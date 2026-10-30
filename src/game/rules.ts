@@ -439,41 +439,61 @@ if (effect === "white_whale") {
 
 let winningCard: PlayedCard | null = null;
 
-if (
-  effect === "white_whale" ||
-  effect === "spotted_stingray"
-) {
-  const candidates = eligibleCards.filter(
-    (play) =>
-      getCardType(play) === "number" ||
-      getCardType(play) === "joker",
-  );
+const numericCandidates = eligibleCards.filter(
+  (play) =>
+    getCardType(play) === "number" ||
+    getCardType(play) === "joker",
+);
 
-  for (const candidate of candidates) {
+// Baleine blanche : la valeur seule détermine le gagnant.
+// Aucune priorité de couleur, même pour le noir.
+if (effect === "white_whale") {
+  for (const candidate of numericCandidates) {
     if (!winningCard) {
       winningCard = candidate;
       continue;
     }
 
-    const valueA = getCardValue(candidate);
-    const valueB = getCardValue(winningCard);
-
-    const candidateWins =
-      effect === "white_whale"
-        ? valueA > valueB
-        : valueA < valueB;
+    const candidateValue = getCardValue(candidate);
+    const winnerValue = getCardValue(winningCard);
 
     if (
-      candidateWins ||
+      candidateValue > winnerValue ||
       (
-        valueA === valueB &&
+        candidateValue === winnerValue &&
         candidate.order < winningCard.order
       )
     ) {
       winningCard = candidate;
     }
   }
-} else if (effect !== "kraken") {
+}
+
+// Raie tachetée : la plus petite valeur gagne.
+else if (effect === "spotted_stingray") {
+  for (const candidate of numericCandidates) {
+    if (!winningCard) {
+      winningCard = candidate;
+      continue;
+    }
+
+    const candidateValue = getCardValue(candidate);
+    const winnerValue = getCardValue(winningCard);
+
+    if (
+      candidateValue < winnerValue ||
+      (
+        candidateValue === winnerValue &&
+        candidate.order < winningCard.order
+      )
+    ) {
+      winningCard = candidate;
+    }
+  }
+}
+
+// Règle normale.
+else if (effect !== "kraken") {
   winningCard = findHighestCard(
     eligibleCards,
     leadSuit,
@@ -482,6 +502,8 @@ if (
 
 let nextLeaderPlayerId = winningCard?.playerId ?? null;
 
+// Kraken : personne ne remporte le pli.
+// On détermine qui aurait gagné sans le Kraken.
 if (effect === "kraken") {
   const playsWithoutKraken = remainingPlays.filter(
     (play) => getCardType(play) !== "kraken",
@@ -498,6 +520,8 @@ if (effect === "kraken") {
   winningCard = null;
 }
 
+// Baleine blanche : si aucune carte numérique
+// n'est jouée, son joueur commence le pli suivant.
 if (
   effect === "white_whale" &&
   winningCard === null
