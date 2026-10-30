@@ -13,8 +13,100 @@ import {
   Skull,
   Crown,
   ArrowLeft,
+  Puzzle,
+  Check,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+
+type Extensions = {
+  loot: boolean;
+  kraken: boolean;
+  white_whale: boolean;
+  mary_thorne: boolean;
+  extra_number_cards: boolean;
+  joker_15: boolean;
+  last_volley: boolean;
+  first_mate_con: boolean;
+  spotted_stingray: boolean;
+  davys_locker: boolean;
+  walk_the_plank: boolean;
+};
+
+const DEFAULT_EXTENSIONS: Extensions = {
+  loot: true,
+  kraken: true,
+  white_whale: true,
+  mary_thorne: true,
+  extra_number_cards: true,
+  joker_15: true,
+  last_volley: true,
+  first_mate_con: true,
+  spotted_stingray: true,
+  davys_locker: true,
+  walk_the_plank: true,
+};
+
+const EXTENSION_OPTIONS: {
+  key: keyof Extensions;
+  name: string;
+  description: string;
+}[] = [
+  {
+    key: "loot",
+    name: "Butin",
+    description: "Ajoute les cartes et règles liées au butin.",
+  },
+  {
+    key: "kraken",
+    name: "Kraken",
+    description: "Active l'extension du Kraken.",
+  },
+  {
+    key: "white_whale",
+    name: "Baleine blanche",
+    description: "Active l'extension de la Baleine blanche.",
+  },
+  {
+    key: "mary_thorne",
+    name: "Mary Thorne",
+    description: "Active les éléments associés à Mary Thorne.",
+  },
+  {
+    key: "extra_number_cards",
+    name: "Cartes numérotées supplémentaires",
+    description: "Ajoute les cartes numérotées supplémentaires.",
+  },
+  {
+    key: "joker_15",
+    name: "Joker 15",
+    description: "Active la carte spéciale Joker 15.",
+  },
+  {
+    key: "last_volley",
+    name: "Dernière salve",
+    description: "Active la règle de dernière salve.",
+  },
+  {
+    key: "first_mate_con",
+    name: "Premier lieutenant",
+    description: "Active la règle du premier lieutenant.",
+  },
+  {
+    key: "spotted_stingray",
+    name: "Raie tachetée",
+    description: "Active la carte spéciale Raie tachetée.",
+  },
+  {
+    key: "davys_locker",
+    name: "Le coffre de Davy Jones",
+    description: "Active les éléments associés au coffre de Davy Jones.",
+  },
+  {
+    key: "walk_the_plank",
+    name: "Marche sur la planche",
+    description: "Active la règle Marche sur la planche.",
+  },
+];
 
 type Room = {
   id: string;
@@ -25,6 +117,7 @@ type Room = {
   is_private: boolean;
   max_players: number;
   created_at: string;
+  extensions?: Extensions;
 };
 
 type RoomPlayer = {
@@ -49,6 +142,10 @@ export default function Lobby({ onBack }: LobbyProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(8);
+  const [extensions, setExtensions] =
+    useState<Extensions>(DEFAULT_EXTENSIONS);
+
+  const enabledExtensionCount = Object.values(extensions).filter(Boolean).length;
 
   const loadRooms = useCallback(async () => {
     const { data: userData } = await supabase.auth.getUser();
@@ -150,6 +247,29 @@ export default function Lobby({ onBack }: LobbyProps) {
     };
   }, [loadRooms, loadSelectedRoom, selectedRoom]);
 
+  function toggleExtension(key: keyof Extensions) {
+    setExtensions((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  }
+
+  function activateAllExtensions() {
+    setExtensions(
+      Object.fromEntries(
+        Object.keys(DEFAULT_EXTENSIONS).map((key) => [key, true])
+      ) as Extensions
+    );
+  }
+
+  function deactivateAllExtensions() {
+    setExtensions(
+      Object.fromEntries(
+        Object.keys(DEFAULT_EXTENSIONS).map((key) => [key, false])
+      ) as Extensions
+    );
+  }
+
   async function createRoom(isPrivate: boolean) {
     const cleanName = roomName.trim();
 
@@ -165,6 +285,7 @@ export default function Lobby({ onBack }: LobbyProps) {
       p_room_name: cleanName,
       p_is_private: isPrivate,
       p_max_players: maxPlayers,
+      p_extensions: extensions,
     });
 
     setLoading(false);
@@ -270,6 +391,7 @@ export default function Lobby({ onBack }: LobbyProps) {
 
   const isHost = selectedRoom?.host_id === userId;
   const playerCount = selectedPlayers.length;
+  const selectedExtensions = selectedRoom?.extensions || DEFAULT_EXTENSIONS;
 
   return (
     <main className="lobby-page">
@@ -377,6 +499,33 @@ export default function Lobby({ onBack }: LobbyProps) {
               ))}
             </div>
 
+            <div className="room-extensions-panel">
+              <h2>
+                <Puzzle size={18} />
+                EXTENSIONS DU SALON
+              </h2>
+              <p>
+                {Object.values(selectedExtensions).filter(Boolean).length} sur{" "}
+                {EXTENSION_OPTIONS.length} activées
+              </p>
+
+              <div className="room-extension-list">
+                {EXTENSION_OPTIONS.map((extension) => (
+                  <span
+                    className={
+                      selectedExtensions[extension.key]
+                        ? "room-extension active"
+                        : "room-extension inactive"
+                    }
+                    key={extension.key}
+                  >
+                    {selectedExtensions[extension.key] && <Check size={13} />}
+                    {extension.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             {selectedRoom.status === "waiting" && isHost && (
               <button
                 className="lobby-primary"
@@ -454,6 +603,49 @@ export default function Lobby({ onBack }: LobbyProps) {
                   </option>
                 ))}
               </select>
+
+              <div className="extensions-config">
+                <div className="extensions-heading">
+                  <div>
+                    <h2>
+                      <Puzzle size={18} />
+                      EXTENSIONS
+                    </h2>
+                    <span>
+                      {enabledExtensionCount}/{EXTENSION_OPTIONS.length} activées
+                    </span>
+                  </div>
+                </div>
+
+                <div className="extension-toggle-actions">
+                  <button type="button" onClick={activateAllExtensions}>
+                    Tout activer
+                  </button>
+                  <button type="button" onClick={deactivateAllExtensions}>
+                    Tout désactiver
+                  </button>
+                </div>
+
+                <div className="extension-options">
+                  {EXTENSION_OPTIONS.map((extension) => (
+                    <label
+                      className="extension-option"
+                      key={extension.key}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={extensions[extension.key]}
+                        onChange={() => toggleExtension(extension.key)}
+                      />
+
+                      <span className="extension-option-info">
+                        <strong>{extension.name}</strong>
+                        <small>{extension.description}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               <div className="create-buttons">
                 <button
