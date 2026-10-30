@@ -22,11 +22,9 @@ type Extensions = {
   loot: boolean;
   kraken: boolean;
   white_whale: boolean;
-  mary_thorne: boolean;
-  extra_number_cards: boolean;
-  joker_15: boolean;
-  last_volley: boolean;
-  first_mate_con: boolean;
+  expansion_2025: boolean;
+  last_shot: boolean;
+  second: boolean;
   spotted_stingray: boolean;
   davys_locker: boolean;
   walk_the_plank: boolean;
@@ -36,11 +34,9 @@ const DEFAULT_EXTENSIONS: Extensions = {
   loot: true,
   kraken: true,
   white_whale: true,
-  mary_thorne: true,
-  extra_number_cards: true,
-  joker_15: true,
-  last_volley: true,
-  first_mate_con: true,
+  expansion_2025: true,
+  last_shot: true,
+  second: true,
   spotted_stingray: true,
   davys_locker: true,
   walk_the_plank: true,
@@ -54,57 +50,47 @@ const EXTENSION_OPTIONS: {
   {
     key: "loot",
     name: "Butin",
-    description: "Ajoute les cartes et règles liées au butin.",
+    description: "Ajoute les cartes Butin du jeu de base.",
   },
   {
     key: "kraken",
     name: "Kraken",
-    description: "Active l'extension du Kraken.",
+    description: "Ajoute la carte spéciale Kraken.",
   },
   {
     key: "white_whale",
     name: "Baleine blanche",
-    description: "Active l'extension de la Baleine blanche.",
+    description: "Ajoute la carte spéciale Baleine blanche.",
   },
   {
-    key: "mary_thorne",
-    name: "Mary Thorne",
-    description: "Active les éléments associés à Mary Thorne.",
+    key: "expansion_2025",
+    name: "Extension 2025",
+    description: "Cartes numérotées supplémentaires, Joker 15 et Mary Throne.",
   },
   {
-    key: "extra_number_cards",
-    name: "Cartes numérotées supplémentaires",
-    description: "Ajoute les cartes numérotées supplémentaires.",
-  },
-  {
-    key: "joker_15",
-    name: "Joker 15",
-    description: "Active la carte spéciale Joker 15.",
-  },
-  {
-    key: "last_volley",
+    key: "last_shot",
     name: "Dernière salve",
-    description: "Active la règle de dernière salve.",
+    description: "Ajoute la carte Dernière salve.",
   },
   {
-    key: "first_mate_con",
-    name: "Premier lieutenant",
-    description: "Active la règle du premier lieutenant.",
+    key: "second",
+    name: "Second",
+    description: "Ajoute la carte Second.",
   },
   {
     key: "spotted_stingray",
     name: "Raie tachetée",
-    description: "Active la carte spéciale Raie tachetée.",
+    description: "Ajoute la carte Raie tachetée.",
   },
   {
     key: "davys_locker",
-    name: "Le coffre de Davy Jones",
-    description: "Active les éléments associés au coffre de Davy Jones.",
+    name: "Casier de Davy Jones",
+    description: "Ajoute la carte Casier de Davy Jones.",
   },
   {
     key: "walk_the_plank",
-    name: "Marche sur la planche",
-    description: "Active la règle Marche sur la planche.",
+    name: "Supplice de la planche",
+    description: "Ajoute la carte Supplice de la planche.",
   },
 ];
 
@@ -145,7 +131,9 @@ export default function Lobby({ onBack }: LobbyProps) {
   const [extensions, setExtensions] =
     useState<Extensions>(DEFAULT_EXTENSIONS);
 
-  const enabledExtensionCount = Object.values(extensions).filter(Boolean).length;
+  const enabledExtensionCount = EXTENSION_OPTIONS.filter(
+    (extension) => extensions[extension.key]
+  ).length;
 
   const loadRooms = useCallback(async () => {
     const { data: userData } = await supabase.auth.getUser();
@@ -255,19 +243,21 @@ export default function Lobby({ onBack }: LobbyProps) {
   }
 
   function activateAllExtensions() {
-    setExtensions(
-      Object.fromEntries(
-        Object.keys(DEFAULT_EXTENSIONS).map((key) => [key, true])
-      ) as Extensions
-    );
+    setExtensions({ ...DEFAULT_EXTENSIONS });
   }
 
   function deactivateAllExtensions() {
-    setExtensions(
-      Object.fromEntries(
-        Object.keys(DEFAULT_EXTENSIONS).map((key) => [key, false])
-      ) as Extensions
-    );
+    setExtensions({
+      loot: false,
+      kraken: false,
+      white_whale: false,
+      expansion_2025: false,
+      last_shot: false,
+      second: false,
+      spotted_stingray: false,
+      davys_locker: false,
+      walk_the_plank: false,
+    });
   }
 
   async function createRoom(isPrivate: boolean) {
@@ -391,7 +381,14 @@ export default function Lobby({ onBack }: LobbyProps) {
 
   const isHost = selectedRoom?.host_id === userId;
   const playerCount = selectedPlayers.length;
-  const selectedExtensions = selectedRoom?.extensions || DEFAULT_EXTENSIONS;
+  const selectedExtensions = {
+    ...DEFAULT_EXTENSIONS,
+    ...(selectedRoom?.extensions || {}),
+  };
+
+  const activeRoomExtensions = EXTENSION_OPTIONS.filter(
+    (extension) => selectedExtensions[extension.key]
+  );
 
   return (
     <main className="lobby-page">
@@ -504,8 +501,9 @@ export default function Lobby({ onBack }: LobbyProps) {
                 <Puzzle size={18} />
                 EXTENSIONS DU SALON
               </h2>
+
               <p>
-                {Object.values(selectedExtensions).filter(Boolean).length} sur{" "}
+                {activeRoomExtensions.length} sur{" "}
                 {EXTENSION_OPTIONS.length} activées
               </p>
 
@@ -519,7 +517,9 @@ export default function Lobby({ onBack }: LobbyProps) {
                     }
                     key={extension.key}
                   >
-                    {selectedExtensions[extension.key] && <Check size={13} />}
+                    {selectedExtensions[extension.key] && (
+                      <Check size={13} />
+                    )}
                     {extension.name}
                   </span>
                 ))}
@@ -609,19 +609,27 @@ export default function Lobby({ onBack }: LobbyProps) {
                   <div>
                     <h2>
                       <Puzzle size={18} />
-                      EXTENSIONS
+                      EXTENSIONS ET CARTES OPTIONNELLES
                     </h2>
                     <span>
-                      {enabledExtensionCount}/{EXTENSION_OPTIONS.length} activées
+                      {enabledExtensionCount}/
+                      {EXTENSION_OPTIONS.length} activées
                     </span>
                   </div>
                 </div>
 
                 <div className="extension-toggle-actions">
-                  <button type="button" onClick={activateAllExtensions}>
+                  <button
+                    type="button"
+                    onClick={activateAllExtensions}
+                  >
                     Tout activer
                   </button>
-                  <button type="button" onClick={deactivateAllExtensions}>
+
+                  <button
+                    type="button"
+                    onClick={deactivateAllExtensions}
+                  >
                     Tout désactiver
                   </button>
                 </div>
@@ -700,7 +708,9 @@ export default function Lobby({ onBack }: LobbyProps) {
                 <div className="empty-rooms">
                   <Skull size={32} />
                   <strong>Aucun équipage disponible</strong>
-                  <span>Crée une partie et attends tes adversaires.</span>
+                  <span>
+                    Crée une partie et attends tes adversaires.
+                  </span>
                 </div>
               ) : (
                 rooms.map((room) => {
@@ -713,7 +723,8 @@ export default function Lobby({ onBack }: LobbyProps) {
                       <div>
                         <strong>{room.room_name}</strong>
                         <span>
-                          Code : {room.code} · {count}/{room.max_players} pirates
+                          Code : {room.code} · {count}/
+                          {room.max_players} pirates
                         </span>
                       </div>
 
