@@ -426,74 +426,96 @@ export function resolveTrick(
   }
 
   let eligibleCards = remainingPlays.filter(
-    isWinningCandidate,
+  isWinningCandidate,
+);
+
+// La Baleine blanche neutralise toutes les cartes
+// spéciales : seules les cartes numérotées peuvent gagner.
+if (effect === "white_whale") {
+  eligibleCards = remainingPlays.filter(
+    (play) =>
+      getCardType(play) === "number" ||
+      getCardType(play) === "joker",
+  );
+}
+
+let winningCard: PlayedCard | null = null;
+
+if (
+  effect === "white_whale" ||
+  effect === "spotted_stingray"
+) {
+  const candidates = eligibleCards.filter(
+    (play) =>
+      getCardType(play) === "number" ||
+      getCardType(play) === "joker",
   );
 
-  // La Baleine blanche neutralise les cartes spéciales
-  // qui ne sont pas des cartes numériques.
-  if (effect === "white_whale") {
-    eligibleCards = remainingPlays.filter(
-      (play) =>
-        getCardType(play) === "number" ||
-        getCardType(play) === "joker",
-    );
-  }
-
-  let winningCard: PlayedCard | null = null;
-
-  if (effect === "spotted_stingray") {
-    const candidates = eligibleCards.filter(
-      (play) =>
-        getCardType(play) === "number" ||
-        getCardType(play) === "joker",
-    );
-
-    for (const candidate of candidates) {
-      if (!winningCard) {
-        winningCard = candidate;
-        continue;
-      }
-
-      const valueA = getCardValue(candidate);
-      const valueB = getCardValue(winningCard);
-
-      if (
-        valueA < valueB ||
-        (
-          valueA === valueB &&
-          candidate.order < winningCard.order
-        )
-      ) {
-        winningCard = candidate;
-      }
+  for (const candidate of candidates) {
+    if (!winningCard) {
+      winningCard = candidate;
+      continue;
     }
-  } else if (effect !== "kraken") {
-    winningCard = findHighestCard(
-      eligibleCards,
-      leadSuit,
-    );
+
+    const valueA = getCardValue(candidate);
+    const valueB = getCardValue(winningCard);
+
+    const candidateWins =
+      effect === "white_whale"
+        ? valueA > valueB
+        : valueA < valueB;
+
+    if (
+      candidateWins ||
+      (
+        valueA === valueB &&
+        candidate.order < winningCard.order
+      )
+    ) {
+      winningCard = candidate;
+    }
   }
+} else if (effect !== "kraken") {
+  winningCard = findHighestCard(
+    eligibleCards,
+    leadSuit,
+  );
+}
 
-  // Le Kraken empêche tout joueur de remporter le pli.
-  // Le prochain leader est celui qui aurait gagné
-  // si le Kraken n'avait pas été joué.
-  let nextLeaderPlayerId = winningCard?.playerId ?? null;
+// Le Kraken détruit le pli.
+// Le prochain leader est celui qui aurait gagné
+// sans le Kraken.
+let nextLeaderPlayerId = winningCard?.playerId ?? null;
 
-  if (effect === "kraken") {
-    const playsWithoutKraken = remainingPlays.filter(
-      (play) => getCardType(play) !== "kraken",
-    );
+if (effect === "kraken") {
+  const playsWithoutKraken = remainingPlays.filter(
+    (play) => getCardType(play) !== "kraken",
+  );
 
-    const hypotheticalWinner = findHighestCard(
-      playsWithoutKraken,
-      leadSuit,
-    );
+  const hypotheticalWinner = findHighestCard(
+    playsWithoutKraken,
+    leadSuit,
+  );
 
-    nextLeaderPlayerId =
-      hypotheticalWinner?.playerId ?? null;
+  nextLeaderPlayerId =
+    hypotheticalWinner?.playerId ?? null;
 
-    winningCard = null;
-  }
+  winningCard = null;
+}
+
+// Si aucune carte numérique n'a été jouée,
+// le joueur ayant posé la Baleine commence le pli suivant.
+if (
+  effect === "white_whale" &&
+  winningCard === null
+) {
+  const whiteWhale = remainingPlays.find(
+    (play) => getCardType(play) === "white_whale",
+  );
+
+  nextLeaderPlayerId =
+    whiteWhale?.playerId ?? null;
+}
 
   const bonusPoints = destroyedLeviathans * 20;
 
