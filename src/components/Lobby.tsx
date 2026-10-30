@@ -19,6 +19,7 @@ import { supabase } from "../lib/supabase";
 type Room = {
   id: string;
   code: string;
+  room_name: string;
   host_id: string;
   status: "waiting" | "playing" | "finished";
   is_private: boolean;
@@ -42,6 +43,7 @@ export default function Lobby({ onBack }: LobbyProps) {
   const [players, setPlayers] = useState<RoomPlayer[]>([]);
   const [userId, setUserId] = useState("");
   const [roomCode, setRoomCode] = useState("");
+  const [roomName, setRoomName] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<RoomPlayer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -149,10 +151,18 @@ export default function Lobby({ onBack }: LobbyProps) {
   }, [loadRooms, loadSelectedRoom, selectedRoom]);
 
   async function createRoom(isPrivate: boolean) {
+    const cleanName = roomName.trim();
+
+    if (cleanName.length < 3 || cleanName.length > 30) {
+      setMessage("Le nom doit contenir entre 3 et 30 caractères.");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
     const { data, error } = await supabase.rpc("create_room", {
+      p_room_name: cleanName,
       p_is_private: isPrivate,
       p_max_players: maxPlayers,
     });
@@ -171,6 +181,7 @@ export default function Lobby({ onBack }: LobbyProps) {
       return;
     }
 
+    setRoomName("");
     await loadSelectedRoom(result.room_id);
     setMessage("Ton salon a été créé !");
   }
@@ -294,7 +305,7 @@ export default function Lobby({ onBack }: LobbyProps) {
               TON ÉQUIPAGE
             </div>
 
-            <h1>Salon d'attente</h1>
+            <h1>{selectedRoom.room_name}</h1>
 
             <p className="lobby-description">
               Prépare ton équipage avant le départ.
@@ -408,6 +419,24 @@ export default function Lobby({ onBack }: LobbyProps) {
             <div className="lobby-create-panel">
               <h2>CRÉER UN SALON</h2>
 
+              <label htmlFor="room-name">
+                Nom de ton salon
+              </label>
+
+              <input
+                id="room-name"
+                type="text"
+                value={roomName}
+                onChange={(event) => setRoomName(event.target.value)}
+                placeholder="Ex : La taverne des pirates"
+                minLength={3}
+                maxLength={30}
+              />
+
+              <span className="room-name-counter">
+                {roomName.length}/30 caractères
+              </span>
+
               <label htmlFor="max-players">
                 Nombre maximum de joueurs
               </label>
@@ -430,7 +459,7 @@ export default function Lobby({ onBack }: LobbyProps) {
                 <button
                   className="lobby-primary"
                   onClick={() => createRoom(false)}
-                  disabled={loading}
+                  disabled={loading || roomName.trim().length < 3}
                 >
                   <Globe size={19} />
                   PARTIE PUBLIQUE
@@ -439,7 +468,7 @@ export default function Lobby({ onBack }: LobbyProps) {
                 <button
                   className="lobby-secondary"
                   onClick={() => createRoom(true)}
-                  disabled={loading}
+                  disabled={loading || roomName.trim().length < 3}
                 >
                   <Lock size={19} />
                   PARTIE PRIVÉE
@@ -490,9 +519,9 @@ export default function Lobby({ onBack }: LobbyProps) {
                   return (
                     <div className="public-room-row" key={room.id}>
                       <div>
-                        <strong>Équipage {room.code}</strong>
+                        <strong>{room.room_name}</strong>
                         <span>
-                          {count}/{room.max_players} pirates
+                          Code : {room.code} · {count}/{room.max_players} pirates
                         </span>
                       </div>
 
