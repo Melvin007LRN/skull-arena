@@ -1,9 +1,8 @@
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Anchor,
   Crown,
-  Shield,
   Swords,
   Trophy,
   Users,
@@ -13,29 +12,86 @@ import {
   ChevronRight,
   Ship,
   X,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 
+import AuthPanel from "./components/AuthPanel";
+import { supabase } from "./lib/supabase";
+
 export default function App() {
-  const [nickname, setNickname] = useState("");
-  const [savedName, setSavedName] = useState("");
   const [showProfile, setShowProfile] = useState(false);
   const [showPrivate, setShowPrivate] = useState(false);
   const [roomCode, setRoomCode] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+
+      const user = data.session?.user;
+      setIsAuthenticated(!!user);
+      setUsername(
+        user?.user_metadata?.username ||
+        user?.email?.split("@")[0] ||
+        ""
+      );
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+
+      const user = session?.user;
+      setIsAuthenticated(!!user);
+      setUsername(
+        user?.user_metadata?.username ||
+        user?.email?.split("@")[0] ||
+        ""
+      );
+
+      if (user) {
+        setShowProfile(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleAuthenticated = useCallback(() => {
+    setShowProfile(false);
+  }, []);
 
   const startGame = () => {
-    if (!savedName) {
+    if (!isAuthenticated) {
       setShowProfile(true);
       return;
     }
-    setShowPrivate(false);
+
+    // Le lancement réel de la partie sera ajouté à l'étape multijoueur.
+    alert("Ton compte est connecté ! L'arène multijoueur arrive.");
   };
 
-  const saveNickname = () => {
-    const clean = nickname.trim();
-    if (clean.length < 3 || clean.length > 16) return;
-    setSavedName(clean);
-    setShowProfile(false);
+  const openPrivateRoom = () => {
+    if (!isAuthenticated) {
+      setShowProfile(true);
+      return;
+    }
+
+    setShowPrivate(true);
+  };
+
+  const joinPrivateRoom = () => {
+    if (roomCode.trim().length < 4) return;
+
+    // La connexion réelle aux salles sera ajoutée à l'étape multijoueur.
+    alert("Ton code est prêt : " + roomCode.trim().toUpperCase());
   };
 
   return (
@@ -59,7 +115,7 @@ export default function App() {
           onClick={() => setShowProfile(true)}
         >
           <Users size={17} />
-          {savedName || "Mon profil"}
+          {username || "Mon profil"}
         </button>
       </header>
 
@@ -90,7 +146,7 @@ export default function App() {
 
             <button
               className="secondary-button"
-              onClick={() => setShowPrivate(true)}
+              onClick={openPrivateRoom}
             >
               <Lock size={17} />
               REJOINDRE UN AMI
@@ -143,17 +199,24 @@ export default function App() {
             <span className="mode-label">MULTIJOUEUR</span>
             <strong>Arène publique</strong>
             <p>Affronte des pirates du monde entier.</p>
-            <span className="mode-link">JOUER <ChevronRight size={16} /></span>
+            <span className="mode-link">
+              JOUER <ChevronRight size={16} />
+            </span>
           </button>
 
-          <button className="mode-card featured" onClick={() => setShowPrivate(true)}>
+          <button
+            className="mode-card featured"
+            onClick={openPrivateRoom}
+          >
             <div className="mode-icon">
               <Lock size={28} />
             </div>
             <span className="mode-label">ENTRE AMIS</span>
             <strong>Partie privée</strong>
             <p>Crée une salle et invite ton équipage.</p>
-            <span className="mode-link">REJOINDRE <ChevronRight size={16} /></span>
+            <span className="mode-link">
+              REJOINDRE <ChevronRight size={16} />
+            </span>
           </button>
 
           <button className="mode-card" onClick={startGame}>
@@ -163,7 +226,9 @@ export default function App() {
             <span className="mode-label">COMPÉTITION</span>
             <strong>Classement</strong>
             <p>Gravis les rangs et gagne des trophées.</p>
-            <span className="mode-link">DÉCOUVRIR <ChevronRight size={16} /></span>
+            <span className="mode-link">
+              DÉCOUVRIR <ChevronRight size={16} />
+            </span>
           </button>
         </div>
       </section>
@@ -178,7 +243,7 @@ export default function App() {
         </div>
         <div className="online-status">
           <span className="status-dot" />
-          ARÈNE EN PRÉPARATION
+          {isAuthenticated ? "PIRATE CONNECTÉ" : "ARÈNE EN PRÉPARATION"}
         </div>
       </section>
 
@@ -189,30 +254,16 @@ export default function App() {
 
       {showProfile && (
         <div className="modal-overlay">
-          <div className="modal">
+          <div className="modal auth-modal">
             <button
               className="close-button"
               onClick={() => setShowProfile(false)}
+              aria-label="Fermer"
             >
               <X />
             </button>
-            <Skull size={42} />
-            <span className="eyebrow">IDENTITÉ DU PIRATE</span>
-            <h2>Quel est ton nom ?</h2>
-            <p>Choisis ton surnom pour rejoindre l'équipage.</p>
-            <input
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Ton pseudo..."
-              maxLength={16}
-            />
-            <button
-              className="primary-button modal-submit"
-              disabled={nickname.trim().length < 3}
-              onClick={saveNickname}
-            >
-              CONFIRMER MON IDENTITÉ
-            </button>
+
+            <AuthPanel onAuthenticated={handleAuthenticated} />
           </div>
         </div>
       )}
@@ -223,27 +274,34 @@ export default function App() {
             <button
               className="close-button"
               onClick={() => setShowPrivate(false)}
+              aria-label="Fermer"
             >
               <X />
             </button>
+
             <Anchor size={42} />
             <span className="eyebrow">ÉQUIPAGE PRIVÉ</span>
             <h2>Rejoindre un équipage</h2>
             <p>Entre le code de la salle de ton ami.</p>
+
             <input
               value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value)}
+              onChange={(event) => setRoomCode(event.target.value)}
               placeholder="CODE DE LA PARTIE"
               maxLength={8}
             />
+
             <button
               className="primary-button modal-submit"
               disabled={roomCode.trim().length < 4}
-              onClick={startGame}
+              onClick={joinPrivateRoom}
             >
               REJOINDRE
             </button>
-            <small className="coming-soon">MULTIJOUEUR EN COURS DE DÉVELOPPEMENT</small>
+
+            <small className="coming-soon">
+              MULTIJOUEUR EN COURS DE DÉVELOPPEMENT
+            </small>
           </div>
         </div>
       )}
