@@ -429,8 +429,6 @@ export function resolveTrick(
   isWinningCandidate,
 );
 
-// La Baleine blanche neutralise toutes les cartes
-// spéciales : seules les cartes numérotées peuvent gagner.
 if (effect === "white_whale") {
   eligibleCards = remainingPlays.filter(
     (play) =>
@@ -482,9 +480,6 @@ if (
   );
 }
 
-// Le Kraken détruit le pli.
-// Le prochain leader est celui qui aurait gagné
-// sans le Kraken.
 let nextLeaderPlayerId = winningCard?.playerId ?? null;
 
 if (effect === "kraken") {
@@ -503,8 +498,6 @@ if (effect === "kraken") {
   winningCard = null;
 }
 
-// Si aucune carte numérique n'a été jouée,
-// le joueur ayant posé la Baleine commence le pli suivant.
 if (
   effect === "white_whale" &&
   winningCard === null
