@@ -1,7 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Anchor,
   Crown,
   Swords,
   Trophy,
@@ -16,12 +15,12 @@ import {
 } from "lucide-react";
 
 import AuthPanel from "./components/AuthPanel";
+import Lobby from "./components/Lobby";
 import { supabase } from "./lib/supabase";
 
 export default function App() {
   const [showProfile, setShowProfile] = useState(false);
-  const [showPrivate, setShowPrivate] = useState(false);
-  const [roomCode, setRoomCode] = useState("");
+  const [showLobby, setShowLobby] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
 
@@ -53,8 +52,8 @@ export default function App() {
         ""
       );
 
-      if (user) {
-        setShowProfile(false);
+      if (!user) {
+        setShowLobby(false);
       }
     });
 
@@ -68,31 +67,22 @@ export default function App() {
     setShowProfile(false);
   }, []);
 
-  const startGame = () => {
+  const enterLobby = () => {
     if (!isAuthenticated) {
       setShowProfile(true);
       return;
     }
 
-    // Le lancement réel de la partie sera ajouté à l'étape multijoueur.
-    alert("Ton compte est connecté ! L'arène multijoueur arrive.");
+    setShowLobby(true);
   };
 
-  const openPrivateRoom = () => {
-    if (!isAuthenticated) {
-      setShowProfile(true);
-      return;
-    }
-
-    setShowPrivate(true);
-  };
-
-  const joinPrivateRoom = () => {
-    if (roomCode.trim().length < 4) return;
-
-    // La connexion réelle aux salles sera ajoutée à l'étape multijoueur.
-    alert("Ton code est prêt : " + roomCode.trim().toUpperCase());
-  };
+  if (showLobby) {
+    return (
+      <Lobby
+        onBack={() => setShowLobby(false)}
+      />
+    );
+  }
 
   return (
     <main className="arena">
@@ -138,7 +128,7 @@ export default function App() {
           </p>
 
           <div className="hero-actions">
-            <button className="primary-button" onClick={startGame}>
+            <button className="primary-button" onClick={enterLobby}>
               <Swords size={20} />
               ENTRER DANS L'ARÈNE
               <ChevronRight size={19} />
@@ -146,7 +136,7 @@ export default function App() {
 
             <button
               className="secondary-button"
-              onClick={openPrivateRoom}
+              onClick={enterLobby}
             >
               <Lock size={17} />
               REJOINDRE UN AMI
@@ -192,7 +182,7 @@ export default function App() {
         </div>
 
         <div className="mode-grid">
-          <button className="mode-card" onClick={startGame}>
+          <button className="mode-card" onClick={enterLobby}>
             <div className="mode-icon">
               <Users size={28} />
             </div>
@@ -206,7 +196,7 @@ export default function App() {
 
           <button
             className="mode-card featured"
-            onClick={openPrivateRoom}
+            onClick={enterLobby}
           >
             <div className="mode-icon">
               <Lock size={28} />
@@ -219,7 +209,7 @@ export default function App() {
             </span>
           </button>
 
-          <button className="mode-card" onClick={startGame}>
+          <button className="mode-card" onClick={enterLobby}>
             <div className="mode-icon">
               <Trophy size={28} />
             </div>
@@ -243,7 +233,9 @@ export default function App() {
         </div>
         <div className="online-status">
           <span className="status-dot" />
-          {isAuthenticated ? "PIRATE CONNECTÉ" : "ARÈNE EN PRÉPARATION"}
+          {isAuthenticated
+            ? "PIRATE CONNECTÉ"
+            : "ARÈNE EN PRÉPARATION"}
         </div>
       </section>
 
@@ -263,45 +255,9 @@ export default function App() {
               <X />
             </button>
 
-            <AuthPanel onAuthenticated={handleAuthenticated} />
-          </div>
-        </div>
-      )}
-
-      {showPrivate && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <button
-              className="close-button"
-              onClick={() => setShowPrivate(false)}
-              aria-label="Fermer"
-            >
-              <X />
-            </button>
-
-            <Anchor size={42} />
-            <span className="eyebrow">ÉQUIPAGE PRIVÉ</span>
-            <h2>Rejoindre un équipage</h2>
-            <p>Entre le code de la salle de ton ami.</p>
-
-            <input
-              value={roomCode}
-              onChange={(event) => setRoomCode(event.target.value)}
-              placeholder="CODE DE LA PARTIE"
-              maxLength={8}
+            <AuthPanel
+              onAuthenticated={handleAuthenticated}
             />
-
-            <button
-              className="primary-button modal-submit"
-              disabled={roomCode.trim().length < 4}
-              onClick={joinPrivateRoom}
-            >
-              REJOINDRE
-            </button>
-
-            <small className="coming-soon">
-              MULTIJOUEUR EN COURS DE DÉVELOPPEMENT
-            </small>
           </div>
         </div>
       )}
