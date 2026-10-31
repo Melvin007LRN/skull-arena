@@ -8,7 +8,7 @@ export interface PlayedCard {
   card: GameCard;
   order: number;
   tigressMode?: TigressMode;
-  chosenValue?: 0 | 14;
+  chosenValue?: number;
   chosenSuit?: Suit;
 }
 
