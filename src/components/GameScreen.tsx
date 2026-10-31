@@ -91,6 +91,13 @@ export default function GameScreen({
   const [submittingBid, setSubmittingBid] = useState(false);
   const [bidMessage, setBidMessage] = useState("");
 
+const [currentTrickId, setCurrentTrickId] = useState<string | null>(null);
+const [playedCards, setPlayedCards] = useState<any[]>([]);
+const [selectedCard, setSelectedCard] = useState<GameCard | null>(null);
+const [tigressMode, setTigressMode] = useState<"pirate" | "escape">("pirate");
+const [playingCard, setPlayingCard] = useState(false);
+const [playMessage, setPlayMessage] = useState("");
+  
   const loadGame = useCallback(async () => {
     setError("");
 
