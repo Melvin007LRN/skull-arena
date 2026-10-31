@@ -597,11 +597,11 @@ export default function Lobby({ onBack }: LobbyProps) {
                   setMaxPlayers(Number(event.target.value))
                 }
               >
-                {[2, 3, 4, 5, 6, 7, 8].map((number) => (
-                  <option key={number} value={number}>
-                    {number} joueurs
-                  </option>
-                ))}
+                {[2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
+  <option key={number} value={number}>
+    {number} joueurs
+  </option>
+))}
               </select>
 
               <div className="extensions-config">
