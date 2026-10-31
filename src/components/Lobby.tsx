@@ -17,6 +17,7 @@ import {
   Check,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import GameScreen from "./GameScreen";
 
 type Extensions = {
   loot: boolean;
@@ -124,6 +125,7 @@ export default function Lobby({ onBack }: LobbyProps) {
   const [roomCode, setRoomCode] = useState("");
   const [roomName, setRoomName] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [showGame, setShowGame] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState<RoomPlayer[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -192,6 +194,7 @@ export default function Lobby({ onBack }: LobbyProps) {
     }
 
     setSelectedRoom(room as Room);
+    setShowGame(room.status === "playing");
 
     const { data: playerData, error: playerError } = await supabase
       .from("room_players")
@@ -364,6 +367,7 @@ export default function Lobby({ onBack }: LobbyProps) {
 
     setSelectedRoom(null);
     setSelectedPlayers([]);
+    setShowGame(false);
     setMessage("Tu as quitté le salon.");
     await loadRooms();
   }
@@ -381,6 +385,7 @@ export default function Lobby({ onBack }: LobbyProps) {
 
   const isHost = selectedRoom?.host_id === userId;
   const playerCount = selectedPlayers.length;
+
   const selectedExtensions = {
     ...DEFAULT_EXTENSIONS,
     ...(selectedRoom?.extensions || {}),
@@ -389,6 +394,15 @@ export default function Lobby({ onBack }: LobbyProps) {
   const activeRoomExtensions = EXTENSION_OPTIONS.filter(
     (extension) => selectedExtensions[extension.key]
   );
+
+  if (showGame && selectedRoom) {
+    return (
+      <GameScreen
+        roomId={selectedRoom.id}
+        onExit={() => setShowGame(false)}
+      />
+    );
+  }
 
   return (
     <main className="lobby-page">
@@ -542,9 +556,19 @@ export default function Lobby({ onBack }: LobbyProps) {
             )}
 
             {selectedRoom.status === "playing" && (
-              <div className="lobby-notice">
-                LA PARTIE EST LANCÉE
-              </div>
+              <>
+                <div className="lobby-notice">
+                  LA PARTIE EST LANCÉE
+                </div>
+
+                <button
+                  className="lobby-primary"
+                  onClick={() => setShowGame(true)}
+                >
+                  <Play size={19} />
+                  RETOURNER À LA PARTIE
+                </button>
+              </>
             )}
 
             <button className="lobby-leave" onClick={leaveRoom}>
@@ -598,10 +622,10 @@ export default function Lobby({ onBack }: LobbyProps) {
                 }
               >
                 {[2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
-  <option key={number} value={number}>
-    {number} joueurs
-  </option>
-))}
+                  <option key={number} value={number}>
+                    {number} joueurs
+                  </option>
+                ))}
               </select>
 
               <div className="extensions-config">
