@@ -1,5 +1,9 @@
 
-import type { GameCard, Suit } from "./cards";
+import type {
+  GameCard,
+  Suit,
+  PiratePower,
+} from "./cards";
 
 export type TigressMode = "pirate" | "escape";
 
@@ -10,6 +14,12 @@ export interface PlayedCard {
   tigressMode?: TigressMode;
   chosenValue?: number;
   chosenSuit?: Suit;
+}
+
+export interface PiratePowerTrigger {
+  playerId: string;
+  power: PiratePower;
+  sourceCardId: string;
 }
 
 export interface TrickResult {
@@ -26,6 +36,7 @@ export interface TrickResult {
   bonusPoints: number;
   removedPirates: PlayedCard[];
   eligibleCards: PlayedCard[];
+  piratePowerTriggers: PiratePowerTrigger[];
   maryThroneWinnerPlayerId: string | null;
   message: string;
 }
@@ -528,6 +539,44 @@ export function resolveTrick(
       whiteWhale?.playerId ?? null;
   }
 
+  // DÉCLENCHEMENT DES POUVOIRS DES PIRATES
+  const piratePowerTriggers: PiratePowerTrigger[] = [];
+
+  if (winningCard) {
+    const winnerType = getCardType(winningCard);
+
+    // Un Pirate classique déclenche son propre pouvoir
+    // lorsqu'il remporte le pli.
+    if (
+      winnerType === "pirate" &&
+      winningCard.card.piratePower
+    ) {
+      piratePowerTriggers.push({
+        playerId: winningCard.playerId,
+        power: winningCard.card.piratePower,
+        sourceCardId: winningCard.card.id,
+      });
+    }
+
+    // SECOND récupère les pouvoirs des Pirates capturés.
+    if (winnerType === "second") {
+      const capturedPirates = remainingPlays.filter(
+        (play) =>
+          getCardType(play) === "pirate" &&
+          play.playerId !== winningCard!.playerId &&
+          play.card.piratePower !== undefined,
+      );
+
+      for (const pirate of capturedPirates) {
+        piratePowerTriggers.push({
+          playerId: winningCard.playerId,
+          power: pirate.card.piratePower!,
+          sourceCardId: pirate.card.id,
+        });
+      }
+    }
+  }
+
   const maryThroneWinnerPlayerId =
     winningCard?.card.id === "mary-throne"
       ? winningCard.playerId
@@ -562,6 +611,7 @@ export function resolveTrick(
     bonusPoints,
     removedPirates,
     eligibleCards,
+    piratePowerTriggers,
     maryThroneWinnerPlayerId,
     message: messages[effect],
   };
