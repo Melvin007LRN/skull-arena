@@ -1,3 +1,4 @@
+
 import type { GameCard, Suit } from "./cards";
 
 export type TigressMode = "pirate" | "escape";
@@ -6,11 +7,7 @@ export interface PlayedCard {
   playerId: string;
   card: GameCard;
   order: number;
-
-  // Obligatoire si la carte jouée est la Tigresse.
   tigressMode?: TigressMode;
-
-  // Valeur choisie pour une carte 0/14.
   chosenValue?: 0 | 14;
 }
 
@@ -92,12 +89,6 @@ function isWinningCandidate(played: PlayedCard): boolean {
   return !NON_WINNING_TYPES.has(getCardType(played));
 }
 
-/**
- * Détermine la couleur demandée par le pli.
- *
- * Une carte spéciale qui ne définit pas de couleur
- * ne fixe pas la couleur du pli.
- */
 export function getLeadSuit(
   plays: PlayedCard[],
 ): Suit | null {
@@ -108,12 +99,8 @@ export function getLeadSuit(
   for (const play of ordered) {
     const type = getCardType(play);
 
-    if (
-      type === "number" ||
-      type === "joker"
-    ) {
+    if (type === "number" || type === "joker") {
       const suit = getCardSuit(play);
-
       if (suit) return suit;
     }
   }
@@ -121,13 +108,6 @@ export function getLeadSuit(
   return null;
 }
 
-/**
- * Classement des cartes ordinaires.
- *
- * Noir domine les autres couleurs.
- * Sinon, la couleur demandée par le pli domine
- * les autres couleurs.
- */
 function compareNumberCards(
   a: PlayedCard,
   b: PlayedCard,
@@ -135,7 +115,6 @@ function compareNumberCards(
 ): number {
   const suitA = getCardSuit(a);
   const suitB = getCardSuit(b);
-
   const valueA = getCardValue(a);
   const valueB = getCardValue(b);
 
@@ -160,7 +139,6 @@ function compareNumberCards(
   if (valueA > valueB) return 1;
   if (valueA < valueB) return -1;
 
-  // En cas d'égalité, la première carte jouée gagne.
   return b.order - a.order;
 }
 
@@ -188,12 +166,6 @@ function compareSpecialCards(
   return b.order - a.order;
 }
 
-/**
- * Compare deux cartes candidates.
- *
- * Retourne une valeur positive si A gagne,
- * négative si B gagne, zéro en cas d'égalité.
- */
 function compareCards(
   a: PlayedCard,
   b: PlayedCard,
@@ -212,9 +184,6 @@ function compareCards(
   const aSpecial = specialTypes.has(typeA);
   const bSpecial = specialTypes.has(typeB);
 
-  // Le Second bat toutes les cartes ordinaires
-  // et les Pirates, mais pas le Skull King
-  // ni les Sirènes.
   if (typeA === "second") {
     if (
       typeB !== "skull_king" &&
@@ -247,10 +216,6 @@ function compareCards(
   return compareNumberCards(a, b, leadSuit);
 }
 
-/**
- * Recherche la carte gagnante parmi les cartes
- * qui peuvent réellement remporter le pli.
- */
 function findHighestCard(
   plays: PlayedCard[],
   leadSuit: Suit | null,
@@ -272,12 +237,6 @@ function findHighestCard(
   return winner;
 }
 
-/**
- * Recherche le dernier Léviathan joué.
- *
- * Le dernier Léviathan détermine l'effet du pli,
- * sauf si le Casier de Davy Jones est présent.
- */
 function getLastLeviathan(
   plays: PlayedCard[],
 ): PlayedCard | null {
@@ -290,16 +249,6 @@ function getLastLeviathan(
     : null;
 }
 
-/**
- * Résolution complète d'un pli.
- *
- * Important :
- * - Les cartes doivent être fournies dans leur ordre réel.
- * - Les valeurs 0/14 doivent être renseignées dans chosenValue.
- * - La Tigresse doit avoir un tigressMode.
- * - Le joueur retiré par Supplice de la planche doit être
- *   sélectionné par le système de jeu avant cette résolution.
- */
 export function resolveTrick(
   input: PlayedCard[],
   options: {
@@ -426,112 +375,119 @@ export function resolveTrick(
   }
 
   let eligibleCards = remainingPlays.filter(
-  isWinningCandidate,
-);
+    isWinningCandidate,
+  );
 
-if (effect === "white_whale") {
-  eligibleCards = remainingPlays.filter(
+  if (effect === "white_whale") {
+    eligibleCards = remainingPlays.filter(
+      (play) =>
+        getCardType(play) === "number" ||
+        getCardType(play) === "joker",
+    );
+  }
+
+  let winningCard: PlayedCard | null = null;
+
+  const numericCandidates = eligibleCards.filter(
     (play) =>
       getCardType(play) === "number" ||
       getCardType(play) === "joker",
   );
-}
 
-let winningCard: PlayedCard | null = null;
+  // BALEINE BLANCHE :
+  // La carte numérique de plus forte valeur gagne.
+  // La couleur et l'atout noir ne donnent aucun avantage.
+  if (effect === "white_whale") {
+    for (const candidate of numericCandidates) {
+      if (!winningCard) {
+        winningCard = candidate;
+        continue;
+      }
 
-const numericCandidates = eligibleCards.filter(
-  (play) =>
-    getCardType(play) === "number" ||
-    getCardType(play) === "joker",
-);
+      const valueA = getCardValue(candidate);
+      const valueB = getCardValue(winningCard);
 
-// Baleine blanche : la valeur seule compte.
-if (effect === "white_whale") {
-  for (const candidate of numericCandidates) {
-    if (!winningCard) {
-      winningCard = candidate;
-      continue;
-    }
-
-    const valueA = getCardValue(candidate);
-    const valueB = getCardValue(winningCard);
-
-    if (
-      valueA > valueB ||
-      (
-        valueA === valueB &&
-        candidate.order < winningCard.order
-      )
-    ) {
-      winningCard = candidate;
+      if (
+        valueA > valueB ||
+        (
+          valueA === valueB &&
+          candidate.order < winningCard.order
+        )
+      ) {
+        winningCard = candidate;
+      }
     }
   }
-}
 
-// Raie tachetée : la plus petite valeur gagne.
-else if (effect === "spotted_stingray") {
-  for (const candidate of numericCandidates) {
-    if (!winningCard) {
-      winningCard = candidate;
-      continue;
-    }
+  // RAIE TACHETÉE :
+  // La carte numérique de plus faible valeur gagne.
+  else if (effect === "spotted_stingray") {
+    for (const candidate of numericCandidates) {
+      if (!winningCard) {
+        winningCard = candidate;
+        continue;
+      }
 
-    const valueA = getCardValue(candidate);
-    const valueB = getCardValue(winningCard);
+      const valueA = getCardValue(candidate);
+      const valueB = getCardValue(winningCard);
 
-    if (
-      valueA < valueB ||
-      (
-        valueA === valueB &&
-        candidate.order < winningCard.order
-      )
-    ) {
-      winningCard = candidate;
+      if (
+        valueA < valueB ||
+        (
+          valueA === valueB &&
+          candidate.order < winningCard.order
+        )
+      ) {
+        winningCard = candidate;
+      }
     }
   }
-}
 
-// Résolution habituelle.
-else if (effect !== "kraken") {
-  winningCard = findHighestCard(
-    eligibleCards,
-    leadSuit,
-  );
-}
+  // RÉSOLUTION NORMALE
+  else if (effect !== "kraken") {
+    winningCard = findHighestCard(
+      eligibleCards,
+      leadSuit,
+    );
+  }
 
-let nextLeaderPlayerId =
-  winningCard?.playerId ?? null;
+  let nextLeaderPlayerId =
+    winningCard?.playerId ?? null;
 
-// Kraken : personne ne remporte le pli.
-if (effect === "kraken") {
-  const playsWithoutKraken = remainingPlays.filter(
-    (play) => getCardType(play) !== "kraken",
-  );
+  // KRAKEN :
+  // Personne ne remporte le pli.
+  // Le prochain leader est celui qui aurait gagné
+  // si le Kraken n'avait pas été joué.
+  if (effect === "kraken") {
+    const playsWithoutKraken = remainingPlays.filter(
+      (play) => getCardType(play) !== "kraken",
+    );
 
-  const hypotheticalWinner = findHighestCard(
-    playsWithoutKraken,
-    leadSuit,
-  );
+    const hypotheticalWinner = findHighestCard(
+      playsWithoutKraken,
+      leadSuit,
+    );
 
-  nextLeaderPlayerId =
-    hypotheticalWinner?.playerId ?? null;
+    nextLeaderPlayerId =
+      hypotheticalWinner?.playerId ?? null;
 
-  winningCard = null;
-}
+    winningCard = null;
+  }
 
-// Baleine blanche : aucune carte numérique.
-// Le joueur ayant posé la Baleine commence le pli suivant.
-if (
-  effect === "white_whale" &&
-  winningCard === null
-) {
-  const whiteWhale = remainingPlays.find(
-    (play) => getCardType(play) === "white_whale",
-  );
+  // BALEINE BLANCHE :
+  // Si aucune carte numérique ou Joker n'a été joué,
+  // le joueur ayant posé la Baleine commence le pli suivant.
+  if (
+    effect === "white_whale" &&
+    winningCard === null
+  ) {
+    const whiteWhale = remainingPlays.find(
+      (play) => getCardType(play) === "white_whale",
+    );
 
-  nextLeaderPlayerId =
-    whiteWhale?.playerId ?? null;
-}
+    nextLeaderPlayerId =
+      whiteWhale?.playerId ?? null;
+  }
 
   const bonusPoints = destroyedLeviathans * 20;
 
@@ -566,13 +522,6 @@ if (
   };
 }
 
-/**
- * Calcule les bonus des cartes 7 et 8
- * de l'extension 2025.
- *
- * Le bonus n'est accordé que si le joueur
- * a réalisé exactement son pari.
- */
 export function getExpansionNumberBonus(
   card: GameCard,
   bidWasCorrect: boolean,
@@ -585,12 +534,6 @@ export function getExpansionNumberBonus(
   return 0;
 }
 
-/**
- * Bonus de capture des cartes spéciales.
- *
- * Ces points sont calculés séparément du score
- * normal du pli.
- */
 export function getCaptureBonus(
   winningCard: PlayedCard | null,
   plays: PlayedCard[],
