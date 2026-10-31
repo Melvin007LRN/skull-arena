@@ -1,3 +1,4 @@
+
 export type Suit = "green" | "purple" | "yellow" | "black";
 
 export type CardType =
@@ -16,6 +17,58 @@ export type CardType =
   | "spotted_stingray"
   | "davys_locker"
   | "walk_the_plank";
+
+export type PiratePower =
+  | "rosie"
+  | "bendt"
+  | "rascal"
+  | "juanita"
+  | "harry";
+
+export interface PiratePowerInfo {
+  id: PiratePower;
+  name: string;
+  description: string;
+  canUseAfterFinalTrick: boolean;
+}
+
+export const PIRATE_POWERS: Record<PiratePower, PiratePowerInfo> = {
+  rosie: {
+    id: "rosie",
+    name: "Rosie la Douce",
+    description:
+      "Choisir le joueur qui commencera le prochain pli, soi-même compris.",
+    canUseAfterFinalTrick: false,
+  },
+  bendt: {
+    id: "bendt",
+    name: "Bendt le Bandit",
+    description:
+      "Piocher 2 cartes, puis en défausser 2 de sa main.",
+    canUseAfterFinalTrick: false,
+  },
+  rascal: {
+    id: "rascal",
+    name: "Rascal le Flambeur",
+    description:
+      "Parier 0, 10 ou 20 points supplémentaires. Gagner ces points si sa mise est exacte, les perdre sinon.",
+    canUseAfterFinalTrick: true,
+  },
+  juanita: {
+    id: "juanita",
+    name: "Juanita Jade",
+    description:
+      "Regarder secrètement les cartes qui n'ont pas été distribuées pendant cette manche.",
+    canUseAfterFinalTrick: false,
+  },
+  harry: {
+    id: "harry",
+    name: "Harry le Géant",
+    description:
+      "Modifier sa mise de +1, de -1 ou la laisser inchangée.",
+    canUseAfterFinalTrick: true,
+  },
+};
 
 export type ExtensionKey =
   | "loot"
@@ -37,6 +90,9 @@ export interface GameCard {
   selectableValue?: number[];
   extension?: ExtensionKey;
   isExpansionCard: boolean;
+
+  /** Pouvoir individuel d'un Pirate classique. */
+  piratePower?: PiratePower;
 }
 
 export type GameExtensions = Record<ExtensionKey, boolean>;
@@ -93,11 +149,44 @@ function createBaseDeck(): GameCard[] {
     }
   }
 
-  for (let i = 1; i <= 5; i++) {
+  const pirates: {
+    id: string;
+    name: string;
+    power: PiratePower;
+  }[] = [
+    {
+      id: "pirate-1",
+      name: "Rosie la Douce",
+      power: "rosie",
+    },
+    {
+      id: "pirate-2",
+      name: "Bendt le Bandit",
+      power: "bendt",
+    },
+    {
+      id: "pirate-3",
+      name: "Rascal le Flambeur",
+      power: "rascal",
+    },
+    {
+      id: "pirate-4",
+      name: "Juanita Jade",
+      power: "juanita",
+    },
+    {
+      id: "pirate-5",
+      name: "Harry le Géant",
+      power: "harry",
+    },
+  ];
+
+  for (const pirate of pirates) {
     cards.push({
-      id: `pirate-${i}`,
-      name: `Pirate ${i}`,
+      id: pirate.id,
+      name: pirate.name,
       type: "pirate",
+      piratePower: pirate.power,
       isExpansionCard: false,
     });
   }
@@ -297,14 +386,12 @@ export function buildDeck(
 
   const deck: GameCard[] = [...BASE_DECK];
 
-  // Cartes Butin, Kraken et Baleine blanche.
   for (const card of OPTIONAL_BASE_DECK) {
     if (card.extension && settings[card.extension]) {
       deck.push(card);
     }
   }
 
-  // Extension 2025 : cartes de couleur, Joker et Mary Throne.
   if (settings.expansion_2025) {
     deck.push(
       ...EXPANSION_2025_DECK.filter(
@@ -313,7 +400,6 @@ export function buildDeck(
     );
   }
 
-  // Cartes spéciales activables indépendamment.
   const optionalExpansionKeys: ExtensionKey[] = [
     "last_shot",
     "second",
