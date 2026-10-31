@@ -445,8 +445,7 @@ const numericCandidates = eligibleCards.filter(
     getCardType(play) === "joker",
 );
 
-// Baleine blanche : la valeur seule détermine le gagnant.
-// Aucune priorité de couleur, même pour le noir.
+// Baleine blanche : la valeur seule compte.
 if (effect === "white_whale") {
   for (const candidate of numericCandidates) {
     if (!winningCard) {
@@ -454,13 +453,13 @@ if (effect === "white_whale") {
       continue;
     }
 
-    const candidateValue = getCardValue(candidate);
-    const winnerValue = getCardValue(winningCard);
+    const valueA = getCardValue(candidate);
+    const valueB = getCardValue(winningCard);
 
     if (
-      candidateValue > winnerValue ||
+      valueA > valueB ||
       (
-        candidateValue === winnerValue &&
+        valueA === valueB &&
         candidate.order < winningCard.order
       )
     ) {
@@ -477,13 +476,13 @@ else if (effect === "spotted_stingray") {
       continue;
     }
 
-    const candidateValue = getCardValue(candidate);
-    const winnerValue = getCardValue(winningCard);
+    const valueA = getCardValue(candidate);
+    const valueB = getCardValue(winningCard);
 
     if (
-      candidateValue < winnerValue ||
+      valueA < valueB ||
       (
-        candidateValue === winnerValue &&
+        valueA === valueB &&
         candidate.order < winningCard.order
       )
     ) {
@@ -492,7 +491,7 @@ else if (effect === "spotted_stingray") {
   }
 }
 
-// Règle normale.
+// Résolution habituelle.
 else if (effect !== "kraken") {
   winningCard = findHighestCard(
     eligibleCards,
@@ -500,10 +499,10 @@ else if (effect !== "kraken") {
   );
 }
 
-let nextLeaderPlayerId = winningCard?.playerId ?? null;
+let nextLeaderPlayerId =
+  winningCard?.playerId ?? null;
 
 // Kraken : personne ne remporte le pli.
-// On détermine qui aurait gagné sans le Kraken.
 if (effect === "kraken") {
   const playsWithoutKraken = remainingPlays.filter(
     (play) => getCardType(play) !== "kraken",
@@ -520,8 +519,8 @@ if (effect === "kraken") {
   winningCard = null;
 }
 
-// Baleine blanche : si aucune carte numérique
-// n'est jouée, son joueur commence le pli suivant.
+// Baleine blanche : aucune carte numérique.
+// Le joueur ayant posé la Baleine commence le pli suivant.
 if (
   effect === "white_whale" &&
   winningCard === null
