@@ -180,10 +180,15 @@ export default function GameScreen({
       .in("id", playerIds);
 
     if (profilesError) {
-      setError("Impossible de charger les profils.");
-      setLoading(false);
-      return;
-    }
+  console.error("ERREUR CHARGEMENT PROFILS :", profilesError);
+
+  setError(
+    `Impossible de charger les profils : ${profilesError.message}`
+  );
+
+  setLoading(false);
+  return;
+}
 
     const profileMap = new Map(
       (profiles || []).map((profile) => [
