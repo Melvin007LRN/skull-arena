@@ -1,19 +1,31 @@
+
 import {
   BASE_DECK,
   buildDeck,
   validateDeck,
 } from "./cards";
 
-import { validateCardPlay } from "./validation";
+import {
+  validateCardPlay,
+  getPlayableCards,
+} from "./validation";
 
 import {
   calculateBidPoints,
   calculateRoundScores,
 } from "./scoring";
 
-import { resolveTrick } from "./rules";
+import {
+  resolveTrick,
+} from "./rules";
 
-import type { PlayedCard } from "./rules";
+import type {
+  PlayedCard,
+} from "./rules";
+
+import type {
+  GameCard,
+} from "./cards";
 
 export interface GameTestResult {
   name: string;
@@ -28,6 +40,34 @@ function assert(
   if (!condition) {
     throw new Error(message);
   }
+}
+
+function makeCard(
+  id: string,
+  type: GameCard["type"],
+  options: Partial<GameCard> = {},
+): GameCard {
+  return {
+    id,
+    name: id,
+    type,
+    isExpansionCard: false,
+    ...options,
+  };
+}
+
+function makePlay(
+  playerId: string,
+  card: GameCard,
+  order: number,
+  options: Partial<PlayedCard> = {},
+): PlayedCard {
+  return {
+    playerId,
+    card,
+    order,
+    ...options,
+  };
 }
 
 /**
@@ -175,11 +215,7 @@ export function runGameTests(): GameTestResult[] {
       playerId: "player-1",
       hand: [greenCard, yellowCard],
       playedCards: [
-        {
-          playerId: "player-2",
-          card: greenLead,
-          order: 0,
-        },
+        makePlay("player-2", greenLead, 0),
       ],
       card: yellowCard,
     });
@@ -209,19 +245,12 @@ export function runGameTests(): GameTestResult[] {
       playerId: "player-1",
       hand: [greenCard],
       playedCards: [
-        {
-          playerId: "player-2",
-          card: greenLead,
-          order: 0,
-        },
+        makePlay("player-2", greenLead, 0),
       ],
       card: greenCard,
     });
 
-    assert(
-      result.valid,
-      result.message,
-    );
+    assert(result.valid, result.message);
   });
 
   // TEST 11 : bonus des cartes 14
@@ -303,11 +332,7 @@ export function runGameTests(): GameTestResult[] {
       playerId: "player-1",
       hand: [card],
       playedCards: [
-        {
-          playerId: "player-1",
-          card,
-          order: 0,
-        },
+        makePlay("player-1", card, 0),
       ],
       card,
     });
@@ -333,24 +358,388 @@ export function runGameTests(): GameTestResult[] {
       "Cartes de test introuvables.",
     );
 
-    const plays: PlayedCard[] = [
-      {
-        playerId: "player-1",
-        card: greenCard,
-        order: 0,
-      },
-      {
-        playerId: "player-2",
-        card: blackCard,
-        order: 1,
-      },
-    ];
-
-    const result = resolveTrick(plays);
+    const result = resolveTrick([
+      makePlay("player-1", greenCard, 0),
+      makePlay("player-2", blackCard, 1),
+    ]);
 
     assert(
       result.winnerPlayerId === "player-2",
       "La carte noire n'a pas remporté le pli.",
+    );
+  });
+
+  // TEST 15 : Joker valeur 15
+  test("Le Joker peut être joué avec la valeur 15", () => {
+    const joker = makeCard("test-joker", "joker", {
+      value: 15,
+      selectableValue: [15],
+      extension: "expansion_2025",
+    });
+
+    const greenLead = makeCard("test-green-14", "number", {
+      suit: "green",
+      value: 14,
+    });
+
+    const result = validateCardPlay({
+      playerId: "player-1",
+      hand: [joker],
+      playedCards: [
+        makePlay("player-2", greenLead, 0),
+      ],
+      card: joker,
+      chosenValue: 15,
+      chosenSuit: "green",
+      extensions: {
+        expansion_2025: true,
+      },
+    });
+
+    assert(result.valid, result.message);
+  });
+
+  // TEST 16 : couleur du Joker
+  test("Le Joker ne peut pas prendre la couleur noire", () => {
+    const joker = makeCard("test-joker-black", "joker", {
+      value: 15,
+      selectableValue: [15],
+      extension: "expansion_2025",
+    });
+
+    const result = validateCardPlay({
+      playerId: "player-1",
+      hand: [joker],
+      playedCards: [],
+      card: joker,
+      chosenValue: 15,
+      chosenSuit: "black",
+      extensions: {
+        expansion_2025: true,
+      },
+    });
+
+    assert(
+      !result.valid,
+      "Le Joker a été autorisé en couleur noire.",
+    );
+  });
+
+  // TEST 17 : Joker disponible dans la main
+  test("Le Joker reste proposé lorsqu'il peut être joué", () => {
+    const joker = makeCard("test-joker", "joker", {
+      value: 15,
+      selectableValue: [15],
+      extension: "expansion_2025",
+    });
+
+    const greenLead = makeCard("test-green-8", "number", {
+      suit: "green",
+      value: 8,
+    });
+
+    const playable = getPlayableCards({
+      playerId: "player-1",
+      hand: [joker],
+      playedCards: [
+        makePlay("player-2", greenLead, 0),
+      ],
+      extensions: {
+        expansion_2025: true,
+      },
+    });
+
+    assert(
+      playable.some((card) => card.id === joker.id),
+      "Le Joker jouable n'apparaît pas dans les cartes proposées.",
+    );
+  });
+
+  // TEST 18 : Tigresse en mode Fuite
+  test("La Tigresse peut être jouée en mode Fuite", () => {
+    const tigress = makeCard("test-tigress", "tigress");
+
+    const result = validateCardPlay({
+      playerId: "player-1",
+      hand: [tigress],
+      playedCards: [],
+      card: tigress,
+      tigressMode: "escape",
+    });
+
+    assert(result.valid, result.message);
+  });
+
+  // TEST 19 : Tigresse sans déclaration
+  test("La Tigresse exige un choix de mode", () => {
+    const tigress = makeCard("test-tigress", "tigress");
+
+    const result = validateCardPlay({
+      playerId: "player-1",
+      hand: [tigress],
+      playedCards: [],
+      card: tigress,
+    });
+
+    assert(
+      !result.valid,
+      "La Tigresse a été autorisée sans déclaration.",
+    );
+  });
+
+  // TEST 20 : Skull King contre Pirate
+  test("Le Skull King bat un Pirate", () => {
+    const skullKing = makeCard("test-skull", "skull_king");
+    const pirate = makeCard("test-pirate", "pirate");
+
+    const result = resolveTrick([
+      makePlay("player-1", pirate, 0),
+      makePlay("player-2", skullKing, 1),
+    ]);
+
+    assert(
+      result.winnerPlayerId === "player-2",
+      "Le Skull King n'a pas battu le Pirate.",
+    );
+  });
+
+  // TEST 21 : Pirate contre Sirène
+  test("Le Pirate bat la Sirène", () => {
+    const pirate = makeCard("test-pirate", "pirate");
+    const mermaid = makeCard("test-mermaid", "mermaid");
+
+    const result = resolveTrick([
+      makePlay("player-1", mermaid, 0),
+      makePlay("player-2", pirate, 1),
+    ]);
+
+    assert(
+      result.winnerPlayerId === "player-2",
+      "Le Pirate n'a pas battu la Sirène.",
+    );
+  });
+
+  // TEST 22 : Sirène contre Skull King
+  test("La Sirène bat le Skull King", () => {
+    const skullKing = makeCard("test-skull", "skull_king");
+    const mermaid = makeCard("test-mermaid", "mermaid");
+
+    const result = resolveTrick([
+      makePlay("player-1", skullKing, 0),
+      makePlay("player-2", mermaid, 1),
+    ]);
+
+    assert(
+      result.winnerPlayerId === "player-2",
+      "La Sirène n'a pas battu le Skull King.",
+    );
+  });
+
+  // TEST 23 : Second contre Pirate
+  test("Le Second bat un Pirate", () => {
+    const second = makeCard("test-second", "second");
+    const pirate = makeCard("test-pirate", "pirate");
+
+    const result = resolveTrick([
+      makePlay("player-1", pirate, 0),
+      makePlay("player-2", second, 1),
+    ]);
+
+    assert(
+      result.winnerPlayerId === "player-2",
+      "Le Second n'a pas battu le Pirate.",
+    );
+  });
+
+  // TEST 24 : Second contre Skull King
+  test("Le Second perd contre le Skull King", () => {
+    const second = makeCard("test-second", "second");
+    const skullKing = makeCard("test-skull", "skull_king");
+
+    const result = resolveTrick([
+      makePlay("player-1", second, 0),
+      makePlay("player-2", skullKing, 1),
+    ]);
+
+    assert(
+      result.winnerPlayerId === "player-2",
+      "Le Skull King n'a pas battu le Second.",
+    );
+  });
+
+  // TEST 25 : Kraken
+  test("Le Kraken empêche de remporter le pli", () => {
+    const kraken = makeCard("test-kraken", "kraken");
+    const greenCard = makeCard("test-green-10", "number", {
+      suit: "green",
+      value: 10,
+    });
+
+    const result = resolveTrick([
+      makePlay("player-1", greenCard, 0),
+      makePlay("player-2", kraken, 1),
+    ]);
+
+    assert(
+      result.effect === "kraken",
+      "L'effet Kraken n'a pas été détecté.",
+    );
+
+    assert(
+      result.winnerPlayerId === null,
+      "Un joueur a remporté le pli malgré le Kraken.",
+    );
+
+    assert(
+      result.nextLeaderPlayerId === "player-1",
+      "Le prochain leader hypothétique est incorrect.",
+    );
+  });
+
+  // TEST 26 : Baleine blanche
+  test("La Baleine blanche laisse gagner la plus forte valeur numérique", () => {
+    const whale = makeCard("test-whale", "white_whale");
+    const low = makeCard("test-green-4", "number", {
+      suit: "green",
+      value: 4,
+    });
+    const high = makeCard("test-black-14", "number", {
+      suit: "black",
+      value: 14,
+    });
+
+    const result = resolveTrick([
+      makePlay("player-1", low, 0),
+      makePlay("player-2", whale, 1),
+      makePlay("player-3", high, 2),
+    ]);
+
+    assert(
+      result.effect === "white_whale",
+      "L'effet Baleine blanche n'a pas été détecté.",
+    );
+
+    assert(
+      result.winnerPlayerId === "player-3",
+      "La plus forte valeur numérique n'a pas gagné.",
+    );
+  });
+
+  // TEST 27 : Raie tachetée
+  test("La Raie tachetée laisse gagner la plus faible valeur numérique", () => {
+    const stingray = makeCard(
+      "test-stingray",
+      "spotted_stingray",
+    );
+
+    const high = makeCard("test-green-12", "number", {
+      suit: "green",
+      value: 12,
+    });
+
+    const low = makeCard("test-yellow-2", "number", {
+      suit: "yellow",
+      value: 2,
+    });
+
+    const result = resolveTrick([
+      makePlay("player-1", high, 0),
+      makePlay("player-2", stingray, 1),
+      makePlay("player-3", low, 2),
+    ]);
+
+    assert(
+      result.effect === "spotted_stingray",
+      "L'effet Raie tachetée n'a pas été détecté.",
+    );
+
+    assert(
+      result.winnerPlayerId === "player-3",
+      "La plus faible valeur numérique n'a pas gagné.",
+    );
+  });
+
+  // TEST 28 : Supplice de la planche
+  test("Le Supplice de la planche retire le Pirate ciblé", () => {
+    const plank = makeCard(
+      "test-plank",
+      "walk_the_plank",
+    );
+
+    const pirate = makeCard("test-pirate", "pirate");
+
+    const number = makeCard("test-green-10", "number", {
+      suit: "green",
+      value: 10,
+    });
+
+    const result = resolveTrick(
+      [
+        makePlay("player-1", pirate, 0),
+        makePlay("player-2", plank, 1),
+        makePlay("player-3", number, 2),
+      ],
+      {
+        walkThePlankTargetPlayerId: "player-1",
+      },
+    );
+
+    assert(
+      result.removedPirates.length === 1,
+      "Le Pirate n'a pas été retiré.",
+    );
+
+    assert(
+      result.removedPirates[0].playerId === "player-1",
+      "Le mauvais Pirate a été retiré.",
+    );
+
+    assert(
+      result.winnerPlayerId === "player-3",
+      "Le Pirate retiré a remporté le pli.",
+    );
+  });
+
+  // TEST 29 : Casier de Davy Jones
+  test("Le Casier détruit les Léviathans et donne 20 points par carte", () => {
+    const locker = makeCard(
+      "test-locker",
+      "davys_locker",
+    );
+
+    const kraken = makeCard("test-kraken", "kraken");
+    const whale = makeCard("test-whale", "white_whale");
+
+    const number = makeCard("test-green-10", "number", {
+      suit: "green",
+      value: 10,
+    });
+
+    const result = resolveTrick([
+      makePlay("player-1", kraken, 0),
+      makePlay("player-2", locker, 1),
+      makePlay("player-3", whale, 2),
+      makePlay("player-4", number, 3),
+    ]);
+
+    assert(
+      result.effect === "davys_locker",
+      "L'effet Casier de Davy Jones n'a pas été détecté.",
+    );
+
+    assert(
+      result.destroyedLeviathans === 2,
+      "Le nombre de Léviathans détruits est incorrect.",
+    );
+
+    assert(
+      result.bonusPoints === 40,
+      "Le bonus de destruction est incorrect.",
+    );
+
+    assert(
+      result.winnerPlayerId === "player-4",
+      "La carte numérique restante n'a pas remporté le pli.",
     );
   });
 
