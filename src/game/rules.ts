@@ -9,6 +9,7 @@ export interface PlayedCard {
   order: number;
   tigressMode?: TigressMode;
   chosenValue?: 0 | 14;
+  chosenSuit?: Suit;
 }
 
 export interface TrickResult {
@@ -25,6 +26,7 @@ export interface TrickResult {
   bonusPoints: number;
   removedPirates: PlayedCard[];
   eligibleCards: PlayedCard[];
+  maryThroneWinnerPlayerId: string | null;
   message: string;
 }
 
@@ -43,6 +45,13 @@ const NON_WINNING_TYPES = new Set([
   "kraken",
   "white_whale",
   "spotted_stingray",
+]);
+
+const SPECIAL_TYPES = new Set([
+  "mermaid",
+  "pirate",
+  "skull_king",
+  "second",
 ]);
 
 function getCardType(played: PlayedCard): string {
@@ -68,16 +77,16 @@ function getCardValue(played: PlayedCard): number {
     return played.chosenValue;
   }
 
-  if (played.card.selectableValue?.length) {
-    return played.card.value ?? 0;
-  }
-
   return played.card.value ?? 0;
 }
 
 function getCardSuit(
   played: PlayedCard,
 ): Suit | undefined {
+  if (getCardType(played) === "joker") {
+    return played.chosenSuit;
+  }
+
   return played.card.suit;
 }
 
@@ -101,6 +110,7 @@ export function getLeadSuit(
 
     if (type === "number" || type === "joker") {
       const suit = getCardSuit(play);
+
       if (suit) return suit;
     }
   }
@@ -115,6 +125,7 @@ function compareNumberCards(
 ): number {
   const suitA = getCardSuit(a);
   const suitB = getCardSuit(b);
+
   const valueA = getCardValue(a);
   const valueB = getCardValue(b);
 
@@ -139,9 +150,19 @@ function compareNumberCards(
   if (valueA > valueB) return 1;
   if (valueA < valueB) return -1;
 
+  // En cas d'égalité, la première carte jouée gagne.
   return b.order - a.order;
 }
 
+/**
+ * Hiérarchie circulaire :
+ * - Skull King bat Pirate.
+ * - Pirate bat Sirène.
+ * - Sirène bat Skull King.
+ *
+ * Deux cartes de même catégorie sont départagées
+ * par leur ordre de pose.
+ */
 function compareSpecialCards(
   a: PlayedCard,
   b: PlayedCard,
@@ -149,21 +170,32 @@ function compareSpecialCards(
   const typeA = getCardType(a);
   const typeB = getCardType(b);
 
-  const rank: Record<string, number> = {
-    mermaid: 1,
-    pirate: 2,
-    skull_king: 3,
-    second: 4,
-  };
-
-  const rankA = rank[typeA] ?? 0;
-  const rankB = rank[typeB] ?? 0;
-
-  if (rankA !== rankB) {
-    return rankA - rankB;
+  if (typeA === typeB) {
+    return b.order - a.order;
   }
 
-  return b.order - a.order;
+  if (
+    typeA === "skull_king" &&
+    typeB === "pirate"
+  ) {
+    return 1;
+  }
+
+  if (
+    typeA === "pirate" &&
+    typeB === "mermaid"
+  ) {
+    return 1;
+  }
+
+  if (
+    typeA === "mermaid" &&
+    typeB === "skull_king"
+  ) {
+    return 1;
+  }
+
+  return -1;
 }
 
 function compareCards(
@@ -174,31 +206,15 @@ function compareCards(
   const typeA = getCardType(a);
   const typeB = getCardType(b);
 
-  const specialTypes = new Set([
-    "mermaid",
-    "pirate",
-    "skull_king",
-    "second",
-  ]);
+  const aSpecial = SPECIAL_TYPES.has(typeA);
+  const bSpecial = SPECIAL_TYPES.has(typeB);
 
-  const aSpecial = specialTypes.has(typeA);
-  const bSpecial = specialTypes.has(typeB);
-
+  // Second bat toutes les cartes sauf Skull King
+  // et Sirène.
   if (typeA === "second") {
     if (
-      typeB !== "skull_king" &&
-      typeB !== "mermaid"
-    ) {
-      return 1;
-    }
-
-    return -1;
-  }
-
-  if (typeB === "second") {
-    if (
-      typeA !== "skull_king" &&
-      typeA !== "mermaid"
+      typeB === "skull_king" ||
+      typeB === "mermaid"
     ) {
       return -1;
     }
@@ -206,10 +222,23 @@ function compareCards(
     return 1;
   }
 
+  if (typeB === "second") {
+    if (
+      typeA === "skull_king" ||
+      typeA === "mermaid"
+    ) {
+      return 1;
+    }
+
+    return -1;
+  }
+
   if (aSpecial && bSpecial) {
     return compareSpecialCards(a, b);
   }
 
+  // Les cartes spéciales gagnent contre les cartes
+  // numériques et les autres cartes gagnantes.
   if (aSpecial) return 1;
   if (bSpecial) return -1;
 
@@ -263,7 +292,9 @@ export function resolveTrick(
     (a, b) => a.order - b.order,
   );
 
-  const playerIds = plays.map((play) => play.playerId);
+  const playerIds = plays.map(
+    (play) => play.playerId,
+  );
 
   if (new Set(playerIds).size !== playerIds.length) {
     throw new Error(
@@ -300,8 +331,18 @@ export function resolveTrick(
         `Valeur invalide pour ${play.card.name}.`,
       );
     }
+
+    if (
+      getCardType(play) === "joker" &&
+      play.chosenSuit === "black"
+    ) {
+      throw new Error(
+        "Le Joker ne peut pas prendre la couleur noire.",
+      );
+    }
   }
 
+  // SUPPLICE DE LA PLANCHE
   const plankCards = plays.filter(
     (play) => getCardType(play) === "walk_the_plank",
   );
@@ -340,6 +381,7 @@ export function resolveTrick(
     (play) => !removedPirates.includes(play),
   );
 
+  // CASIER DE DAVY JONES
   const davyLockerPlayed = activePlays.some(
     (play) => getCardType(play) === "davys_locker",
   );
@@ -394,9 +436,8 @@ export function resolveTrick(
       getCardType(play) === "joker",
   );
 
-  // BALEINE BLANCHE :
-  // La carte numérique de plus forte valeur gagne.
-  // La couleur et l'atout noir ne donnent aucun avantage.
+  // BALEINE BLANCHE : la plus forte valeur numérique
+  // gagne, sans avantage de couleur ni d'atout.
   if (effect === "white_whale") {
     for (const candidate of numericCandidates) {
       if (!winningCard) {
@@ -419,8 +460,8 @@ export function resolveTrick(
     }
   }
 
-  // RAIE TACHETÉE :
-  // La carte numérique de plus faible valeur gagne.
+  // RAIE TACHETÉE : la plus faible valeur numérique
+  // gagne, indépendamment de la couleur.
   else if (effect === "spotted_stingray") {
     for (const candidate of numericCandidates) {
       if (!winningCard) {
@@ -454,9 +495,8 @@ export function resolveTrick(
   let nextLeaderPlayerId =
     winningCard?.playerId ?? null;
 
-  // KRAKEN :
-  // Personne ne remporte le pli.
-  // Le prochain leader est celui qui aurait gagné
+  // KRAKEN : personne ne remporte le pli.
+  // Le prochain leader est le gagnant hypothétique
   // si le Kraken n'avait pas été joué.
   if (effect === "kraken") {
     const playsWithoutKraken = remainingPlays.filter(
@@ -474,9 +514,8 @@ export function resolveTrick(
     winningCard = null;
   }
 
-  // BALEINE BLANCHE :
-  // Si aucune carte numérique ou Joker n'a été joué,
-  // le joueur ayant posé la Baleine commence le pli suivant.
+  // BALEINE BLANCHE : si aucune carte numérique
+  // ou Joker n'est présente, son joueur mène ensuite.
   if (
     effect === "white_whale" &&
     winningCard === null
@@ -488,6 +527,11 @@ export function resolveTrick(
     nextLeaderPlayerId =
       whiteWhale?.playerId ?? null;
   }
+
+  const maryThroneWinnerPlayerId =
+    winningCard?.card.id === "mary-throne"
+      ? winningCard.playerId
+      : null;
 
   const bonusPoints = destroyedLeviathans * 20;
 
@@ -518,6 +562,7 @@ export function resolveTrick(
     bonusPoints,
     removedPirates,
     eligibleCards,
+    maryThroneWinnerPlayerId,
     message: messages[effect],
   };
 }
@@ -537,6 +582,7 @@ export function getExpansionNumberBonus(
 export function getCaptureBonus(
   winningCard: PlayedCard | null,
   plays: PlayedCard[],
+  removedPirates: PlayedCard[] = [],
 ): number {
   if (!winningCard) return 0;
 
@@ -545,7 +591,12 @@ export function getCaptureBonus(
   let bonus = 0;
 
   for (const play of plays) {
-    if (play.playerId === winningCard.playerId) continue;
+    if (
+      play.playerId === winningCard.playerId ||
+      removedPirates.includes(play)
+    ) {
+      continue;
+    }
 
     const capturedType = getCardType(play);
 
@@ -571,14 +622,8 @@ export function getCaptureBonus(
     }
 
     if (
-      winnerType === "skull_king" &&
-      capturedType === "second"
-    ) {
-      bonus += 30;
-    }
-
-    if (
-      winnerType === "mermaid" &&
+      (winnerType === "skull_king" ||
+        winnerType === "mermaid") &&
       capturedType === "second"
     ) {
       bonus += 30;
