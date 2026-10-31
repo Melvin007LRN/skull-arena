@@ -245,9 +245,15 @@ export default function GameScreen({
             p_round_id: currentRound.id,
           });
 
-        if (!revealedError && revealedData) {
-          setRevealedBids(revealedData as RevealedBid[]);
-        }
+        if (revealedError) {
+  console.error("ERREUR RÉVÉLATION DES ENCHÈRES :", revealedError);
+  setBidMessage(
+    `Erreur de révélation : ${revealedError.message}`
+  );
+} else if (revealedData) {
+  setRevealedBids(revealedData as RevealedBid[]);
+  setBidMessage("");
+}
       } else {
         setRevealedBids([]);
       }
