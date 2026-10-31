@@ -584,6 +584,12 @@ export default function GameScreen({
           </>
         )}
 
+{bidMessage && (
+  <p className="bid-message">
+    {bidMessage}
+  </p>
+)}
+        
         {(round.status === "playing" ||
           round.status === "completed") && (
           <div className="bid-reveal">
