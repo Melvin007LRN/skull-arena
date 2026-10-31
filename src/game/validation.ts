@@ -1,7 +1,8 @@
+
 import type {
   GameCard,
-  GameExtensions,
   Suit,
+  ExtensionKey,
 } from "./cards";
 
 import type {
@@ -15,8 +16,9 @@ export interface CardPlayRequest {
   playedCards: PlayedCard[];
   card: GameCard;
   tigressMode?: TigressMode;
-  chosenValue?: number;
-  extensions?: Partial<GameExtensions>;
+  chosenValue?: 0 | 14;
+  chosenSuit?: Suit;
+  extensions?: Partial<Record<ExtensionKey, boolean>>;
 }
 
 export interface CardValidationResult {
@@ -25,63 +27,38 @@ export interface CardValidationResult {
   leadSuit: Suit | null;
 }
 
-/**
- * Identifie le type réel de la carte.
- * La Tigresse peut être déclarée Pirate ou Fuite.
- */
+const VALID_JOKER_SUITS: Suit[] = [
+  "green",
+  "purple",
+  "yellow",
+];
+
 function getEffectiveType(
   card: GameCard,
   tigressMode?: TigressMode,
 ): string {
   if (card.type === "tigress") {
-    if (!tigressMode) return "tigress";
-    return tigressMode === "pirate" ? "pirate" : "escape";
+    if (tigressMode === "pirate") return "pirate";
+    if (tigressMode === "escape") return "escape";
   }
 
   return card.type;
 }
 
 /**
- * Détermine la couleur à suivre dans le pli.
+ * Détermine la couleur demandée par le pli.
  *
- * - Une carte numérotée jouée en premier impose sa couleur.
- * - Un personnage joué en premier n'impose aucune couleur.
- * - Une Fuite ou un Butin en premier reporte le choix
- *   au prochain joueur qui joue une carte numérotée.
- * - Plusieurs Fuites ou Butins peuvent reporter ce choix.
+ * Les cartes Fuite et Butin ne déterminent pas
+ * la couleur demandée.
  */
 export function determineLeadSuit(
   playedCards: PlayedCard[],
 ): Suit | null {
-  if (playedCards.length === 0) return null;
-
   const ordered = [...playedCards].sort(
     (a, b) => a.order - b.order,
   );
 
-  const first = ordered[0];
-  const firstType = getEffectiveType(
-    first.card,
-    first.tigressMode,
-  );
-
-  if (
-    firstType === "number" ||
-    firstType === "joker"
-  ) {
-    return first.card.suit ?? null;
-  }
-
-  if (
-    firstType !== "escape" &&
-    firstType !== "loot"
-  ) {
-    return null;
-  }
-
-  // Le premier joueur a joué une Fuite ou un Butin.
-  // On cherche la première carte numérotée jouée ensuite.
-  for (const play of ordered.slice(1)) {
+  for (const play of ordered) {
     const type = getEffectiveType(
       play.card,
       play.tigressMode,
@@ -91,80 +68,119 @@ export function determineLeadSuit(
       continue;
     }
 
-    if (type === "number" || type === "joker") {
+    if (type === "number") {
       return play.card.suit ?? null;
     }
 
-    // Un personnage ne définit pas de couleur.
+    if (type === "joker") {
+      return play.chosenSuit ?? null;
+    }
+
+    // Une carte spéciale jouée en premier
+    // ne fixe pas de couleur.
     return null;
   }
 
   return null;
 }
 
-/**
- * Vérifie que le joueur possède bien la carte
- * qu'il souhaite jouer.
- */
-function cardBelongsToPlayer(
-  card: GameCard,
-  hand: GameCard[],
-): boolean {
-  return hand.some((item) => item.id === card.id);
-}
-
-/**
- * Vérifie que la carte est autorisée
- * par les extensions activées dans le salon.
- */
-function isExtensionEnabled(
-  card: GameCard,
-  extensions: Partial<GameExtensions>,
-): boolean {
-  if (!card.extension) return true;
-
-  // Une extension absente de la configuration
-  // est considérée comme désactivée.
-  return extensions[card.extension] === true;
-}
-
-/**
- * Vérifie si le joueur possède au moins une carte
- * numérotée de la couleur demandée.
- */
 function playerHasLeadSuit(
   hand: GameCard[],
   leadSuit: Suit,
 ): boolean {
   return hand.some((card) => {
-    return (
+    if (
       card.type === "number" &&
       card.suit === leadSuit
+    ) {
+      return true;
+    }
+
+    // Le Joker peut prendre la couleur demandée,
+    // sauf lorsque la couleur demandée est noire.
+    return (
+      card.type === "joker" &&
+      leadSuit !== "black"
     );
   });
 }
 
-/**
- * Vérifie si la valeur choisie pour une carte
- * à valeur variable est autorisée.
- */
 function isChosenValueValid(
   card: GameCard,
-  chosenValue?: number,
+  chosenValue?: 0 | 14,
 ): boolean {
   if (!card.selectableValue?.length) {
     return chosenValue === undefined;
   }
 
-  if (chosenValue === undefined) return false;
+  if (chosenValue === undefined) {
+    return false;
+  }
 
   return card.selectableValue.includes(chosenValue);
 }
 
-/**
- * Vérifie toutes les conditions nécessaires
- * avant d'accepter une carte dans un pli.
- */
+function isExtensionEnabled(
+  card: GameCard,
+  extensions?: Partial<Record<ExtensionKey, boolean>>,
+): boolean {
+  if (!card.extension) return true;
+
+  return extensions?.[card.extension] === true;
+}
+
+function validateJokerSuit(
+  request: CardPlayRequest,
+  leadSuit: Suit | null,
+): CardValidationResult | null {
+  const { chosenSuit } = request;
+
+  if (chosenSuit === "black") {
+    return {
+      valid: false,
+      message: "Le Joker ne peut pas prendre la couleur noire.",
+      leadSuit,
+    };
+  }
+
+  if (
+    chosenSuit !== undefined &&
+    !VALID_JOKER_SUITS.includes(chosenSuit)
+  ) {
+    return {
+      valid: false,
+      message: "La couleur choisie pour le Joker est invalide.",
+      leadSuit,
+    };
+  }
+
+  // Si aucune couleur n'est établie, le joueur
+  // doit choisir une couleur pour son Joker.
+  if (leadSuit === null && chosenSuit === undefined) {
+    return {
+      valid: false,
+      message: "Choisis une couleur pour ton Joker.",
+      leadSuit,
+    };
+  }
+
+  // Si une couleur autre que noire est établie,
+  // le Joker doit prendre cette couleur.
+  if (
+    leadSuit !== null &&
+    leadSuit !== "black" &&
+    chosenSuit !== leadSuit
+  ) {
+    return {
+      valid: false,
+      message: `Le Joker doit suivre la couleur ${leadSuit}.`,
+      leadSuit,
+    };
+  }
+
+  return null;
+}
+
 export function validateCardPlay(
   request: CardPlayRequest,
 ): CardValidationResult {
@@ -175,96 +191,172 @@ export function validateCardPlay(
     card,
     tigressMode,
     chosenValue,
+    chosenSuit,
     extensions = {},
   } = request;
 
   const leadSuit = determineLeadSuit(playedCards);
 
-  const reject = (message: string): CardValidationResult => ({
-    valid: false,
-    message,
-    leadSuit,
-  });
-
-  // 1. Le joueur doit avoir la carte.
-  if (!cardBelongsToPlayer(card, hand)) {
-    return reject(
-      "Cette carte ne se trouve pas dans votre main.",
-    );
+  if (!playerId) {
+    return {
+      valid: false,
+      message: "Joueur invalide.",
+      leadSuit,
+    };
   }
 
-  // 2. Un joueur ne peut jouer qu'une carte par pli.
+  const cardInHand = hand.some(
+    (handCard) => handCard.id === card.id,
+  );
+
+  if (!cardInHand) {
+    return {
+      valid: false,
+      message: "Cette carte n'est pas dans ta main.",
+      leadSuit,
+    };
+  }
+
   if (
     playedCards.some(
       (play) => play.playerId === playerId,
     )
   ) {
-    return reject(
-      "Vous avez déjà joué une carte dans ce pli.",
-    );
+    return {
+      valid: false,
+      message: "Tu as déjà joué une carte dans ce pli.",
+      leadSuit,
+    };
   }
 
-  // 3. Vérification des extensions.
   if (!isExtensionEnabled(card, extensions)) {
-    return reject(
-      "Cette carte appartient à une extension désactivée.",
-    );
+    return {
+      valid: false,
+      message: "Cette carte appartient à une extension désactivée.",
+      leadSuit,
+    };
   }
 
-  // 4. Vérification de la Tigresse.
   if (
     card.type === "tigress" &&
     !tigressMode
   ) {
-    return reject(
-      "Vous devez choisir si la Tigresse est jouée comme Pirate ou comme Fuite.",
-    );
+    return {
+      valid: false,
+      message: "Choisis si la Tigresse devient Pirate ou Fuite.",
+      leadSuit,
+    };
   }
 
-  // 5. Vérification de la valeur variable.
+  if (
+    card.type !== "tigress" &&
+    tigressMode !== undefined
+  ) {
+    return {
+      valid: false,
+      message: "Le mode Tigresse ne peut être utilisé que sur la Tigresse.",
+      leadSuit,
+    };
+  }
+
   if (!isChosenValueValid(card, chosenValue)) {
-    return reject(
-      "Vous devez choisir une valeur autorisée pour cette carte.",
-    );
+    return {
+      valid: false,
+      message: card.selectableValue?.length
+        ? `Choisis une valeur pour ${card.name}.`
+        : "Cette carte ne possède pas de valeur sélectionnable.",
+      leadSuit,
+    };
   }
 
-  // 6. Les cartes spéciales peuvent être jouées
-  // même si le joueur possède la couleur demandée.
+  if (
+    card.type === "joker" &&
+    chosenSuit !== undefined &&
+    !VALID_JOKER_SUITS.includes(chosenSuit)
+  ) {
+    return {
+      valid: false,
+      message: "La couleur choisie pour le Joker est invalide.",
+      leadSuit,
+    };
+  }
+
   const effectiveType = getEffectiveType(
     card,
     tigressMode,
   );
 
-  const isNumberCard =
-    effectiveType === "number" ||
-    effectiveType === "joker";
+  // Le Joker doit être joué avec une couleur valide.
+  if (effectiveType === "joker") {
+    const jokerError = validateJokerSuit(
+      request,
+      leadSuit,
+    );
 
-  if (!isNumberCard) {
+    if (jokerError) return jokerError;
+  }
+
+  // Les cartes spéciales peuvent être jouées
+  // même si le joueur possède la couleur demandée.
+  if (
+    effectiveType !== "number" &&
+    effectiveType !== "joker"
+  ) {
     return {
       valid: true,
-      message: "Carte spéciale autorisée.",
+      message: "Carte autorisée.",
       leadSuit,
     };
   }
 
-  // 7. Si aucune couleur n'est demandée,
-  // toute carte numérotée est autorisée.
-  if (!leadSuit) {
+  // Aucune couleur n'a encore été établie.
+  if (leadSuit === null) {
     return {
       valid: true,
-      message: "Aucune couleur obligatoire.",
-      leadSuit: null,
+      message: "Carte autorisée.",
+      leadSuit,
     };
   }
 
-  // 8. Une carte numérotée doit suivre la couleur
-  // si le joueur possède cette couleur.
-  if (playerHasLeadSuit(hand, leadSuit)) {
-    if (card.suit !== leadSuit) {
-      return reject(
-        `Vous devez jouer une carte ${leadSuit}. Vous en possédez au moins une.`,
-      );
-    }
+  // Le Joker suit obligatoirement la couleur établie,
+  // sauf lorsque la couleur demandée est noire.
+  if (
+    effectiveType === "joker" &&
+    leadSuit !== "black"
+  ) {
+    return {
+      valid: true,
+      message: "Le Joker suit la couleur demandée.",
+      leadSuit,
+    };
+  }
+
+  const hasLeadSuit = playerHasLeadSuit(
+    hand,
+    leadSuit,
+  );
+
+  if (!hasLeadSuit) {
+    return {
+      valid: true,
+      message: "Tu ne possèdes pas la couleur demandée.",
+      leadSuit,
+    };
+  }
+
+  const followsSuit =
+    effectiveType === "number"
+      ? card.suit === leadSuit
+      : effectiveType === "joker" &&
+        leadSuit !== "black" &&
+        chosenSuit === leadSuit;
+
+  if (!followsSuit) {
+    return {
+      valid: false,
+      message: `Tu dois suivre la couleur ${leadSuit}.`,
+      leadSuit,
+    };
   }
 
   return {
@@ -275,46 +367,72 @@ export function validateCardPlay(
 }
 
 /**
- * Vérifie si un joueur peut encore jouer dans le pli.
- */
-export function canPlayerPlay(
-  playerId: string,
-  playedCards: PlayedCard[],
-): boolean {
-  return !playedCards.some(
-    (play) => play.playerId === playerId,
-  );
-}
-
-/**
- * Retourne toutes les cartes jouables d'une main.
- *
- * Utile pour griser les cartes interdites dans l'interface.
+ * Retourne les cartes qui peuvent être proposées
+ * au joueur selon les règles du pli.
  */
 export function getPlayableCards(
   request: Omit<CardPlayRequest, "card">,
 ): GameCard[] {
   return request.hand.filter((card) => {
-    const result = validateCardPlay({
-      ...request,
+    const effectiveType = getEffectiveType(
       card,
-      chosenValue:
-        card.selectableValue?.length === 1
-          ? card.selectableValue[0]
-          : undefined,
-    });
+      card.type === "tigress" ? "escape" : undefined,
+    );
 
-    // Une carte à choix multiple, comme 0/14,
-    // reste sélectionnable : son choix sera demandé
-    // au moment de la jouer.
-    if (
-      card.selectableValue &&
-      card.selectableValue.length > 1 &&
-      result.message.includes("choisir une valeur")
-    ) {
+    // Une Tigresse peut être jouée dans les deux modes.
+    if (card.type === "tigress") {
+      const pirateResult = validateCardPlay({
+        ...request,
+        card,
+        tigressMode: "pirate",
+      });
+
+      const escapeResult = validateCardPlay({
+        ...request,
+        card,
+        tigressMode: "escape",
+      });
+
+      return pirateResult.valid || escapeResult.valid;
+    }
+
+    // Les cartes à valeur sélectionnable doivent
+    // pouvoir être proposées avant le choix de valeur.
+    const valueToUse =
+      card.selectableValue?.length === 1
+        ? card.selectableValue[0]
+        : undefined;
+
+    const chosenValue =
+      valueToUse === 0 || valueToUse === 14
+        ? valueToUse
+        : undefined;
+
+    // Le Joker nécessite un choix de couleur.
+    // On vérifie ici sa disponibilité sans imposer
+    // le choix final à l'interface.
+    if (effectiveType === "joker") {
+      const leadSuit = determineLeadSuit(
+        request.playedCards,
+      );
+
+      if (
+        leadSuit !== null &&
+        leadSuit !== "black"
+      ) {
+        return playerHasLeadSuit(
+          request.hand,
+          leadSuit,
+        );
+      }
+
       return true;
     }
 
-    return result.valid;
+    return validateCardPlay({
+      ...request,
+      card,
+      chosenValue,
+    }).valid;
   });
 }
