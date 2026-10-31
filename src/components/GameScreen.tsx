@@ -14,6 +14,8 @@ import {
   Eye,
   Minus,
   Plus,
+  X,
+  Play,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -25,6 +27,7 @@ type GameCard = {
   value?: number;
   selectableValue?: number[];
   isExpansionCard?: boolean;
+  piratePower?: string;
 };
 
 type GamePlayer = {
@@ -53,6 +56,23 @@ type RevealedBid = {
   bid: number;
 };
 
+type PlayedCard = {
+  id: string;
+  player_id: string;
+  card: GameCard;
+  play_order: number;
+  tigress_mode: string | null;
+  chosen_value: number | null;
+  chosen_suit: string | null;
+};
+
+type CurrentTrick = {
+  id: string;
+  trick_number: number;
+  status: string;
+  leader_player_id: string;
+};
+
 type GameScreenProps = {
   roomId: string;
   onExit: () => void;
@@ -71,6 +91,48 @@ const suitNames: Record<string, string> = {
   yellow: "JAUNE",
   black: "NOIR",
 };
+
+const cardTypeNames: Record<string, string> = {
+  number: "CARTE NUMÉRIQUE",
+  escape: "FUITE",
+  pirate: "PIRATE",
+  tigress: "TIGRESSE",
+  mermaid: "SIRÈNE",
+  skull_king: "SKULL KING",
+  loot: "TRÉSOR",
+  kraken: "KRAKEN",
+  white_whale: "BALEINE BLANCHE",
+  joker: "JOKER",
+  last_volley: "DERNIÈRE VOLÉE",
+  second: "SECOND",
+  spotted_stingray: "RAIE TACHETÉE",
+  davys_locker: "CASIER DE DAVY JONES",
+  walk_the_plank: "SUPPLICE DE LA PLANCHE",
+};
+
+function cardSymbol(type: string) {
+  switch (type) {
+    case "escape":
+      return "⚓";
+    case "pirate":
+    case "tigress":
+      return "☠";
+    case "mermaid":
+      return "🧜";
+    case "skull_king":
+      return "👑";
+    case "kraken":
+      return "🐙";
+    case "white_whale":
+      return "🐋";
+    case "loot":
+      return "💰";
+    case "second":
+      return "⚔";
+    default:
+      return "★";
+  }
+}
 
 export default function GameScreen({
   roomId,
@@ -91,13 +153,18 @@ export default function GameScreen({
   const [submittingBid, setSubmittingBid] = useState(false);
   const [bidMessage, setBidMessage] = useState("");
 
-const [currentTrickId, setCurrentTrickId] = useState<string | null>(null);
-const [playedCards, setPlayedCards] = useState<any[]>([]);
-const [selectedCard, setSelectedCard] = useState<GameCard | null>(null);
-const [tigressMode, setTigressMode] = useState<"pirate" | "escape">("pirate");
-const [playingCard, setPlayingCard] = useState(false);
-const [playMessage, setPlayMessage] = useState("");
-  
+  const [currentTrick, setCurrentTrick] =
+    useState<CurrentTrick | null>(null);
+  const [playedCards, setPlayedCards] = useState<PlayedCard[]>([]);
+  const [selectedCard, setSelectedCard] =
+    useState<GameCard | null>(null);
+  const [tigressMode, setTigressMode] =
+    useState<"pirate" | "escape">("pirate");
+  const [playingCard, setPlayingCard] = useState(false);
+  const [playMessage, setPlayMessage] = useState("");
+  const [showPlayConfirmation, setShowPlayConfirmation] =
+    useState(false);
+
   const loadGame = useCallback(async () => {
     setError("");
 
@@ -115,7 +182,7 @@ const [playMessage, setPlayMessage] = useState("");
 
     const { data: room, error: roomError } = await supabase
       .from("game_rooms")
-      .select("room_name, status")
+      .select("room_name, status, host_id")
       .eq("id", roomId)
       .single();
 
@@ -163,7 +230,11 @@ const [playMessage, setPlayMessage] = useState("");
       return;
     }
 
-    setHand(Array.isArray(handData.cards) ? handData.cards : []);
+    const currentHand = Array.isArray(handData.cards)
+      ? (handData.cards as GameCard[])
+      : [];
+
+    setHand(currentHand);
 
     const { data: roomPlayers, error: playersError } = await supabase
       .from("room_players")
@@ -187,15 +258,13 @@ const [playMessage, setPlayMessage] = useState("");
       .in("id", playerIds);
 
     if (profilesError) {
-  console.error("ERREUR CHARGEMENT PROFILS :", profilesError);
-
-  setError(
-    `Impossible de charger les profils : ${profilesError.message}`
-  );
-
-  setLoading(false);
-  return;
-}
+      console.error("ERREUR CHARGEMENT PROFILS :", profilesError);
+      setError(
+        `Impossible de charger les profils : ${profilesError.message}`
+      );
+      setLoading(false);
+      return;
+    }
 
     const profileMap = new Map(
       (profiles || []).map((profile) => [
@@ -204,22 +273,16 @@ const [playMessage, setPlayMessage] = useState("");
       ])
     );
 
-    const { data: roomData } = await supabase
-      .from("game_rooms")
-      .select("host_id")
-      .eq("id", roomId)
-      .single();
-
     setPlayers(
       (roomPlayers || []).map((player) => ({
         player_id: player.player_id,
         username:
           profileMap.get(player.player_id) || "Pirate inconnu",
-        isHost: player.player_id === roomData?.host_id,
+        isHost: player.player_id === room.host_id,
       }))
     );
 
-    // Récupération de la progression des enchères.
+    // Progression des enchères.
     if (
       currentRound.status === "bidding" ||
       currentRound.status === "playing" ||
@@ -241,8 +304,6 @@ const [playMessage, setPlayMessage] = useState("");
         setHasSubmittedBid(ownBid?.has_bid ?? false);
       }
 
-      // Les valeurs ne sont récupérées qu'après
-      // validation de tous les joueurs.
       if (
         currentRound.status === "playing" ||
         currentRound.status === "completed"
@@ -252,18 +313,47 @@ const [playMessage, setPlayMessage] = useState("");
             p_round_id: currentRound.id,
           });
 
-        if (revealedError) {
-  console.error("ERREUR RÉVÉLATION DES ENCHÈRES :", revealedError);
-  setBidMessage(
-    `Erreur de révélation : ${revealedError.message}`
-  );
-} else if (revealedData) {
-  setRevealedBids(revealedData as RevealedBid[]);
-  setBidMessage("");
-}
+        if (!revealedError && revealedData) {
+          setRevealedBids(revealedData as RevealedBid[]);
+        } else if (revealedError) {
+          console.error("ERREUR RÉVÉLATION :", revealedError);
+        }
       } else {
         setRevealedBids([]);
       }
+    }
+
+    // Chargement du pli en cours.
+    const { data: trickData, error: trickError } = await supabase
+      .from("game_tricks")
+      .select("id, trick_number, status, leader_player_id")
+      .eq("round_id", currentRound.id)
+      .eq("status", "playing")
+      .order("trick_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (trickError) {
+      console.error("ERREUR CHARGEMENT DU PLI :", trickError);
+    } else if (trickData) {
+      setCurrentTrick(trickData as CurrentTrick);
+
+      const { data: playsData, error: playsError } = await supabase
+        .from("trick_plays")
+        .select(
+          "id, player_id, card, play_order, tigress_mode, chosen_value, chosen_suit"
+        )
+        .eq("trick_id", trickData.id)
+        .order("play_order", { ascending: true });
+
+      if (playsError) {
+        console.error("ERREUR CARTES JOUÉES :", playsError);
+      } else {
+        setPlayedCards((playsData || []) as PlayedCard[]);
+      }
+    } else {
+      setCurrentTrick(null);
+      setPlayedCards([]);
     }
 
     setLoading(false);
@@ -272,7 +362,6 @@ const [playMessage, setPlayMessage] = useState("");
   useEffect(() => {
     loadGame();
 
-    // Actualisation régulière de la progression.
     const refreshInterval = window.setInterval(() => {
       loadGame();
     }, 3000);
@@ -305,6 +394,24 @@ const [playMessage, setPlayMessage] = useState("");
           schema: "public",
           table: "room_players",
           filter: `room_id=eq.${roomId}`,
+        },
+        () => loadGame()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "game_tricks",
+        },
+        () => loadGame()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "trick_plays",
         },
         () => loadGame()
       )
@@ -343,6 +450,40 @@ const [playMessage, setPlayMessage] = useState("");
     await loadGame();
   };
 
+  const playSelectedCard = async () => {
+    if (!round || !selectedCard || playingCard) return;
+
+    setPlayingCard(true);
+    setPlayMessage("");
+
+    const { data, error: playError } = await supabase.rpc(
+      "play_card",
+      {
+        p_round_id: round.id,
+        p_card_id: selectedCard.id,
+        p_tigress_mode:
+          selectedCard.type === "tigress" ? tigressMode : null,
+        p_chosen_value: null,
+        p_chosen_suit: null,
+      }
+    );
+
+    setPlayingCard(false);
+
+    if (playError) {
+      setPlayMessage(playError.message);
+      return;
+    }
+
+    setPlayMessage("Carte jouée avec succès !");
+    setSelectedCard(null);
+    setShowPlayConfirmation(false);
+
+    console.log("RÉSULTAT POSE CARTE :", data);
+
+    await loadGame();
+  };
+
   const leader = players.find(
     (player) => player.player_id === round?.leader_player_id
   );
@@ -360,8 +501,26 @@ const [playMessage, setPlayMessage] = useState("");
     submittedCount === bidProgress.length;
 
   const bidsAreRevealed =
-    revealedBids.length > 0 &&
-    allPlayersSubmitted;
+    revealedBids.length > 0 && allPlayersSubmitted;
+
+  const currentTrickLeader = players.find(
+    (player) =>
+      player.player_id ===
+      (currentTrick?.leader_player_id || round?.leader_player_id)
+  );
+
+  const currentPlayerHasPlayed = playedCards.some(
+    (play) => play.player_id === userId
+  );
+
+  const playerCount = players.length;
+  const allCardsPlayed =
+    playerCount > 0 && playedCards.length >= playerCount;
+
+  const isMyTurn =
+    round?.status === "playing" &&
+    !currentPlayerHasPlayed &&
+    !allCardsPlayed;
 
   if (loading) {
     return (
@@ -581,9 +740,7 @@ const [playMessage, setPlayMessage] = useState("");
                       <Check size={15} /> VALIDÉ
                     </span>
                   ) : (
-                    <span className="bid-waiting">
-                      EN ATTENTE
-                    </span>
+                    <span className="bid-waiting">EN ATTENTE</span>
                   )}
                 </div>
               ))}
@@ -591,12 +748,6 @@ const [playMessage, setPlayMessage] = useState("");
           </>
         )}
 
-{bidMessage && (
-  <p className="bid-message">
-    {bidMessage}
-  </p>
-)}
-        
         {(round.status === "playing" ||
           round.status === "completed") && (
           <div className="bid-reveal">
@@ -622,14 +773,121 @@ const [playMessage, setPlayMessage] = useState("");
                 ))}
               </div>
             ) : (
-              <p>
-                Les annonces sont en cours de récupération...
-              </p>
+              <p>Les annonces sont en cours de récupération...</p>
             )}
           </div>
         )}
       </section>
 
+      {/* PLATEAU DU PLI */}
+      {round.status === "playing" && (
+        <section className="game-trick-panel">
+          <div className="game-section-heading">
+            <h2>
+              <Swords size={19} /> LE PLI EN COURS
+            </h2>
+            <span>
+              {playedCards.length}/{players.length} cartes
+            </span>
+          </div>
+
+          <div className="trick-status-card">
+            <div>
+              <span>PREMIER JOUEUR</span>
+              <strong>
+                {currentTrickLeader?.username ||
+                  leader?.username ||
+                  "En attente"}
+              </strong>
+            </div>
+            <div>
+              <span>PLI</span>
+              <strong>
+                {currentTrick?.trick_number || 1}
+              </strong>
+            </div>
+          </div>
+
+          <div className="trick-played-list">
+            {playedCards.length === 0 ? (
+              <div className="trick-empty">
+                <Anchor size={30} />
+                <strong>LE PLI N'A PAS ENCORE COMMENCÉ</strong>
+                <span>Le premier pirate peut jouer sa carte.</span>
+              </div>
+            ) : (
+              playedCards.map((play) => {
+                const player = players.find(
+                  (item) => item.player_id === play.player_id
+                );
+
+                return (
+                  <div
+                    className="trick-played-card"
+                    key={play.id}
+                  >
+                    <div className="trick-played-player">
+                      <span>{play.play_order}</span>
+                      <strong>
+                        {player?.username || "Pirate"}
+                      </strong>
+                      {play.player_id === userId && (
+                        <small>TOI</small>
+                      )}
+                    </div>
+
+                    <div
+                      className="trick-card-mini"
+                      style={{
+                        borderColor:
+                          suitColors[play.card?.suit || ""] ||
+                          "#c9a45c",
+                      }}
+                    >
+                      <span>
+                        {play.card?.value ??
+                          cardSymbol(play.card?.type || "")}
+                      </span>
+                      <strong>
+                        {play.card?.name || "Carte"}
+                      </strong>
+                      {play.tigress_mode && (
+                        <small>
+                          {play.tigress_mode === "pirate"
+                            ? "MODE PIRATE"
+                            : "MODE FUITE"}
+                        </small>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="trick-action-status">
+            {allCardsPlayed ? (
+              <strong>
+                <Check size={17} /> TOUTES LES CARTES SONT POSÉES
+              </strong>
+            ) : currentPlayerHasPlayed ? (
+              <strong>
+                <Lock size={17} /> CARTE POSÉE — EN ATTENTE DES AUTRES PIRATES
+              </strong>
+            ) : (
+              <strong>
+                <Play size={17} /> À TON TOUR DE JOUER
+              </strong>
+            )}
+          </div>
+
+          {playMessage && (
+            <p className="play-message">{playMessage}</p>
+          )}
+        </section>
+      )}
+
+      {/* ÉQUIPAGE */}
       <section className="game-crew">
         <div className="game-section-heading">
           <h2>
@@ -639,41 +897,60 @@ const [playMessage, setPlayMessage] = useState("");
         </div>
 
         <div className="game-player-list">
-          {players.map((player) => (
-            <div
-              className={
-                player.player_id === userId
-                  ? "game-player current"
-                  : "game-player"
-              }
-              key={player.player_id}
-            >
-              <div className="game-player-avatar">
-                {player.isHost ? (
-                  <Crown size={20} />
-                ) : (
-                  <Skull size={20} />
+          {players.map((player) => {
+            const hasPlayed = playedCards.some(
+              (play) => play.player_id === player.player_id
+            );
+
+            return (
+              <div
+                className={
+                  player.player_id === userId
+                    ? "game-player current"
+                    : "game-player"
+                }
+                key={player.player_id}
+              >
+                <div className="game-player-avatar">
+                  {player.isHost ? (
+                    <Crown size={20} />
+                  ) : (
+                    <Skull size={20} />
+                  )}
+                </div>
+
+                <div className="game-player-info">
+                  <strong>
+                    {player.username}
+                    {player.player_id === userId ? " (TOI)" : ""}
+                  </strong>
+                  <span>
+                    {player.isHost ? "CAPITAINE" : "PIRATE"}
+                  </span>
+                </div>
+
+                {player.player_id === round.leader_player_id && (
+                  <span className="leader-tag">
+                    PREMIER JOUEUR
+                  </span>
+                )}
+
+                {round.status === "playing" && (
+                  <span className="player-play-status">
+                    {hasPlayed ? (
+                      <Check size={16} />
+                    ) : (
+                      <Lock size={15} />
+                    )}
+                  </span>
                 )}
               </div>
-
-              <div className="game-player-info">
-                <strong>
-                  {player.username}
-                  {player.player_id === userId ? " (TOI)" : ""}
-                </strong>
-                <span>
-                  {player.isHost ? "CAPITAINE" : "PIRATE"}
-                </span>
-              </div>
-
-              {player.player_id === round.leader_player_id && (
-                <span className="leader-tag">PREMIER JOUEUR</span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
+      {/* MAIN DU JOUEUR */}
       <section className="game-hand-section">
         <div className="game-section-heading">
           <h2>
@@ -684,6 +961,8 @@ const [playMessage, setPlayMessage] = useState("");
 
         <p className="game-hand-hint">
           Tes cartes sont privées. Seul ton compte peut consulter cette main.
+          {round.status === "playing" &&
+            " Sélectionne une carte pour la jouer."}
         </p>
 
         {hand.length === 0 ? (
@@ -692,47 +971,188 @@ const [playMessage, setPlayMessage] = useState("");
           </div>
         ) : (
           <div className="game-hand">
-            {hand.map((card) => (
-              <article className="game-card" key={card.id}>
-                <div
-                  className="game-card-top"
+            {hand.map((card) => {
+              const isSelected = selectedCard?.id === card.id;
+
+              return (
+                <button
+                  type="button"
+                  className={`game-card ${
+                    isSelected ? "game-card-selected" : ""
+                  }`}
+                  key={card.id}
+                  onClick={() => {
+                    if (
+                      round.status !== "playing" ||
+                      currentPlayerHasPlayed ||
+                      playingCard
+                    ) {
+                      return;
+                    }
+
+                    setSelectedCard(
+                      isSelected ? null : card
+                    );
+                    setPlayMessage("");
+                    setShowPlayConfirmation(false);
+                  }}
+                  disabled={
+                    round.status !== "playing" ||
+                    currentPlayerHasPlayed ||
+                    playingCard ||
+                    hand.length === 0
+                  }
                   style={{
                     borderColor:
                       suitColors[card.suit || ""] || "#c9a45c",
+                    cursor:
+                      round.status === "playing" &&
+                      !currentPlayerHasPlayed
+                        ? "pointer"
+                        : "default",
                   }}
                 >
-                  <span>
-                    {card.suit
-                      ? suitNames[card.suit] || card.suit
-                      : "SPÉCIALE"}
-                  </span>
-                  <strong>
-                    {card.value ??
-                      (card.type === "escape"
-                        ? "F"
-                        : card.type === "pirate"
-                          ? "P"
-                          : card.type === "mermaid"
-                            ? "S"
-                            : "★")}
-                  </strong>
-                </div>
+                  <div
+                    className="game-card-top"
+                    style={{
+                      borderColor:
+                        suitColors[card.suit || ""] || "#c9a45c",
+                    }}
+                  >
+                    <span>
+                      {card.suit
+                        ? suitNames[card.suit] || card.suit
+                        : "SPÉCIALE"}
+                    </span>
+                    <strong>
+                      {card.value ??
+                        cardSymbol(card.type)}
+                    </strong>
+                  </div>
 
-                <div className="game-card-art">
-                  {card.type === "escape" ? (
-                    <Shield size={38} />
-                  ) : card.type === "pirate" ? (
-                    <Skull size={42} />
-                  ) : (
-                    <Anchor size={38} />
+                  <div className="game-card-art">
+                    <span className="game-card-symbol">
+                      {cardSymbol(card.type)}
+                    </span>
+                  </div>
+
+                  <div className="game-card-name">
+                    {card.name}
+                  </div>
+
+                  {isSelected && (
+                    <div className="game-card-selection">
+                      <Check size={17} />
+                    </div>
                   )}
-                </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-                <div className="game-card-name">
-                  {card.name}
+        {selectedCard && round.status === "playing" && (
+          <div className="selected-card-panel">
+            <div className="selected-card-heading">
+              <div>
+                <span>CARTE SÉLECTIONNÉE</span>
+                <strong>{selectedCard.name}</strong>
+                <small>
+                  {cardTypeNames[selectedCard.type] ||
+                    selectedCard.type.toUpperCase()}
+                </small>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCard(null);
+                  setShowPlayConfirmation(false);
+                }}
+                aria-label="Annuler la sélection"
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            {selectedCard.type === "tigress" && (
+              <div className="tigress-choice">
+                <strong>CHOISIS LE POUVOIR DE LA TIGRESSE</strong>
+
+                <div>
+                  <button
+                    type="button"
+                    className={
+                      tigressMode === "pirate" ? "selected" : ""
+                    }
+                    onClick={() => setTigressMode("pirate")}
+                  >
+                    <Skull size={18} />
+                    PIRATE
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      tigressMode === "escape" ? "selected" : ""
+                    }
+                    onClick={() => setTigressMode("escape")}
+                  >
+                    <Shield size={18} />
+                    FUITE
+                  </button>
                 </div>
-              </article>
-            ))}
+              </div>
+            )}
+
+            {!showPlayConfirmation ? (
+              <button
+                type="button"
+                className="lobby-primary play-card-button"
+                disabled={!isMyTurn || playingCard}
+                onClick={() => setShowPlayConfirmation(true)}
+              >
+                <Play size={18} />
+                POSER CETTE CARTE
+              </button>
+            ) : (
+              <div className="play-confirmation">
+                <p>
+                  Confirmer la pose de <strong>{selectedCard.name}</strong> ?
+                </p>
+
+                <button
+                  type="button"
+                  className="lobby-primary"
+                  onClick={playSelectedCard}
+                  disabled={playingCard}
+                >
+                  <Check size={18} />
+                  {playingCard ? "ENVOI..." : "CONFIRMER"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPlayConfirmation(false)}
+                  disabled={playingCard}
+                >
+                  ANNULER
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {round.status === "playing" && currentPlayerHasPlayed && (
+          <div className="game-empty-hand">
+            <Lock size={19} />
+            Tu as déjà joué. Attends les autres pirates.
+          </div>
+        )}
+
+        {round.status === "bidding" && (
+          <div className="game-empty-hand">
+            Les cartes seront jouables après la validation des enchères.
           </div>
         )}
       </section>
