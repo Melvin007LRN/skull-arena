@@ -1,3 +1,4 @@
+
 import type { GameCard } from "./cards";
 import type { PlayedCard } from "./rules";
 
@@ -7,6 +8,15 @@ export interface PlayerRoundStats {
   tricksWon: number;
   capturedCards: GameCard[];
   capturedTricks: PlayedCard[][];
+
+  /**
+   * Pirates retirés par Supplice de la planche,
+   * rangés dans le même ordre que capturedTricks.
+   *
+   * À renseigner lors de l'enregistrement des plis
+   * pour éviter de compter leurs bonus de capture.
+   */
+  removedPiratesByTrick?: PlayedCard[][];
 }
 
 export interface RoundScoreResult {
@@ -40,6 +50,14 @@ export function calculateBidPoints(
   tricksWon: number,
   roundNumber: number,
 ): number {
+  if (
+    !Number.isInteger(roundNumber) ||
+    roundNumber < 1 ||
+    roundNumber > 10
+  ) {
+    throw new Error("Numéro de manche invalide.");
+  }
+
   if (
     !Number.isInteger(bid) ||
     bid < 0 ||
@@ -75,8 +93,8 @@ export function calculateBidPoints(
  * 14 vert, violet ou jaune : +10
  * 14 noir : +20
  *
- * Chaque carte capturée ne rapporte son bonus
- * que si l'annonce du joueur est exacte.
+ * Les bonus sont appliqués uniquement si l'annonce
+ * du joueur est exacte.
  */
 export function calculateFourteenBonuses(
   capturedCards: GameCard[],
@@ -84,7 +102,10 @@ export function calculateFourteenBonuses(
   let bonus = 0;
 
   for (const card of capturedCards) {
-    if (card.type !== "number" || card.value !== 14) {
+    if (
+      card.type !== "number" ||
+      card.value !== 14
+    ) {
       continue;
     }
 
@@ -102,6 +123,30 @@ export function calculateFourteenBonuses(
   return bonus;
 }
 
+function getEffectiveType(
+  play: PlayedCard,
+): string {
+  if (play.card.type === "tigress") {
+    return play.tigressMode === "pirate"
+      ? "pirate"
+      : "escape";
+  }
+
+  return play.card.type;
+}
+
+function isRemovedPirate(
+  play: PlayedCard,
+  removedPirates: PlayedCard[],
+): boolean {
+  return removedPirates.some(
+    (removed) =>
+      removed.playerId === play.playerId &&
+      removed.order === play.order &&
+      removed.card.id === play.card.id,
+  );
+}
+
 /**
  * Calcule les bonus de capture des cartes spéciales.
  *
@@ -110,37 +155,43 @@ export function calculateFourteenBonuses(
  * Sirène capture Skull King : +40
  * Skull King ou Sirène capture Second : +30
  *
- * Les bonus sont calculés pli par pli.
+ * Les Pirates retirés par Supplice de la planche
+ * sont exclus du calcul.
  */
 export function calculateSpecialCaptureBonuses(
   playerId: string,
   capturedTricks: PlayedCard[][],
+  removedPiratesByTrick: PlayedCard[][] = [],
 ): number {
   let bonus = 0;
 
-  for (const trick of capturedTricks) {
+  for (let index = 0; index < capturedTricks.length; index++) {
+    const trick = capturedTricks[index];
+
+    const removedPirates =
+      removedPiratesByTrick[index] ?? [];
+
     const winnerPlay = trick.find(
       (play) => play.playerId === playerId,
     );
 
     if (!winnerPlay) continue;
 
-    const winnerType =
-      winnerPlay.card.type === "tigress"
-        ? winnerPlay.tigressMode === "pirate"
-          ? "pirate"
-          : "escape"
-        : winnerPlay.card.type;
+    const winnerType = getEffectiveType(winnerPlay);
+
+    // La Tigresse utilisée comme Fuite ne capture
+    // pas de cartes et ne rapporte aucun bonus.
+    if (winnerType === "escape") continue;
 
     for (const play of trick) {
-      if (play.playerId === playerId) continue;
+      if (
+        play.playerId === playerId ||
+        isRemovedPirate(play, removedPirates)
+      ) {
+        continue;
+      }
 
-      const capturedType =
-        play.card.type === "tigress"
-          ? play.tigressMode === "pirate"
-            ? "pirate"
-            : "escape"
-          : play.card.type;
+      const capturedType = getEffectiveType(play);
 
       if (
         winnerType === "pirate" &&
@@ -190,9 +241,12 @@ export function calculateExpansionBonuses(
   let bonus = 0;
 
   for (const card of capturedCards) {
-    if (!card.isExpansionCard) continue;
-
-    if (card.type !== "number") continue;
+    if (
+      !card.isExpansionCard ||
+      card.type !== "number"
+    ) {
+      continue;
+    }
 
     if (card.id.endsWith("-7")) {
       bonus -= 5;
@@ -228,6 +282,32 @@ export function calculatePlayerRoundScore(
     );
   }
 
+  if (
+    !Number.isInteger(stats.bid) ||
+    stats.bid < 0 ||
+    stats.bid > roundNumber
+  ) {
+    throw new Error("Annonce invalide.");
+  }
+
+  if (
+    !Number.isInteger(stats.tricksWon) ||
+    stats.tricksWon < 0 ||
+    stats.tricksWon > roundNumber
+  ) {
+    throw new Error("Nombre de plis remportés invalide.");
+  }
+
+  if (
+    stats.removedPiratesByTrick &&
+    stats.removedPiratesByTrick.length >
+      stats.capturedTricks.length
+  ) {
+    throw new Error(
+      "Les Pirates retirés ne correspondent pas aux plis enregistrés.",
+    );
+  }
+
   const bidCorrect =
     stats.bid === stats.tricksWon;
 
@@ -247,6 +327,7 @@ export function calculatePlayerRoundScore(
     bonusPoints += calculateSpecialCaptureBonuses(
       stats.playerId,
       stats.capturedTricks,
+      stats.removedPiratesByTrick,
     );
 
     bonusPoints += calculateExpansionBonuses(
