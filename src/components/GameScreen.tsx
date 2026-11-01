@@ -1926,7 +1926,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               >
                 {latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
                 <div className="game-player-avatar">
-                  {player.isHost ? (
+                  {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
                     <Crown size={20} />
                   ) : (
                     <Skull size={20} />
