@@ -2075,3 +2075,224 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
     animation:none !important;
   }
 }
+
+
+/* =========================================
+   SKULL ARENA — IMMERSIVE TABLE PASS
+========================================= */
+.skull-game {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(160, 96, 34, .16), transparent 48%),
+    linear-gradient(180deg, rgba(7, 11, 19, .94), rgba(7, 11, 19, .82)),
+    url("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=2200&q=90") center / cover fixed;
+}
+.skull-game::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 42%, transparent 15%, rgba(4, 7, 13, .54) 100%),
+    linear-gradient(180deg, rgba(5, 8, 14, .1), rgba(5, 8, 14, .72));
+}
+.game-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 12px clamp(14px, 3vw, 42px);
+  background: rgba(8, 12, 20, .82);
+  border-bottom: 1px solid rgba(225, 177, 91, .32);
+  backdrop-filter: blur(14px);
+}
+.game-round-info {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px auto 20px;
+  padding: 0 14px;
+}
+.game-round-info > div {
+  min-width: 112px;
+  padding: 9px 17px;
+  border: 1px solid rgba(224, 177, 91, .48);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(57, 39, 23, .92), rgba(15, 17, 22, .94));
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 5px 20px rgba(0,0,0,.28);
+  text-align: center;
+}
+.game-round-info span {
+  display: block;
+  color: #c7a66d;
+  font-size: 9px;
+  letter-spacing: 1.8px;
+}
+.game-round-info strong {
+  display: block;
+  margin-top: 3px;
+  color: #fff0ce;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 15px;
+}
+.game-arena {
+  position: relative;
+  width: min(1100px, calc(100% - 28px));
+  margin: 16px auto 24px;
+  padding: clamp(14px, 2.5vw, 28px);
+  border: 1px solid rgba(221, 172, 86, .48);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at center, rgba(123, 72, 31, .26), transparent 65%),
+    linear-gradient(145deg, rgba(27, 24, 21, .9), rgba(8, 12, 19, .92));
+  box-shadow: 0 22px 65px rgba(0,0,0,.5), inset 0 0 55px rgba(202, 143, 54, .08);
+}
+.arena-table {
+  position: relative;
+  min-height: clamp(230px, 35vw, 390px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 8px ridge rgba(153, 104, 48, .72);
+  border-radius: 48% / 38%;
+  background:
+    radial-gradient(ellipse at center, rgba(96, 61, 34, .94), rgba(30, 25, 22, .98) 66%, rgba(12, 15, 20, .98));
+  box-shadow: inset 0 0 0 3px rgba(255, 213, 133, .16), inset 0 0 65px #080a0e, 0 12px 28px rgba(0,0,0,.42);
+}
+.arena-table::before {
+  content: "☠";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 220, 160, .055);
+  font-size: clamp(130px, 24vw, 260px);
+  pointer-events: none;
+}
+.arena-decoration {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 221, 163, .72);
+  text-shadow: 0 3px 12px #000;
+}
+.arena-decoration strong {
+  font-family: Cinzel, Georgia, serif;
+  letter-spacing: 3px;
+}
+.arena-status {
+  position: absolute;
+  z-index: 2;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 30px);
+  padding: 9px 16px;
+  white-space: nowrap;
+  border: 1px solid rgba(229, 184, 105, .4);
+  border-radius: 999px;
+  background: rgba(9, 12, 17, .8);
+  color: #f4d69d;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.quick-chat-dock {
+  position: fixed;
+  right: clamp(12px, 2vw, 28px);
+  bottom: clamp(12px, 2vw, 26px);
+  z-index: 70;
+  width: min(290px, calc(100vw - 24px));
+  color: #f7e8c9;
+}
+.quick-chat-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 15px;
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid rgba(231, 184, 99, .65);
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(66, 43, 23, .98), rgba(13, 16, 22, .98));
+  box-shadow: 0 8px 30px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.12);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.quick-chat-trigger::-webkit-details-marker { display: none; }
+.quick-chat-trigger-icon { font-size: 20px; }
+.quick-chat-trigger-count {
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(229, 184, 105, .18);
+  color: #f5d69e;
+}
+.quick-chat-menu {
+  position: absolute;
+  right: 0;
+  bottom: 62px;
+  width: 100%;
+  max-height: min(60vh, 430px);
+  overflow: auto;
+  padding: 15px;
+  border: 1px solid rgba(231, 184, 99, .55);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(31, 27, 24, .98), rgba(8, 13, 21, .99));
+  box-shadow: 0 18px 50px rgba(0,0,0,.55);
+  backdrop-filter: blur(14px);
+}
+.quick-chat-menu .game-section-heading { margin-bottom: 10px; }
+.quick-chat-menu .game-section-heading h2 { font-size: 11px; }
+.quick-chat-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+.quick-chat-pill {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid rgba(219, 177, 105, .32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .055);
+  color: #f8e8c9;
+  text-align: left;
+  font-size: 11px;
+}
+.quick-chat-pill:hover:not(:disabled) {
+  border-color: #e7b863;
+  background: rgba(213, 161, 79, .18);
+}
+.player-chat-bubble {
+  z-index: 50;
+  max-width: 210px;
+  padding: 9px 13px;
+  border: 1px solid rgba(245, 205, 135, .8);
+  border-radius: 18px 18px 18px 5px;
+  background: linear-gradient(145deg, rgba(255, 238, 201, .97), rgba(198, 151, 85, .96));
+  color: #24170d;
+  box-shadow: 0 0 24px rgba(239, 178, 82, .32), 0 8px 24px rgba(0,0,0,.4);
+  font-family: Georgia, serif;
+  font-weight: 700;
+  animation: crewSmokeIn .28s ease-out both;
+}
+@keyframes crewSmokeIn {
+  from { opacity: 0; transform: translateY(9px) scale(.92); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@media (max-width: 700px) {
+  .skull-game { background-attachment: scroll; }
+  .game-arena { border-radius: 18px; }
+  .arena-table { min-height: 250px; border-radius: 32px; }
+  .quick-chat-dock { width: min(250px, calc(100vw - 24px)); }
+  .game-round-info > div { min-width: 95px; padding: 8px 11px; }
+}

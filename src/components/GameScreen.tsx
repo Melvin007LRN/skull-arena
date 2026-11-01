@@ -2059,11 +2059,21 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </section>
       )}
 
-      <section className="quick-chat-dock" aria-label="Messages rapides">
-        <div className="game-section-heading"><h2>💬 RÉACTIONS DE L'ÉQUIPAGE</h2><span>Une bulle, deux secondes</span></div>
-        <div className="quick-chat-options">{quickPhrases.map((item) => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>
-        {chatError && <p role="alert" className="play-message">{chatError}</p>}
-      </section>
+      <details className="quick-chat-dock" aria-label="Messages rapides">
+        <summary className="quick-chat-trigger">
+          <span className="quick-chat-trigger-icon">💬</span>
+          <span>CHAT DE L'ÉQUIPAGE</span>
+          <span className="quick-chat-trigger-count">{quickPhrases.length}</span>
+        </summary>
+        <div className="quick-chat-menu">
+          <div className="game-section-heading">
+            <h2>RÉACTIONS RAPIDES</h2>
+            <span>Choisis une phrase</span>
+          </div>
+          <div className="quick-chat-options">{quickPhrases.map((item) => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>
+          {chatError && <p role="alert" className="play-message">{chatError}</p>}
+        </div>
+      </details>
 
       {/* ÉQUIPAGE */}
       <section className="game-crew">
