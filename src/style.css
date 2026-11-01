@@ -1125,3 +1125,393 @@ footer {
     flex-wrap: wrap;
   }
 }
+
+
+/* =========================================================
+   SKULL ARENA — THE GOLDEN PIRATE SHIP
+   Global visual pass: obsidian, antique gold, warm parchment.
+========================================================= */
+:root {
+  --gold: #d8b46a;
+  --gold-light: #ffe4a0;
+  --gold-deep: #8c6428;
+  --panel: rgba(14, 16, 19, .94);
+  --wood: #24170f;
+  --parchment: #ead9b5;
+}
+html { background: #070707; }
+body {
+  color: #f4ead6;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(175,128,49,.12), transparent 42%),
+    linear-gradient(180deg,#090909 0%,#11100d 58%,#070707 100%);
+}
+button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 3px;
+}
+.arena, .lobby-page {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(192,146,66,.14), transparent 44%),
+    linear-gradient(145deg,#070707 0%,#15120d 55%,#080808 100%);
+}
+.arena::before {
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.76)),
+    repeating-linear-gradient(90deg,transparent 0 78px,rgba(218,180,106,.018) 79px 80px);
+}
+.brand-icon, .lobby-brand > svg {
+  filter: drop-shadow(0 0 12px rgba(255,211,126,.3));
+}
+.primary-button, .lobby-primary, .join-code-row button, .public-room-row button {
+  color: #1a1207;
+  background: linear-gradient(135deg,#fff0bd 0%,#d8ad5b 42%,#96651e 100%);
+  border: 1px solid #f7d88e;
+  box-shadow: 0 7px 22px rgba(180,126,42,.22), inset 0 1px rgba(255,255,255,.65);
+  text-shadow: 0 1px rgba(255,255,255,.25);
+}
+.primary-button:hover:not(:disabled), .lobby-primary:hover:not(:disabled),
+.join-code-row button:hover:not(:disabled), .public-room-row button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(213,166,79,.35), 0 0 0 1px rgba(255,224,155,.25);
+}
+.secondary-button, .lobby-secondary, .profile-button, .lobby-back, .lobby-refresh {
+  color: #f2dcae;
+  background: linear-gradient(145deg,rgba(255,255,255,.055),rgba(0,0,0,.36));
+  border-color: rgba(216,180,106,.38);
+}
+.mode-card, .lobby-create-panel, .lobby-join-panel, .public-rooms, .room-panel,
+.modal, .walk-the-plank-choice, .game-crew, .game-hand-section,
+.game-bidding, .game-trick-section, .game-scoreboard, .game-round-summary {
+  background:
+    linear-gradient(145deg,rgba(37,29,19,.92),rgba(10,10,10,.97));
+  border: 1px solid rgba(216,180,106,.3);
+  box-shadow: 0 18px 48px rgba(0,0,0,.38), inset 0 1px rgba(255,224,155,.045);
+}
+.mode-card:hover, .public-room-row:hover {
+  border-color: rgba(255,220,145,.7);
+  box-shadow: 0 16px 38px rgba(0,0,0,.48),0 0 25px rgba(216,180,106,.08);
+}
+.lobby-page { position: relative; isolation: isolate; }
+.lobby-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .25;
+  background:
+    repeating-linear-gradient(0deg,transparent 0 42px,rgba(216,180,106,.025) 43px 44px),
+    radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,.7) 100%);
+}
+.lobby-content h1, .hero h1, .section-heading h2 {
+  text-shadow: 0 5px 22px rgba(0,0,0,.65);
+}
+.room-code-box {
+  background: linear-gradient(135deg,rgba(216,180,106,.12),rgba(0,0,0,.3));
+  border-color: rgba(255,220,145,.5);
+}
+.game-screen, .game-page, .game-arena {
+  background:
+    radial-gradient(ellipse at 50% 44%,rgba(119,79,31,.19),transparent 55%),
+    linear-gradient(180deg,#090909,#17120c 55%,#080808);
+}
+/* The play surface reads as a captain's table: dark oak, brass seams. */
+.game-trick-section, .trick-table, .game-table, .trick-area {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(224,185,105,.58) !important;
+  border-radius: 24px !important;
+  background:
+    radial-gradient(ellipse at 50% 45%,rgba(93,59,25,.24),transparent 60%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 2px,transparent 2px 9px),
+    linear-gradient(145deg,#382516,#1b110b 48%,#2b1b10) !important;
+  box-shadow: inset 0 0 0 5px rgba(0,0,0,.24), inset 0 0 0 6px rgba(225,185,104,.16), 0 24px 60px rgba(0,0,0,.5);
+}
+.game-trick-section::after, .trick-table::after, .game-table::after, .trick-area::after {
+  content: "☠  SKULL ARENA  •  THE CAPTAIN'S TABLE  ☠";
+  display: block;
+  margin: 12px auto 0;
+  color: rgba(255,224,160,.32);
+  font: 700 9px/1.4 Cinzel,serif;
+  letter-spacing: 3px;
+  text-align: center;
+  pointer-events: none;
+}
+.game-card {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(225,185,104,.78) !important;
+  border-radius: 13px !important;
+  color: #24180d !important;
+  background:
+    radial-gradient(circle at 50% 28%,rgba(255,255,255,.92),transparent 42%),
+    linear-gradient(145deg,#f3e6c9,#cdb88d 75%,#9c8255) !important;
+  box-shadow: 0 12px 24px rgba(0,0,0,.42), inset 0 0 0 3px rgba(255,255,255,.25);
+  transform-origin: 50% 100%;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s, filter .22s;
+  touch-action: manipulation;
+}
+.game-card::before {
+  content: "";
+  position: absolute;
+  inset: -60% -120%;
+  pointer-events: none;
+  background: linear-gradient(110deg,transparent 42%,rgba(255,255,255,.42) 49%,transparent 56%);
+  transform: translateX(-65%) rotate(12deg);
+  transition: transform .55s ease;
+}
+.game-card:hover::before, .game-card-selected::before { transform: translateX(65%) rotate(12deg); }
+.game-card:hover:not(:disabled) {
+  transform: translateY(-13px) rotate(-1deg) scale(1.045);
+  z-index: 5;
+  box-shadow: 0 22px 34px rgba(0,0,0,.58),0 0 22px rgba(255,211,126,.22);
+}
+.game-card-selected {
+  transform: translateY(-20px) scale(1.055) !important;
+  z-index: 6;
+  box-shadow: 0 0 0 2px #ffe2a0,0 0 28px rgba(255,210,119,.48),0 22px 34px rgba(0,0,0,.5) !important;
+}
+.game-card-top { border-bottom: 1px solid rgba(95,64,27,.28) !important; }
+.game-card-art {
+  background:
+    radial-gradient(circle at 50% 45%,rgba(255,255,255,.48),transparent 52%),
+    repeating-linear-gradient(135deg,rgba(111,78,34,.06) 0 2px,transparent 2px 7px);
+}
+.game-card-symbol { filter: drop-shadow(0 4px 3px rgba(42,27,10,.28)); }
+.game-card-name {
+  color: #291b0d !important;
+  font-family: Cinzel,serif;
+  font-weight: 900;
+}
+.game-hand {
+  align-items: flex-end;
+  perspective: 900px;
+  padding: 20px 12px 12px;
+  gap: clamp(5px,1.1vw,13px);
+}
+.game-hand .game-card {
+  animation: hand-rise .45s both;
+  animation-delay: calc(var(--card-index, 0) * 35ms);
+}
+@keyframes hand-rise {
+  from { opacity: 0; transform: translateY(24px) rotate(2deg); }
+  to { opacity: 1; }
+}
+.trick-played-card, .trick-card-mini {
+  border-color: rgba(226,188,113,.42) !important;
+  background: linear-gradient(145deg,#e9d8b5,#bca276) !important;
+  color: #24180d !important;
+  box-shadow: 0 9px 20px rgba(0,0,0,.36);
+  animation: card-land .38s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes card-land {
+  0% { opacity: 0; transform: translateY(-24px) scale(.82) rotate(-5deg); }
+  70% { transform: translateY(3px) scale(1.035) rotate(1deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+.game-player.current, .player-row:has(.you-label) {
+  border-color: rgba(255,221,145,.6);
+  background: linear-gradient(90deg,rgba(216,180,106,.14),rgba(0,0,0,.15));
+}
+.leader-tag, .host-label {
+  color: #ffe2a0 !important;
+}
+.game-section-heading h2, .game-section-heading svg {
+  color: #e6c47e;
+}
+.selected-card-panel, .tigress-choice, .play-confirmation {
+  border-color: rgba(225,185,104,.38) !important;
+  background: linear-gradient(145deg,rgba(53,39,22,.9),rgba(12,11,9,.95)) !important;
+}
+.game-empty-hand {
+  border: 1px dashed rgba(216,180,106,.35);
+  background: rgba(0,0,0,.22);
+  color: #cdbb98;
+}
+.lobby-message, .play-message {
+  color: #ffe4a0 !important;
+  background: rgba(216,180,106,.09) !important;
+  border: 1px solid rgba(216,180,106,.3);
+  border-radius: 10px;
+}
+@media (max-width: 700px) {
+  .game-hand { overflow-x: auto; justify-content: flex-start; padding: 22px 8px 14px; }
+  .game-card { flex: 0 0 auto; }
+  .game-trick-section, .trick-table, .game-table, .trick-area { border-radius: 17px !important; }
+  .game-card:hover:not(:disabled) { transform: translateY(-8px) scale(1.02); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+
+/* SKULL ARENA — selectors matching the live React game screen */
+.skull-game {
+  min-height: 100vh;
+  color: #f4ead6;
+  background:
+    radial-gradient(ellipse at 50% 34%,rgba(168,117,45,.18),transparent 50%),
+    linear-gradient(180deg,#080808,#17110b 58%,#080808);
+}
+.skull-game .game-topbar {
+  background: rgba(8,8,8,.88);
+  border-bottom: 1px solid rgba(216,180,106,.25);
+  box-shadow: 0 10px 32px rgba(0,0,0,.3);
+  backdrop-filter: blur(14px);
+}
+.skull-game .game-brand { color: #f4d89d; text-shadow: 0 0 20px rgba(216,180,106,.24); }
+.skull-game .game-round-info {
+  color: #f0d7a0;
+  border: 1px solid rgba(216,180,106,.24);
+  background: linear-gradient(135deg,rgba(216,180,106,.12),rgba(0,0,0,.3));
+  border-radius: 12px;
+}
+.skull-game .arena-table {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(225,188,112,.58);
+  border-radius: 26px;
+  background:
+    radial-gradient(ellipse at 50% 42%,rgba(130,83,34,.28),transparent 58%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 2px,transparent 2px 8px),
+    linear-gradient(145deg,#382719,#1b110b 52%,#2c1c10);
+  box-shadow: inset 0 0 0 5px rgba(0,0,0,.3),inset 0 0 0 6px rgba(223,183,104,.16),0 24px 60px rgba(0,0,0,.48);
+}
+.skull-game .arena-table::after {
+  content: "☠  THE CAPTAIN'S TABLE  ☠";
+  display: block;
+  padding: 10px 0 2px;
+  color: rgba(255,224,160,.34);
+  font: 700 9px/1.4 Cinzel,serif;
+  letter-spacing: 3px;
+  text-align: center;
+  pointer-events: none;
+}
+.skull-game .arena-decoration { color: rgba(255,222,151,.55); filter: drop-shadow(0 0 12px rgba(216,180,106,.3)); }
+.skull-game .game-bidding-panel,
+.skull-game .game-trick-panel,
+.skull-game .game-scoreboard,
+.skull-game .game-crew,
+.skull-game .game-hand-section,
+.skull-game .selected-card-panel {
+  border: 1px solid rgba(216,180,106,.26);
+  border-radius: 18px;
+  background: linear-gradient(145deg,rgba(39,29,19,.94),rgba(10,10,10,.97));
+  box-shadow: 0 16px 38px rgba(0,0,0,.3),inset 0 1px rgba(255,224,155,.045);
+}
+.skull-game .game-section-heading h2,
+.skull-game .game-section-heading svg,
+.skull-game .arena-heading { color: #e7c57e; }
+.skull-game .game-hand {
+  display: flex;
+  align-items: flex-end;
+  perspective: 1000px;
+  gap: clamp(5px,1vw,12px);
+  padding: 20px 10px 14px;
+}
+.skull-game .game-card {
+  flex: 0 0 auto;
+  position: relative;
+  overflow: hidden;
+  color: #26190d;
+  border: 2px solid rgba(220,181,103,.8);
+  border-radius: 13px;
+  background: linear-gradient(145deg,#f3e6c9,#cdb88d 76%,#9c8255);
+  box-shadow: 0 12px 24px rgba(0,0,0,.42),inset 0 0 0 3px rgba(255,255,255,.24);
+  transform-origin: 50% 100%;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,filter .22s;
+}
+.skull-game .game-card::before {
+  content: "";
+  position: absolute;
+  inset: -60% -120%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(110deg,transparent 42%,rgba(255,255,255,.46) 49%,transparent 56%);
+  transform: translateX(-65%) rotate(12deg);
+  transition: transform .55s ease;
+}
+.skull-game .game-card:hover:not(:disabled)::before,
+.skull-game .game-card-selected::before { transform: translateX(65%) rotate(12deg); }
+.skull-game .game-card:hover:not(:disabled) {
+  transform: translateY(-13px) rotate(-1deg) scale(1.045);
+  z-index: 5;
+  box-shadow: 0 22px 34px rgba(0,0,0,.58),0 0 22px rgba(255,211,126,.22);
+}
+.skull-game .game-card-selected {
+  transform: translateY(-20px) scale(1.055);
+  z-index: 6;
+  box-shadow: 0 0 0 2px #ffe2a0,0 0 28px rgba(255,210,119,.48),0 22px 34px rgba(0,0,0,.5);
+}
+.skull-game .game-card-top { color: #5b411f; border-bottom: 1px solid rgba(95,64,27,.28); }
+.skull-game .game-card-art {
+  background: radial-gradient(circle at 50% 45%,rgba(255,255,255,.5),transparent 52%),repeating-linear-gradient(135deg,rgba(111,78,34,.06) 0 2px,transparent 2px 7px);
+}
+.skull-game .game-card-symbol { filter: drop-shadow(0 4px 3px rgba(42,27,10,.28)); }
+.skull-game .game-card-name { color: #291b0d; font-family: Cinzel,serif; font-weight: 900; }
+.skull-game .trick-played-card {
+  animation: skull-play-reveal .42s cubic-bezier(.2,.8,.2,1) both;
+  border: 1px solid rgba(226,188,113,.38);
+  background: linear-gradient(145deg,rgba(216,180,106,.1),rgba(0,0,0,.22));
+}
+.skull-game .trick-card-mini {
+  color: #26190d;
+  border: 1px solid #d8b46a;
+  background: linear-gradient(145deg,#f1e3c5,#c4ac7c);
+  box-shadow: 0 9px 20px rgba(0,0,0,.36);
+}
+@keyframes skull-play-reveal {
+  0% { opacity: 0; transform: translateY(-18px) scale(.86) rotate(-3deg); }
+  70% { opacity: 1; transform: translateY(2px) scale(1.025) rotate(1deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+.skull-game .lobby-primary,
+.skull-game .play-card-button,
+.skull-game .bid-submit {
+  color: #1a1207;
+  background: linear-gradient(135deg,#fff0bd 0%,#d8ad5b 42%,#96651e 100%);
+  border: 1px solid #f7d88e;
+  box-shadow: 0 7px 22px rgba(180,126,42,.22),inset 0 1px rgba(255,255,255,.65);
+  font-weight: 900;
+}
+.skull-game .lobby-primary:hover:not(:disabled),
+.skull-game .play-card-button:hover:not(:disabled),
+.skull-game .bid-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(213,166,79,.35),0 0 0 1px rgba(255,224,155,.25);
+}
+.skull-game .game-player-list,
+.skull-game .bid-progress-player,
+.skull-game .trick-status-card {
+  border-color: rgba(216,180,106,.2);
+  background: rgba(0,0,0,.2);
+}
+.skull-game .leader-tag { color: #ffe2a0; }
+@media(max-width:700px) {
+  .skull-game .arena-table { border-radius: 18px; }
+  .skull-game .game-hand { overflow-x: auto; justify-content: flex-start; padding: 22px 8px 14px; }
+  .skull-game .game-card:hover:not(:disabled) { transform: translateY(-8px) scale(1.02); }
+}
+
+/* SKULL ARENA — design system harmonisé */
+:root{--sa-ink:#080d13;--sa-panel:rgba(19,27,36,.94);--sa-gold:#d9ad68;--sa-gold-bright:#f4d49a;--sa-cream:#f4ead7;--sa-muted:#b5aa98;--sa-line:rgba(217,173,104,.24);font-family:"Inter",sans-serif}
+button,input,select,textarea{font-family:inherit}button{transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}button:not(:disabled):hover{border-color:rgba(244,212,154,.72)}button:not(:disabled):active{transform:translateY(1px) scale(.99)}:focus-visible{outline:2px solid var(--sa-gold-bright);outline-offset:3px}
+h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
+.profile-button,.primary-button,.secondary-button,.mode-card,.lobby-primary,.lobby-back,.lobby-refresh,.quick-chat-pill,.avatar-upload-button{border-radius:12px;font-weight:800;letter-spacing:.045em}
+.primary-button,.lobby-primary,.avatar-upload-button{background:linear-gradient(135deg,#f1d69e,#bd8740);color:#1a140c;border:1px solid #f7dfae;box-shadow:0 8px 26px rgba(174,122,48,.2)}
+.secondary-button,.profile-button,.lobby-back,.lobby-refresh,.quick-chat-pill{background:rgba(255,255,255,.045);color:var(--sa-cream);border:1px solid var(--sa-line)}
+.news-modal{width:min(760px,94vw)}.news-page{color:var(--sa-cream);max-height:82vh;overflow:auto;padding:8px 4px 18px}.news-kicker{display:flex;align-items:center;gap:8px;color:var(--sa-gold-bright);font-size:10px;font-weight:800;letter-spacing:.18em}
+.news-hero{margin:18px 0 20px;padding:32px 24px;text-align:center;border:1px solid var(--sa-line);border-radius:18px;background:radial-gradient(ellipse at 50% 0%,rgba(211,158,78,.19),transparent 65%),linear-gradient(145deg,#18212b,#0b1017)}
+.news-emblem{width:74px;height:74px;margin:0 auto 18px;border:1px solid rgba(238,197,127,.5);border-radius:50%;display:grid;place-items:center;color:var(--sa-gold-bright)}.news-tag{color:var(--sa-gold);font-size:10px;font-weight:800;letter-spacing:.2em}.news-hero h1{margin:12px 0;font-size:clamp(30px,6vw,52px);line-height:1.12;letter-spacing:.04em}.news-hero h1 span{color:var(--sa-gold-bright)}.news-hero p,.news-meta{color:var(--sa-muted)}
+.news-meta{display:flex;align-items:center;gap:9px;font-size:10px;font-weight:800;letter-spacing:.12em;margin-bottom:18px}.news-copy{max-width:640px;margin:auto;font-size:14px;line-height:1.85;color:#d7cebf}.news-copy p{margin:0 0 16px}.news-copy h2{color:var(--sa-gold-bright);font-size:21px;margin:24px 0 8px}.news-lead{font-size:16px;color:#f3e8d5}
+.news-callout{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--sa-line);border-radius:13px;background:rgba(217,173,104,.08);color:var(--sa-gold-bright);margin:22px 0}.news-callout small{display:block;color:var(--sa-muted);margin-top:3px}.news-signature{display:block;color:var(--sa-gold-bright);margin-top:20px}
+.profile-avatar-editor{display:flex;align-items:center;gap:16px;padding:15px;margin:0 0 20px;border:1px solid var(--sa-line);border-radius:14px;background:rgba(255,255,255,.035)}.profile-avatar-preview{width:76px;height:76px;flex:0 0 76px;overflow:hidden;border-radius:50%;display:grid;place-items:center;background:#18212b;border:2px solid var(--sa-gold);font-size:32px;color:var(--sa-gold-bright)}.profile-avatar-preview img{width:100%;height:100%;object-fit:cover}.profile-avatar-editor p{margin:5px 0 10px;color:var(--sa-muted);font-size:12px}.avatar-upload-button{display:inline-flex;padding:9px 13px;font-size:10px;cursor:pointer}.avatar-upload-button input{display:none}.profile-avatar-editor small{display:block;color:#ff9b88;margin-top:6px}
+.quick-chat-dock{margin:22px 0;padding:16px;border:1px solid var(--sa-line);border-radius:15px;background:rgba(8,13,19,.68)}.quick-chat-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.quick-chat-pill{padding:9px 12px;font-size:11px}
+.game-player{position:relative}.player-chat-bubble{position:absolute;z-index:5;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);width:max-content;max-width:min(230px,70vw);padding:9px 13px;border:1px solid rgba(235,219,190,.28);border-radius:14px 14px 14px 4px;background:rgba(24,29,34,.78);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);box-shadow:0 8px 24px rgba(0,0,0,.32);color:#fff5e5;font-size:11px;font-weight:700;text-align:center;line-height:1.35;animation:sa-bubble-in .2s ease-out;pointer-events:none}.player-chat-bubble:after{content:"";position:absolute;left:16px;bottom:-6px;width:10px;height:10px;background:rgba(24,29,34,.78);border-right:1px solid rgba(235,219,190,.28);border-bottom:1px solid rgba(235,219,190,.28);transform:rotate(45deg)}@keyframes sa-bubble-in{from{opacity:0;transform:translate(-50%,5px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@media(max-width:700px){.topbar{gap:8px;flex-wrap:wrap;padding:12px 0}.brand{flex:1 0 100%}.profile-button{padding:9px 10px;font-size:10px}.news-hero{padding:26px 14px}.profile-avatar-editor{align-items:flex-start}.quick-chat-options{gap:6px}.quick-chat-pill{font-size:10px;padding:8px 9px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.game-player-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}

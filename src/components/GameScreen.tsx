@@ -34,6 +34,7 @@ type GamePlayer = {
   player_id: string;
   username: string;
   isHost: boolean;
+  avatar_url?: string | null;
 };
 
 type GameRound = {
@@ -42,6 +43,7 @@ type GameRound = {
   round_number: number;
   status: string;
   leader_player_id: string | null;
+  last_volley_skip_player_ids?: string[];
 };
 
 type BidProgress = {
@@ -162,6 +164,7 @@ export default function GameScreen({
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; player_id: string; username: string; phrase: string; created_at: string }>>([]);
   const [sendingChat, setSendingChat] = useState(false);
   const [chatError, setChatError] = useState("");
+  const [chatNow, setChatNow] = useState(Date.now());
 
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
@@ -253,7 +256,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     const { data: roundData, error: roundError } = await supabase
       .from("game_rounds")
-      .select("id, room_id, round_number, status, leader_player_id")
+      .select("id, room_id, round_number, status, leader_player_id, last_volley_skip_player_ids")
       .eq("room_id", roomId)
       .order("round_number", { ascending: false })
       .limit(1)
@@ -310,7 +313,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, username")
+      .select("id, username, avatar_url")
       .in("id", playerIds);
 
     if (profilesError) {
@@ -325,7 +328,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     const profileMap = new Map(
       (profiles || []).map((profile) => [
         profile.id,
-        profile.username,
+        { username: profile.username, avatar_url: profile.avatar_url },
       ])
     );
 
@@ -333,7 +336,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       (roomPlayers || []).map((player) => ({
         player_id: player.player_id,
         username:
-          profileMap.get(player.player_id) || "Pirate inconnu",
+          profileMap.get(player.player_id)?.username || "Pirate inconnu",
+        avatar_url: profileMap.get(player.player_id)?.avatar_url || null,
         isHost: player.player_id === room.host_id,
       }))
     );
@@ -463,8 +467,15 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const juanitaTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "juanita"
   );
+  const juanitaPeekedPlayers = Array.isArray(
+    (resolvedMetadata as { juanita_peeked_player_ids?: string[] } | null)?.juanita_peeked_player_ids
+  )
+    ? (resolvedMetadata as { juanita_peeked_player_ids: string[] }).juanita_peeked_player_ids
+    : [];
   const canPeekWithJuanita = Boolean(
-    juanitaTrigger && lastResolvedTrick?.id &&
+    juanitaTrigger &&
+    !juanitaPeekedPlayers.includes(currentUserId) &&
+    lastResolvedTrick?.id &&
     lastResolvedTrick.trick_number < currentRound.round_number
   );
   setJuanitaCanPeek(canPeekWithJuanita);
@@ -546,6 +557,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         setChatMessages((previous) => previous.some((item) => item.id === message.id)
           ? previous
           : [...previous.slice(-24), message]);
+        setChatNow(Date.now());
+        window.setTimeout(() => setChatNow(Date.now()), 2050);
       })
       .subscribe();
     return () => {
@@ -556,17 +569,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
   const sendQuickChat = async (phrase: string) => {
     if (!userId || sendingChat) return;
-    setSendingChat(true);
-    setChatError("");
+    setSendingChat(true); setChatError("");
     const username = players.find((player) => player.player_id === userId)?.username || "Pirate";
-    const { error: sendError } = await supabase.from("room_chat_messages").insert({
-      room_id: roomId,
-      player_id: userId,
-      username,
-      phrase,
-    });
-    setSendingChat(false);
-    if (sendError) setChatError(sendError.message);
+    const { error: sendError } = await supabase.from("room_chat_messages").insert({ room_id: roomId, player_id: userId, username, phrase });
+    setSendingChat(false); if (sendError) setChatError(sendError.message);
   };
 
   useEffect(() => {
@@ -977,29 +983,56 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       (currentTrick?.leader_player_id || round?.leader_player_id)
   );
 
+  const playerCount = players.length;
+  const skippedOnFinalTrick =
+    Boolean(round && currentTrick && currentTrick.trick_number === round.round_number);
+  const skippedPlayerIds = skippedOnFinalTrick
+    ? (round?.last_volley_skip_player_ids || [])
+    : [];
+  const activePlayers = players.filter(
+    (player) => !skippedPlayerIds.includes(player.player_id)
+  );
+  const activePlayerCount = activePlayers.length;
+  const volleyPlayers =
+    round && currentTrick && currentTrick.trick_number < round.round_number
+      ? playedCards
+          .filter((play) => play.card?.type === "last_volley")
+          .sort((a, b) => a.play_order - b.play_order)
+          .map((play) => play.player_id)
+      : [];
+  const normalPlaysComplete =
+    activePlayerCount > 0 && playedCards.length >= activePlayerCount;
+  const expectedVolleyPlayer = normalPlaysComplete
+    ? volleyPlayers[playedCards.length - activePlayerCount] || null
+    : null;
+  const isExtraVolleyTurn = expectedVolleyPlayer === userId;
   const currentPlayerHasPlayed = playedCards.some(
     (play) => play.player_id === userId
-  );
-
-  const playerCount = players.length;
+  ) && !isExtraVolleyTurn;
 
   const allCardsPlayed =
-    playerCount > 0 && playedCards.length >= playerCount;
+    activePlayerCount > 0 &&
+    playedCards.length >= activePlayerCount + volleyPlayers.length;
 
-  // ORDRE DE JEU
-  // L'ordre de passage suit l'ordre d'arrivée dans le salon,
-  // en partant du leader enregistré pour le pli en cours.
+  // ORDRE DE JEU : les joueurs exclus du dernier pli sont ignorés.
   const turnLeaderId =
     currentTrick?.leader_player_id || round?.leader_player_id;
-
   const turnLeaderIndex = players.findIndex(
     (player) => player.player_id === turnLeaderId
   );
-
+  const orderedActivePlayers =
+    turnLeaderIndex >= 0
+      ? [
+          ...players.slice(turnLeaderIndex),
+          ...players.slice(0, turnLeaderIndex),
+        ].filter((player) => !skippedPlayerIds.includes(player.player_id))
+      : activePlayers;
   const expectedPlayer =
-    playerCount > 0 && turnLeaderIndex >= 0
-      ? players[(turnLeaderIndex + playedCards.length) % playerCount]
-      : null;
+    !normalPlaysComplete && activePlayerCount > 0
+      ? orderedActivePlayers[playedCards.length] || null
+      : expectedVolleyPlayer
+        ? players.find((player) => player.player_id === expectedVolleyPlayer) || null
+        : null;
 
   const isMyTurn =
     round?.status === "playing" &&
@@ -1860,37 +1893,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </section>
       )}
 
-      <section className="walk-the-plank-choice" aria-label="Discussion rapide">
-        <div className="game-section-heading">
-          <h2>💬 MESSAGES DE L'ÉQUIPAGE</h2>
-          <span>{chatMessages.length} messages récents</span>
-        </div>
-        <div style={{ display: "grid", gap: 6, maxHeight: 170, overflowY: "auto", marginBottom: 12 }}>
-          {chatMessages.length === 0 ? (
-            <p>Aucun message pour le moment. Lance les premiers encouragements !</p>
-          ) : chatMessages.map((message) => (
-            <div key={message.id} style={{ padding: "7px 10px", borderRadius: 8, background: message.player_id === userId ? "rgba(218,170,91,.14)" : "rgba(255,255,255,.05)" }}>
-              <strong>{message.username}</strong> : {message.phrase}
-            </div>
-          ))}
-        </div>
-        {quickPhrases.length > 0 ? (
-          <div className="plank-target-list">
-            {quickPhrases.map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                className="plank-target"
-                onClick={() => void sendQuickChat(item.phrase)}
-                disabled={sendingChat}
-              >
-                {item.phrase}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p>Les messages rapides seront disponibles dès que l'administrateur aura ajouté des phrases.</p>
-        )}
+      <section className="quick-chat-dock" aria-label="Messages rapides">
+        <div className="game-section-heading"><h2>💬 RÉACTIONS DE L'ÉQUIPAGE</h2><span>Une bulle, deux secondes</span></div>
+        <div className="quick-chat-options">{quickPhrases.map((item) => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>
         {chatError && <p role="alert" className="play-message">{chatError}</p>}
       </section>
 
@@ -1905,6 +1910,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
         <div className="game-player-list">
           {players.map((player) => {
+            const latestBubble = chatMessages[chatMessages.length - 1];
+            const showBubble = latestBubble?.player_id === player.player_id && chatNow - new Date(latestBubble.created_at).getTime() < 2000;
             const hasPlayed = playedCards.some(
               (play) => play.player_id === player.player_id
             );
@@ -1918,8 +1925,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                 }
                 key={player.player_id}
               >
+                {showBubble && latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
                 <div className="game-player-avatar">
-                  {player.isHost ? (
+                  {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
                     <Crown size={20} />
                   ) : (
                     <Skull size={20} />

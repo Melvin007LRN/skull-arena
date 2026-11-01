@@ -19,12 +19,14 @@ import GameProfile from "./components/GameProfile";
 import AdminPanel from "./components/AdminPanel";
 import Leaderboard from "./components/Leaderboard";
 import Lobby from "./components/Lobby";
+import NewsPage from "./components/NewsPage";
 import { supabase } from "./lib/supabase";
 
 export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showNews, setShowNews] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -116,10 +118,13 @@ export default function App() {
           </div>
           <div>
             <span className="brand-name">SKULL ARENA</span>
-            <span className="brand-sub">THE PIRATE CHALLENGE</span>
+            <span className="brand-sub">SKULL ARENA · THE PIRATE CHALLENGE</span>
           </div>
         </div>
 
+        <button className="profile-button" onClick={() => setShowNews(true)}>
+          <Sparkles size={17} /> ACTUALITÉS
+        </button>
         <button className="profile-button" onClick={() => setShowLeaderboard(true)}>
           <Trophy size={17} /> CLASSEMENT
         </button>
@@ -272,6 +277,9 @@ export default function App() {
         <span>BUILT FOR PIRATES</span>
       </footer>
 
+      {showNews && (
+        <div className="modal-overlay"><div className="modal auth-modal news-modal"><button className="close-button" onClick={() => setShowNews(false)} aria-label="Fermer"><X /></button><NewsPage /></div></div>
+      )}
       {showLeaderboard && (
         <div className="modal-overlay">
           <div className="modal auth-modal">
