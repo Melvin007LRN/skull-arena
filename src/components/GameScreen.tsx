@@ -204,6 +204,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const [bendtCanDraw, setBendtCanDraw] = useState(false);
   const [bendtDiscardIds, setBendtDiscardIds] = useState<string[]>([]);
   const [bendtLoading, setBendtLoading] = useState(false);
+  const [harryTrickId, setHarryTrickId] = useState<string | null>(null);
+  const [harryCanAdjust, setHarryCanAdjust] = useState(false);
+  const [harryLoading, setHarryLoading] = useState(false);
   
   const loadGame = useCallback(async () => {
     setError("");
@@ -467,6 +470,12 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   setBendtCanDraw(canUseBendt);
   setBendtTrickId(canUseBendt ? lastResolvedTrick?.id ?? null : null);
   if (!canUseBendt) setBendtDiscardIds([]);
+  const harryTrigger = powerTriggers.some(
+    (trigger) => trigger.player_id === currentUserId && trigger.power === "harry"
+  );
+  const canUseHarry = Boolean(harryTrigger && lastResolvedTrick?.id);
+  setHarryCanAdjust(canUseHarry);
+  setHarryTrickId(canUseHarry ? lastResolvedTrick?.id ?? null : null);
 
   if (
     lastResolvedTrick?.resolved_at &&
@@ -704,6 +713,26 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     setBendtDiscardIds([]);
     setBendtTrickId(null);
     setPlayMessage("Pouvoir de Bendt terminé : deux cartes défaussées.");
+    await loadGame();
+  };
+
+  const applyHarryAdjustment = async (adjustment: -1 | 0 | 1) => {
+    if (!harryTrickId || harryLoading) return;
+    setHarryLoading(true);
+    setPlayMessage("");
+    const { data, error: harryError } = await supabase.rpc(
+      "apply_harry_bid_adjustment",
+      { p_trick_id: harryTrickId, p_adjustment: adjustment }
+    );
+    setHarryLoading(false);
+    if (harryError) {
+      setPlayMessage(harryError.message);
+      return;
+    }
+    const result = data as { old_bid?: number; new_bid?: number } | null;
+    setHarryCanAdjust(false);
+    setHarryTrickId(null);
+    setPlayMessage(`Harry modifie ta mise : ${result?.old_bid ?? "?"} → ${result?.new_bid ?? "?"}.`);
     await loadGame();
   };
 
@@ -1602,6 +1631,29 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           >
             {rosieSaving ? "VALIDATION..." : "CONFIRMER LE MENEUR"}
           </button>
+        </section>
+      )}
+
+      {harryCanAdjust && (
+        <section className="walk-the-plank-choice" aria-live="polite">
+          <div className="game-section-heading">
+            <h2>💪 HARRY LE GÉANT — MODIFIE TA MISE</h2>
+          </div>
+          <p>Choisis d'augmenter ta mise d'un point, de la réduire d'un point ou de la conserver.</p>
+          <div className="plank-target-list">
+            {([-1, 0, 1] as const).map((adjustment) => (
+              <button
+                type="button"
+                key={adjustment}
+                className="plank-target"
+                onClick={() => applyHarryAdjustment(adjustment)}
+                disabled={harryLoading}
+              >
+                {adjustment === -1 ? "−1 POINT" : adjustment === 1 ? "+1 POINT" : "NE RIEN CHANGER"}
+              </button>
+            ))}
+          </div>
+          {harryLoading && <p>VALIDATION DU POUVOIR...</p>}
         </section>
       )}
 
