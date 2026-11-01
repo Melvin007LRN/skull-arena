@@ -1019,9 +1019,16 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const turnLeaderIndex = activePlayers.findIndex(
     (player) => player.player_id === turnLeaderId
   );
+  const orderedActivePlayers =
+    turnLeaderIndex >= 0
+      ? [
+          ...players.slice(turnLeaderIndex),
+          ...players.slice(0, turnLeaderIndex),
+        ].filter((player) => !skippedPlayerIds.includes(player.player_id))
+      : activePlayers;
   const expectedPlayer =
-    !normalPlaysComplete && activePlayerCount > 0 && turnLeaderIndex >= 0
-      ? activePlayers[(turnLeaderIndex + playedCards.length) % activePlayerCount]
+    !normalPlaysComplete && activePlayerCount > 0
+      ? orderedActivePlayers[playedCards.length] || null
       : expectedVolleyPlayer
         ? players.find((player) => player.player_id === expectedVolleyPlayer) || null
         : null;
