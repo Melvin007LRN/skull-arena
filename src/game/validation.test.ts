@@ -42,16 +42,32 @@ function play(playerId: string, card: GameCard, order: number, tigressMode?: Tig
 }
 
 describe("Détermination de la couleur demandée", () => {
-  it("ignore un Pirate joué avant la première carte numérique", () => {
+  it("n'impose aucune couleur si le pli commence par un Pirate", () => {
     const played = [play("p1", pirate, 0), play("p2", greenThree, 1)];
-    expect(determineLeadSuit(played)).toBe("green");
+    expect(determineLeadSuit(played)).toBeNull();
     expect(validateCardPlay({
       playerId: "p3",
       hand: [greenThree, yellowFour],
       playedCards: played,
       card: yellowFour,
-    }).valid).toBe(false);
+    }).valid).toBe(true);
   });
+
+  it.each(["skull_king", "second"] as const)(
+    "n'impose aucune couleur si le pli commence par %s",
+    (type) => {
+      const special: GameCard = {
+        id: `${type}-test`,
+        name: type,
+        type,
+        isExpansionCard: false,
+      };
+      expect(determineLeadSuit([
+        play("p1", special, 0),
+        play("p2", greenThree, 1),
+      ])).toBeNull();
+    },
+  );
 
   it("ignore une carte Fuite avant la première carte numérique", () => {
     expect(determineLeadSuit([
@@ -70,7 +86,7 @@ describe("Détermination de la couleur demandée", () => {
     expect(determineLeadSuit([
       play("p1", tigress, 0, "pirate"),
       play("p2", greenThree, 1),
-    ])).toBe("green");
+    ])).toBeNull();
   });
 
   it("renvoie null si le pli ne contient aucune carte de couleur", () => {
