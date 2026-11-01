@@ -621,6 +621,23 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     await loadGame();
   };
 
+  const revealJuanitaDrawPile = async () => {
+    if (!juanitaTrickId || juanitaPeekLoading) return;
+    setJuanitaPeekLoading(true);
+    setPlayMessage("");
+    const { data, error: peekError } = await supabase.rpc(
+      "reveal_juanita_draw_pile",
+      { p_trick_id: juanitaTrickId }
+    );
+    setJuanitaPeekLoading(false);
+    if (peekError) {
+      setPlayMessage(peekError.message);
+      return;
+    }
+    const result = data as { draw_pile?: GameCard[] } | null;
+    setJuanitaPeekCards(Array.isArray(result?.draw_pile) ? result.draw_pile : []);
+  };
+
   const submitBid = async () => {
     if (!round || hasSubmittedBid || submittingBid) return;
 
@@ -1516,6 +1533,37 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           >
             {rosieSaving ? "VALIDATION..." : "CONFIRMER LE MENEUR"}
           </button>
+        </section>
+      )}
+
+      {juanitaCanPeek && (
+        <section className="walk-the-plank-choice" aria-live="polite">
+          <div className="game-section-heading">
+            <h2>🔮 JUANITA JADE — VISION DE LA PIOCHE</h2>
+          </div>
+          <p>Tu as remporté un pli avec Juanita. Consulte secrètement les cartes restantes de cette manche.</p>
+          {!juanitaPeekCards ? (
+            <button
+              type="button"
+              className="lobby-primary play-card-button"
+              onClick={revealJuanitaDrawPile}
+              disabled={juanitaPeekLoading}
+            >
+              {juanitaPeekLoading ? "OUVERTURE..." : "REGARDER LA PIOCHE"}
+            </button>
+          ) : (
+            <div className="trick-played-list">
+              <strong>TA VISION PRIVÉE — {juanitaPeekCards.length} CARTE(S)</strong>
+              {juanitaPeekCards.map((card, index) => (
+                <div className="trick-played-card" key={card.id || index}>
+                  <div className="trick-card-mini">
+                    <span>{card.value ?? cardTypeNames[card.type] ?? card.type}</span>
+                    <strong>{card.name}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
