@@ -995,10 +995,13 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     (player) => !skippedPlayerIds.includes(player.player_id)
   );
   const activePlayerCount = activePlayers.length;
-  const volleyPlayers = playedCards
-    .filter((play) => play.card?.type === "last_volley")
-    .sort((a, b) => a.play_order - b.play_order)
-    .map((play) => play.player_id);
+  const volleyPlayers =
+    round && currentTrick && currentTrick.trick_number < round.round_number
+      ? playedCards
+          .filter((play) => play.card?.type === "last_volley")
+          .sort((a, b) => a.play_order - b.play_order)
+          .map((play) => play.player_id)
+      : [];
   const normalPlaysComplete =
     activePlayerCount > 0 && playedCards.length >= activePlayerCount;
   const expectedVolleyPlayer = normalPlaysComplete
