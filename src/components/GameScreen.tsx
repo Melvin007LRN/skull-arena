@@ -441,7 +441,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
   setLastResolvedTrickNumber(lastResolvedTrick?.trick_number ?? 0);
   const resolvedMetadata = lastResolvedTrick?.resolution as
-    | { pirate_power_triggers?: Array<{ player_id?: string; power?: string }> }
+    | {
+        pirate_power_triggers?: Array<{ player_id?: string; power?: string }>;
+        bendt_discard_completed?: boolean;
+      }
     | null;
   const powerTriggers = resolvedMetadata?.pirate_power_triggers ?? [];
   const rosieTrigger = powerTriggers.some(
@@ -467,7 +470,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     (trigger) => trigger.player_id === currentUserId && trigger.power === "bendt"
   );
   const canUseBendt = Boolean(
-    bendtTrigger && lastResolvedTrick?.id &&
+    bendtTrigger && !resolvedMetadata?.bendt_discard_completed &&
+    lastResolvedTrick?.id &&
     lastResolvedTrick.trick_number < currentRound.round_number
   );
   setBendtCanDraw(canUseBendt);
