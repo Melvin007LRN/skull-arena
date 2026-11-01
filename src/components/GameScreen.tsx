@@ -1910,7 +1910,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
         <div className="game-player-list">
           {players.map((player) => {
-            const latestBubble = [...chatMessages].reverse().find((message) => message.player_id === player.player_id && chatNow - new Date(message.created_at).getTime() < 2000);
+            const latestBubble = chatMessages[chatMessages.length - 1];
+            const showBubble = latestBubble?.player_id === player.player_id && chatNow - new Date(latestBubble.created_at).getTime() < 2000;
             const hasPlayed = playedCards.some(
               (play) => play.player_id === player.player_id
             );
@@ -1924,7 +1925,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                 }
                 key={player.player_id}
               >
-                {latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
+                {showBubble && latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
                 <div className="game-player-avatar">
                   {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
                     <Crown size={20} />
