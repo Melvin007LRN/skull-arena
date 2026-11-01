@@ -1816,3 +1816,262 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
   }
   .game-card::after { animation:none !important; }
 }
+
+/* =========================================================
+   CARD ART DIRECTION — DISTINCT PIRATE IDENTITY PER CARD
+   All card faces share one engraved frame, each type has its
+   own palette, material, atmosphere and special-card shine.
+========================================================= */
+.game-card {
+  isolation:isolate;
+  border:2px solid #bd914b !important;
+  outline:1px solid rgba(255,225,156,.5);
+  outline-offset:-5px;
+  background:
+    linear-gradient(145deg,rgba(255,248,223,.96),rgba(203,173,119,.98)) !important;
+}
+.game-card::after {
+  content:"";
+  position:absolute;
+  inset:7px;
+  z-index:0;
+  border:1px solid rgba(109,73,31,.45);
+  border-radius:8px;
+  pointer-events:none;
+}
+.game-card-top,.game-card-art,.game-card-name {
+  position:relative;
+  z-index:1;
+}
+.game-card-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:7px 9px;
+  color:#3a2815;
+  background:linear-gradient(90deg,rgba(255,244,212,.9),rgba(188,148,81,.22)) !important;
+  border-bottom:1px solid rgba(107,74,35,.4) !important;
+  font-family:Cinzel,Georgia,serif;
+  letter-spacing:.07em;
+}
+.game-card-top strong { font-size:23px;text-shadow:0 1px rgba(255,255,255,.6); }
+.game-card-art {
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  margin:6px;
+  min-height:110px;
+  border:1px solid rgba(93,63,30,.48);
+  border-radius:7px;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(255,239,190,.45),transparent 43%),
+    linear-gradient(145deg,#7a6040,#30251c);
+}
+.game-card-symbol {
+  position:relative;
+  z-index:1;
+  font-size:clamp(42px,5vw,64px);
+  filter:drop-shadow(0 7px 5px rgba(0,0,0,.55));
+  transform:translateY(-1px);
+}
+.game-card-name {
+  margin:0 7px 8px;
+  padding:7px 4px;
+  color:#382615;
+  background:linear-gradient(90deg,transparent,rgba(128,89,38,.16),transparent);
+  border-top:1px solid rgba(106,73,35,.35);
+  text-align:center;
+  font:900 10px/1.2 Cinzel,Georgia,serif;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+/* Four numeric suits: clearly readable, each with a nautical world. */
+.game-card[style*="33, 199, 122"],.game-card[style*="33,199,122"] .game-card-art {
+  --face-ink:#173e2e;
+}
+.game-card--number .game-card-art {
+  background:
+    radial-gradient(circle at 50% 42%,rgba(255,255,255,.3),transparent 48%),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 3px,transparent 3px 9px),
+    linear-gradient(145deg,#3c7155,#132b25) !important;
+}
+.game-card--escape .game-card-art {
+  background:radial-gradient(circle at 50% 40%,#c7d6db,#4b6268 48%,#1d2d33) !important;
+}
+.game-card--loot .game-card-art {
+  background:radial-gradient(circle at 50% 40%,#ffe7a0,#a96e20 45%,#39200d) !important;
+}
+.game-card--pirate .game-card-art {
+  background:radial-gradient(circle at 50% 35%,#d16b45,#65251e 48%,#210d0d) !important;
+}
+.game-card--tigress .game-card-art {
+  background:radial-gradient(circle at 50% 35%,#ffe0a0,#ad5527 45%,#3b160d) !important;
+}
+.game-card--mermaid .game-card-art {
+  background:radial-gradient(circle at 50% 35%,#baf7ef,#258c91 48%,#102e43) !important;
+}
+.game-card--second .game-card-art {
+  background:radial-gradient(circle at 50% 35%,#f4d7a4,#805c35 48%,#241b18) !important;
+}
+.game-card--skull_king .game-card-art {
+  background:
+    radial-gradient(circle at 50% 35%,#fff0b0,#bd7924 34%,#541c13 72%,#150b0b) !important;
+}
+.game-card--kraken .game-card-art {
+  background:
+    radial-gradient(circle at 50% 35%,#c7b2ff,#543c9e 38%,#10102f 78%) !important;
+}
+.game-card--white_whale .game-card-art {
+  background:
+    radial-gradient(circle at 50% 35%,#f0ffff,#68b8cc 42%,#173b5b 82%) !important;
+}
+.game-card--joker .game-card-art {
+  background:
+    conic-gradient(from 35deg at 50% 50%,#46205f,#1b4b68,#a22d50,#b67a28,#46205f) !important;
+}
+.game-card--last_volley .game-card-art,
+.game-card--walk_the_plank .game-card-art {
+  background:radial-gradient(circle at 50% 35%,#ffd1a2,#a84928 44%,#27100d) !important;
+}
+.game-card--davys_locker .game-card-art {
+  background:radial-gradient(circle at 50% 35%,#b8c5d1,#35465d 45%,#0b1320) !important;
+}
+.game-card--spotted_stingray .game-card-art {
+  background:radial-gradient(circle at 50% 35%,#f0d4a5,#7c6845 46%,#242019) !important;
+}
+/* Increasing shine by card rarity/power — subtle on common, spectacular on legends. */
+.game-card--number { box-shadow:0 8px 16px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.35) !important; }
+.game-card--escape,.game-card--loot { box-shadow:0 10px 19px rgba(0,0,0,.4),0 0 8px rgba(201,173,116,.22) !important; }
+.game-card--pirate,.game-card--tigress,.game-card--second,
+.game-card--mermaid,.game-card--last_volley,.game-card--walk_the_plank,
+.game-card--davys_locker,.game-card--spotted_stingray {
+  box-shadow:0 12px 22px rgba(0,0,0,.46),0 0 13px var(--card-glow,rgba(255,192,90,.42)),inset 0 0 0 2px rgba(255,235,190,.45) !important;
+}
+.game-card--skull_king,.game-card--kraken,.game-card--white_whale,.game-card--joker {
+  border-color:#ffe2a0 !important;
+  outline:1px solid rgba(255,231,169,.85);
+  box-shadow:0 13px 25px rgba(0,0,0,.55),0 0 14px var(--card-glow),0 0 28px var(--card-glow),inset 0 0 0 2px rgba(255,255,255,.62) !important;
+}
+.game-card--skull_king::before,.game-card--kraken::before,
+.game-card--white_whale::before,.game-card--joker::before,
+.game-card--pirate::before,.game-card--mermaid::before {
+  content:"";
+  position:absolute;
+  inset:-100% -160%;
+  z-index:3;
+  pointer-events:none;
+  background:linear-gradient(112deg,transparent 43%,rgba(255,255,255,.08) 47%,rgba(255,255,255,.88) 50%,rgba(255,228,160,.2) 53%,transparent 58%);
+  transform:translateX(-70%) rotate(12deg);
+  animation:legend-card-sweep 3.4s ease-in-out infinite;
+}
+.game-card--skull_king::before { animation-duration:2.2s; }
+.game-card--kraken::before { animation-duration:3s; }
+.game-card--joker::before { animation-duration:1.9s; }
+@keyframes legend-card-sweep {
+  0%,25% { transform:translateX(-70%) rotate(12deg); }
+  72%,100% { transform:translateX(70%) rotate(12deg); }
+}
+/* Pirate portrait frames — visible in the arena, not plain circles. */
+.game-player {
+  position:relative;
+  padding:12px 13px !important;
+  min-width:0;
+  border:1px solid rgba(205,160,83,.4) !important;
+  border-radius:13px !important;
+  background:
+    linear-gradient(145deg,rgba(49,34,20,.96),rgba(9,9,9,.96)) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.38),inset 0 1px rgba(255,226,164,.08);
+}
+.game-player.current {
+  border-color:rgba(255,218,133,.85) !important;
+  box-shadow:0 0 0 1px rgba(255,211,120,.22),0 0 22px rgba(225,171,76,.16),0 10px 24px rgba(0,0,0,.4);
+}
+.game-player-avatar {
+  position:relative;
+  flex:0 0 58px;
+  width:58px !important;
+  height:58px !important;
+  display:grid;
+  place-items:center;
+  overflow:visible !important;
+  border:3px solid #d4a34e !important;
+  border-radius:50% !important;
+  color:#ffe5a8 !important;
+  background:linear-gradient(145deg,#3b2918,#090909) !important;
+  box-shadow:0 0 0 3px #24170d,0 0 0 5px rgba(239,193,104,.72),0 5px 15px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,237,191,.3) !important;
+}
+.game-player-avatar::before {
+  content:"";
+  position:absolute;
+  inset:-9px;
+  z-index:2;
+  border:1px solid rgba(255,222,153,.65);
+  border-radius:50%;
+  pointer-events:none;
+}
+.game-player-avatar::after {
+  content:"☠";
+  position:absolute;
+  right:-8px;
+  bottom:-6px;
+  z-index:3;
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  color:#1b1008;
+  background:linear-gradient(145deg,#ffe8ad,#b47b2d);
+  border:1px solid #ffe5a8;
+  border-radius:50%;
+  font-size:12px;
+  box-shadow:0 3px 7px rgba(0,0,0,.55);
+}
+.game-player-avatar img {
+  width:100% !important;
+  height:100% !important;
+  display:block;
+  object-fit:cover;
+  border-radius:50% !important;
+  border:0 !important;
+}
+.game-player-info strong {
+  color:#ffe6b2 !important;
+  font-family:Cinzel,Georgia,serif;
+  font-size:12px;
+  letter-spacing:.04em;
+  text-shadow:0 2px 7px rgba(0,0,0,.8);
+}
+.game-player-info span {
+  color:#c5a36a !important;
+  letter-spacing:.14em;
+  font-size:8px !important;
+}
+.leader-tag {
+  color:#ffe4a0 !important;
+  border:1px solid rgba(235,189,101,.45);
+  background:rgba(118,77,25,.3);
+  border-radius:999px;
+  padding:4px 7px;
+}
+.player-play-status {
+  color:#f3ce82 !important;
+}
+.player-chat-bubble {
+  z-index:5;
+  border:1px solid rgba(255,220,145,.65) !important;
+  color:#fff0ce !important;
+  background:rgba(13,10,7,.94) !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 18px rgba(223,173,82,.18);
+}
+@media(max-width:700px) {
+  .game-player { padding:9px !important;gap:9px !important; }
+  .game-player-avatar { flex-basis:48px;width:48px !important;height:48px !important; }
+  .game-player-avatar::before { inset:-7px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .game-card--skull_king::before,.game-card--kraken::before,
+  .game-card--white_whale::before,.game-card--joker::before,
+  .game-card--pirate::before,.game-card--mermaid::before {
+    animation:none !important;
+  }
+}
