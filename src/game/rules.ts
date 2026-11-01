@@ -619,10 +619,9 @@ export function resolveTrick(
 
 export function getExpansionNumberBonus(
   card: GameCard,
-  bidWasCorrect: boolean,
+  _bidWasCorrect: boolean,
 ): number {
-  if (!bidWasCorrect) return 0;
-
+  // Les bonus de capture sont dus même si l'annonce est manquée.
   if (card.id.endsWith("-7")) return -5;
   if (card.id.endsWith("-8")) return 5;
 
