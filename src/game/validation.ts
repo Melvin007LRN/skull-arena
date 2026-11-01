@@ -57,16 +57,31 @@ export function determineLeadSuit(
     (a, b) => a.order - b.order,
   );
 
+  // Si le pli commence par un Pirate, le Skull King ou le Second,
+  // aucune couleur n'est imposée pour ce pli.
+  const firstPlay = ordered[0];
+  if (firstPlay) {
+    const firstType = getEffectiveType(
+      firstPlay.card,
+      firstPlay.tigressMode,
+    );
+    if (
+      firstType === "pirate" ||
+      firstType === "skull_king" ||
+      firstType === "second"
+    ) {
+      return null;
+    }
+  }
+
   for (const play of ordered) {
     const type = getEffectiveType(
       play.card,
       play.tigressMode,
     );
 
-    if (type === "escape" || type === "loot") {
-      continue;
-    }
-
+    // Les autres cartes spéciales ne définissent pas la couleur :
+    // on cherche la première carte numérique ou le Joker.
     if (type === "number") {
       return play.card.suit ?? null;
     }
@@ -74,8 +89,6 @@ export function determineLeadSuit(
     if (type === "joker") {
       return play.chosenSuit ?? null;
     }
-
-    return null;
   }
 
   return null;

@@ -92,6 +92,16 @@ type ScoreboardEntry = {
   rank_position: number;
 };
 
+type RoundSummaryEntry = {
+  player_id: string;
+  username: string;
+  bid: number;
+  tricks_won: number;
+  base_points: number;
+  bonus_points: number;
+  total_points: number;
+};
+
 type GameScreenProps = {
   roomId: string;
   onExit: () => void;
@@ -160,6 +170,9 @@ export default function GameScreen({
   const [userId, setUserId] = useState("");
   const [roomName, setRoomName] = useState("SKULL ARENA");
   const [roomStatus, setRoomStatus] = useState("waiting");
+  const [countdownEndsAt, setCountdownEndsAt] = useState<string | null>(null);
+  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+  const [showGo, setShowGo] = useState(false);
   const [quickPhrases, setQuickPhrases] = useState<Array<{ id: string; phrase: string }>>([]);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; player_id: string; username: string; phrase: string; created_at: string }>>([]);
   const [sendingChat, setSendingChat] = useState(false);
@@ -168,6 +181,10 @@ export default function GameScreen({
 
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
+  const [roundSummary, setRoundSummary] = useState<RoundSummaryEntry[]>([]);
+  const [roundSummaryId, setRoundSummaryId] = useState("");
+  const [dismissedRoundSummaryId, setDismissedRoundSummaryId] = useState("");
+  const [roundTricksWon, setRoundTricksWon] = useState<Record<string, number>>({});
   const [round, setRound] = useState<GameRound | null>(null);
   const [hand, setHand] = useState<GameCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,7 +254,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     const { data: room, error: roomError } = await supabase
       .from("game_rooms")
-      .select("room_name, status, host_id")
+      .select("room_name, status, host_id, countdown_ends_at")
       .eq("id", roomId)
       .single();
 
@@ -249,6 +266,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     setRoomName(room.room_name || "SKULL ARENA");
     setRoomStatus(room.status || "waiting");
+    setCountdownEndsAt(room.countdown_ends_at || null);
 
     if (room.status !== "playing" && room.status !== "finished") {
       setError("Cette partie n'est pas en cours.");
@@ -344,6 +362,25 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       }))
     );
 
+    // PLIS DÉJÀ REMPORTÉS PENDANT CETTE MANCHE
+    const { data: resolvedTricks, error: resolvedTricksError } = await supabase
+      .from("game_tricks")
+      .select("winner_player_id")
+      .eq("round_id", currentRound.id)
+      .eq("status", "completed")
+      .not("winner_player_id", "is", null);
+
+    if (resolvedTricksError) {
+      console.error("ERREUR COMPTE DES PLIS :", resolvedTricksError);
+    } else {
+      const wins: Record<string, number> = {};
+      (resolvedTricks || []).forEach((trick) => {
+        const winnerId = trick.winner_player_id as string | null;
+        if (winnerId) wins[winnerId] = (wins[winnerId] || 0) + 1;
+      });
+      setRoundTricksWon(wins);
+    }
+
     // CLASSEMENT DU SALON
     const { data: scoreboardData, error: scoreboardError } =
       await supabase.rpc("get_room_scoreboard", {
@@ -354,6 +391,48 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       setScoreboard(scoreboardData as ScoreboardEntry[]);
     } else if (scoreboardError) {
       console.error("ERREUR CLASSEMENT :", scoreboardError);
+    }
+
+    // RÉCAPITULATIF DE LA MANCHE PRÉCÉDENTE
+    if (currentRound.round_number > 1) {
+      const { data: previousRound } = await supabase
+        .from("game_rounds")
+        .select("id")
+        .eq("room_id", roomId)
+        .eq("round_number", currentRound.round_number - 1)
+        .maybeSingle();
+
+      if (previousRound?.id) {
+        setRoundSummaryId(previousRound.id);
+        const { data: previousScores, error: previousScoresError } = await supabase
+          .from("player_round_scores")
+          .select("player_id, bid, tricks_won, base_points, bonus_points, total_points")
+          .eq("round_id", previousRound.id)
+          .order("total_points", { ascending: false });
+
+        if (previousScoresError) {
+          console.error("ERREUR RÉCAPITULATIF DE MANCHE :", previousScoresError);
+        } else {
+          const summaryRows = previousScores || [];
+          const summaryPlayerIds = summaryRows.map((entry) => entry.player_id);
+          const { data: summaryProfiles } = summaryPlayerIds.length
+            ? await supabase.from("profiles").select("id, username").in("id", summaryPlayerIds)
+            : { data: [] };
+          const summaryNames = new Map(
+            (summaryProfiles || []).map((profile) => [profile.id, profile.username || "Pirate inconnu"])
+          );
+          setRoundSummary(summaryRows.map((entry) => ({
+            ...entry,
+            username: summaryNames.get(entry.player_id) || "Pirate inconnu",
+          })) as RoundSummaryEntry[]);
+        }
+      } else {
+        setRoundSummary([]);
+        setRoundSummaryId("");
+      }
+    } else {
+      setRoundSummary([]);
+      setRoundSummaryId("");
     }
 
     // PROGRESSION DES ENCHÈRES
@@ -578,14 +657,46 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   };
 
   useEffect(() => {
-    loadGame();
+    let mounted = true;
+    let refreshInProgress = false;
+    let refreshPending = false;
+    let refreshTimer: number | null = null;
 
+    const refreshSafely = async () => {
+      if (!mounted) return;
+      if (refreshInProgress) {
+        refreshPending = true;
+        return;
+      }
+
+      refreshInProgress = true;
+      do {
+        refreshPending = false;
+        await loadGame();
+      } while (mounted && refreshPending);
+      refreshInProgress = false;
+    };
+
+    const scheduleRefresh = () => {
+      if (refreshTimer !== null) {
+        window.clearTimeout(refreshTimer);
+      }
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = null;
+        void refreshSafely();
+      }, 120);
+    };
+
+    void refreshSafely();
+
+    // Filet de sécurité en cas de perte temporaire du canal Realtime.
     const refreshInterval = window.setInterval(() => {
-      loadGame();
-    }, 3000);
+      void refreshSafely();
+    }, 5000);
 
-    const channel = supabase
-      .channel(`game-screen-${roomId}`)
+    let channel = supabase.channel(`game-screen-${roomId}`);
+
+    channel = channel
       .on(
         "postgres_changes",
         {
@@ -594,7 +705,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "game_rooms",
           filter: `id=eq.${roomId}`,
         },
-        () => loadGame()
+        scheduleRefresh
       )
       .on(
         "postgres_changes",
@@ -604,29 +715,18 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "player_scores",
           filter: `room_id=eq.${roomId}`,
         },
-        () => loadGame()
+        scheduleRefresh
       )
-     
-.on(
-  "postgres_changes",
-  {
-    event: "*",
-    schema: "public",
-    table: "player_round_scores",
-    filter: `room_id=eq.${roomId}`,
-  },
-  () => loadGame()
-)
-.on(
-  "postgres_changes",
-  {
-    event: "*",
-    schema: "public",
-    table: "player_bids",
-  },
-  () => loadGame()
-)
-      
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "player_round_scores",
+          filter: `room_id=eq.${roomId}`,
+        },
+        scheduleRefresh
+      )
       .on(
         "postgres_changes",
         {
@@ -635,16 +735,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "game_rounds",
           filter: `room_id=eq.${roomId}`,
         },
-        () => loadGame()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "player_hands",
-        },
-        () => loadGame()
+        scheduleRefresh
       )
       .on(
         "postgres_changes",
@@ -654,36 +745,105 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "room_players",
           filter: `room_id=eq.${roomId}`,
         },
-        () => loadGame()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "game_tricks",
-        },
-        () => loadGame()
-      )
-      .on(
+        scheduleRefresh
+      );
+
+    // Ces tables sont liées à la manche courante : on évite les
+    // notifications globales provenant des autres salons.
+    if (round?.id) {
+      channel = channel
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "player_bids",
+            filter: `round_id=eq.${round.id}`,
+          },
+          scheduleRefresh
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "player_hands",
+            filter: `round_id=eq.${round.id}`,
+          },
+          scheduleRefresh
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "game_tricks",
+            filter: `round_id=eq.${round.id}`,
+          },
+          scheduleRefresh
+        );
+    }
+
+    if (currentTrick?.id) {
+      channel = channel.on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "trick_plays",
+          filter: `trick_id=eq.${currentTrick.id}`,
         },
-        () => loadGame()
-      )
-      .subscribe();
+        scheduleRefresh
+      );
+    }
 
+    channel.subscribe();
 
-
-    
     return () => {
+      mounted = false;
       window.clearInterval(refreshInterval);
-      supabase.removeChannel(channel);
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      void supabase.removeChannel(channel);
     };
-  }, [roomId, loadGame]);
+  }, [roomId, loadGame, round?.id, currentTrick?.id]);
+
+  useEffect(() => {
+    if (!countdownEndsAt) {
+      setCountdownValue(null);
+      setShowGo(false);
+      return;
+    }
+
+    const target = new Date(countdownEndsAt).getTime();
+    if (!Number.isFinite(target)) return;
+
+    let goTimer: number | null = null;
+    let goShown = false;
+
+    const updateLaunchCountdown = () => {
+      const remainingMs = target - Date.now();
+      if (remainingMs > 0) {
+        setCountdownValue(Math.ceil(remainingMs / 1000));
+        setShowGo(false);
+        return;
+      }
+
+      setCountdownValue(null);
+      if (!goShown) {
+        goShown = true;
+        setShowGo(true);
+        goTimer = window.setTimeout(() => setShowGo(false), 850);
+      }
+    };
+
+    updateLaunchCountdown();
+    const interval = window.setInterval(updateLaunchCountdown, 100);
+
+    return () => {
+      window.clearInterval(interval);
+      if (goTimer !== null) window.clearTimeout(goTimer);
+    };
+  }, [countdownEndsAt]);
 
   useEffect(() => {
   const updateCountdown = () => {
@@ -1270,6 +1430,36 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
   return (
     <main className="skull-game">
+      {(countdownValue !== null || showGo) && (
+        <div
+          role="status"
+          aria-live="assertive"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            display: "grid",
+            placeItems: "center",
+            background: "rgba(5, 8, 14, 0.82)",
+            backdropFilter: "blur(8px)",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              color: "#ffe6a0",
+              fontFamily: "Georgia, serif",
+              fontSize: "clamp(76px, 18vw, 150px)",
+              fontWeight: 900,
+              textShadow: "0 0 18px rgba(255,174,49,.9), 0 0 54px rgba(255,120,25,.65)",
+              animation: "skullLaunchPulse .65s ease-in-out infinite alternate",
+            }}
+          >
+            {showGo ? "GO !" : countdownValue}
+          </div>
+        </div>
+      )}
+      <style>{`@keyframes skullLaunchPulse { from { transform: scale(.88); opacity:.75; } to { transform: scale(1.06); opacity:1; } }`}</style>
       <header className="game-topbar">
         <button className="game-back" onClick={onExit}>
           <ArrowLeft size={18} />
@@ -1310,73 +1500,60 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
       </section>
 
+      {roundSummary.length > 0 && roundSummaryId && dismissedRoundSummaryId !== roundSummaryId && (
+        <section className="round-summary-panel" aria-label="Résultats de la manche précédente">
+          <div className="round-summary-heading">
+            <div>
+              <span>RÉSULTATS DE LA MANCHE {round.round_number - 1}</span>
+              <strong>Le score est tombé !</strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDismissedRoundSummaryId(roundSummaryId)}
+              aria-label="Fermer le récapitulatif"
+            >
+              <X size={17} />
+            </button>
+          </div>
+          <div className="round-summary-list">
+            {roundSummary.map((entry, index) => (
+              <div className="round-summary-row" key={entry.player_id}>
+                <span className="round-summary-rank">{index + 1}</span>
+                <div className="round-summary-player">
+                  <strong>{entry.username}</strong>
+                  <span>Mise {entry.bid} · {entry.tricks_won} pli(s) · bonus {entry.bonus_points >= 0 ? "+" : ""}{entry.bonus_points}</span>
+                </div>
+                <strong className={entry.total_points >= 0 ? "round-summary-positive" : "round-summary-negative"}>
+                  {entry.total_points > 0 ? "+" : ""}{entry.total_points} pts
+                </strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* CLASSEMENT EN DIRECT */}
-      <section
-        className="game-scoreboard"
-        style={{
-          margin: "18px 0",
-          padding: "18px",
-          borderRadius: "16px",
-          background: "rgba(12, 20, 35, 0.92)",
-          border: "1px solid rgba(246, 201, 76, 0.25)",
-        }}
-      >
+      <section className="game-scoreboard skull-scoreboard" aria-label="Classement de l'équipage">
         <div className="game-section-heading">
-          <h2>
-            <Crown size={19} /> CLASSEMENT DE L'ÉQUIPAGE
-          </h2>
-          <span>EN DIRECT</span>
+          <h2><Crown size={19} /> CLASSEMENT DE L'ÉQUIPAGE</h2>
+          <span className="scoreboard-live"><i /> EN DIRECT</span>
         </div>
-
         {scoreboard.length === 0 ? (
-          <p>Aucun score enregistré pour le moment.</p>
+          <p className="scoreboard-empty">Les scores apparaîtront dès la fin du premier pli.</p>
         ) : (
-          <div style={{ display: "grid", gap: "9px" }}>
-            {scoreboard.map((player) => {
+          <div className="scoreboard-list">
+            {[...scoreboard].sort((a, b) => a.rank_position - b.rank_position).map((player) => {
               const isCurrentPlayer = player.player_id === userId;
-
+              const podium = player.rank_position <= 3;
+              const medal = player.rank_position === 1 ? "♛" : player.rank_position === 2 ? "🥈" : player.rank_position === 3 ? "🥉" : `#${player.rank_position}`;
               return (
-                <div
-                  key={player.player_id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "36px minmax(0, 1fr) auto",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    background: isCurrentPlayer
-                      ? "rgba(246, 201, 76, 0.12)"
-                      : "rgba(255,255,255,0.035)",
-                    border: isCurrentPlayer
-                      ? "1px solid rgba(246, 201, 76, 0.45)"
-                      : "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  <strong style={{ color: "#f6c94c" }}>
-                    #{player.rank_position}
-                  </strong>
-
-                  <div style={{ minWidth: 0 }}>
-                    <strong>
-                      {player.username}
-                      {isCurrentPlayer ? " (TOI)" : ""}
-                    </strong>
-
-                    <div style={{ fontSize: "12px", opacity: 0.7 }}>
-                      {player.tricks_won} plis gagnés ·{" "}
-                      {player.rounds_played} manches
-                    </div>
+                <div key={player.player_id} className={`scoreboard-row ${podium ? `scoreboard-row--top scoreboard-row--rank-${player.rank_position}` : ""} ${isCurrentPlayer ? "scoreboard-row--me" : ""}`}>
+                  <span className="scoreboard-rank" aria-label={`Position ${player.rank_position}`}>{medal}</span>
+                  <div className="scoreboard-player">
+                    <strong>{player.username}{isCurrentPlayer ? <small>TOI</small> : null}</strong>
+                    <span>{player.tricks_won} plis remportés <i>·</i> {player.rounds_played} manches</span>
                   </div>
-
-                  <strong
-                    style={{
-                      color: "#f6c94c",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {player.total_score} pts
-                  </strong>
+                  <strong className="scoreboard-points">{player.total_score}<small>PTS</small></strong>
                 </div>
               );
             })}
@@ -1391,6 +1568,28 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <div className="arena-table">
+          <div className="arena-played-cards" aria-live="polite" aria-label="Cartes jouées dans le pli">
+            {playedCards.length === 0 ? (
+              <div className="arena-empty-play">
+                <Swords size={25} />
+                <span>{round.status === "bidding" ? "EN ATTENTE DES ENCHÈRES" : "À TOI DE JOUER"}</span>
+              </div>
+            ) : (
+              playedCards.map((play) => {
+                const playedCard = play.card as GameCard;
+                const playedBy = players.find((player) => player.player_id === play.player_id);
+                return (
+                  <div className="arena-played-card" key={play.id}>
+                    <span className="arena-played-by">{playedBy?.username ?? "Pirate"}</span>
+                    <div className={`arena-mini-card arena-mini-card--${playedCard.type}`}>
+                      <strong>{playedCard.value ?? cardSymbol(playedCard.type)}</strong>
+                      <span>{playedCard.name}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
           <div className="arena-decoration">
             <Skull size={62} />
             <strong>SKULL ARENA</strong>
@@ -1944,11 +2143,21 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </section>
       )}
 
-      <section className="quick-chat-dock" aria-label="Messages rapides">
-        <div className="game-section-heading"><h2>💬 RÉACTIONS DE L'ÉQUIPAGE</h2><span>Une bulle, deux secondes</span></div>
-        <div className="quick-chat-options">{quickPhrases.map((item) => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>
-        {chatError && <p role="alert" className="play-message">{chatError}</p>}
-      </section>
+      <details className="quick-chat-dock" aria-label="Messages rapides">
+        <summary className="quick-chat-trigger">
+          <span className="quick-chat-trigger-icon">💬</span>
+          <span>CHAT DE L'ÉQUIPAGE</span>
+          <span className="quick-chat-trigger-count">{quickPhrases.length}</span>
+        </summary>
+        <div className="quick-chat-menu">
+          <div className="game-section-heading">
+            <h2>RÉACTIONS RAPIDES</h2>
+            <span>Choisis une phrase</span>
+          </div>
+          <div className="quick-chat-options">{quickPhrases.map((item) => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>
+          {chatError && <p role="alert" className="play-message">{chatError}</p>}
+        </div>
+      </details>
 
       {/* ÉQUIPAGE */}
       <section className="game-crew">
@@ -1977,12 +2186,15 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                 key={player.player_id}
               >
                 {showBubble && latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
-                <div className="game-player-avatar">
-                  {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
-                    <Crown size={20} />
-                  ) : (
-                    <Skull size={20} />
-                  )}
+                <div className="game-player-portrait-frame">
+                  <div className="game-player-avatar">
+                    {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
+                      <Crown size={20} />
+                    ) : (
+                      <Skull size={20} />
+                    )}
+                  </div>
+                  {player.isHost && <span className="game-player-crown" aria-label="Capitaine">♛</span>}
                 </div>
 
                 <div className="game-player-info">
@@ -1993,6 +2205,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   <span>
                     {player.isHost ? "CAPITAINE" : "PIRATE"}
                   </span>
+                  <div className="game-player-round-stats">
+                    <span>MISE <b>{revealedBids.find((bid) => bid.player_id === player.player_id)?.bid ?? "—"}</b></span>
+                    <span>PLIS <b>{roundTricksWon[player.player_id] ?? 0}</b></span>
+                  </div>
                 </div>
 
                 {player.player_id === round.leader_player_id && (
