@@ -34,6 +34,7 @@ type GamePlayer = {
   player_id: string;
   username: string;
   isHost: boolean;
+  avatar_url?: string | null;
 };
 
 type GameRound = {
@@ -327,7 +328,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     const profileMap = new Map(
       (profiles || []).map((profile) => [
         profile.id,
-        profile.username,
+        { username: profile.username, avatar_url: profile.avatar_url },
       ])
     );
 
@@ -335,7 +336,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       (roomPlayers || []).map((player) => ({
         player_id: player.player_id,
         username:
-          profileMap.get(player.player_id) || "Pirate inconnu",
+          profileMap.get(player.player_id)?.username || "Pirate inconnu",
+        avatar_url: profileMap.get(player.player_id)?.avatar_url || null,
         isHost: player.player_id === room.host_id,
       }))
     );
@@ -555,6 +557,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         setChatMessages((previous) => previous.some((item) => item.id === message.id)
           ? previous
           : [...previous.slice(-24), message]);
+        setChatNow(Date.now());
+        window.setTimeout(() => setChatNow(Date.now()), 2050);
       })
       .subscribe();
     return () => {
@@ -1906,6 +1910,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
         <div className="game-player-list">
           {players.map((player) => {
+            const latestBubble = [...chatMessages].reverse().find((message) => message.player_id === player.player_id && chatNow - new Date(message.created_at).getTime() < 2000);
             const hasPlayed = playedCards.some(
               (play) => play.player_id === player.player_id
             );
@@ -1919,6 +1924,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                 }
                 key={player.player_id}
               >
+                {latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
                 <div className="game-player-avatar">
                   {player.isHost ? (
                     <Crown size={20} />
