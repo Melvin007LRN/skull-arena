@@ -200,6 +200,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const [juanitaCanPeek, setJuanitaCanPeek] = useState(false);
   const [juanitaPeekCards, setJuanitaPeekCards] = useState<GameCard[] | null>(null);
   const [juanitaPeekLoading, setJuanitaPeekLoading] = useState(false);
+  const [bendtTrickId, setBendtTrickId] = useState<string | null>(null);
+  const [bendtCanDraw, setBendtCanDraw] = useState(false);
+  const [bendtDiscardIds, setBendtDiscardIds] = useState<string[]>([]);
+  const [bendtLoading, setBendtLoading] = useState(false);
   
   const loadGame = useCallback(async () => {
     setError("");
@@ -453,6 +457,16 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   setJuanitaCanPeek(canPeekWithJuanita);
   setJuanitaTrickId(canPeekWithJuanita ? lastResolvedTrick?.id ?? null : null);
   if (!canPeekWithJuanita) setJuanitaPeekCards(null);
+  const bendtTrigger = powerTriggers.some(
+    (trigger) => trigger.player_id === currentUserId && trigger.power === "bendt"
+  );
+  const canUseBendt = Boolean(
+    bendtTrigger && lastResolvedTrick?.id &&
+    lastResolvedTrick.trick_number < currentRound.round_number
+  );
+  setBendtCanDraw(canUseBendt);
+  setBendtTrickId(canUseBendt ? lastResolvedTrick?.id ?? null : null);
+  if (!canUseBendt) setBendtDiscardIds([]);
 
   if (
     lastResolvedTrick?.resolved_at &&
@@ -640,6 +654,57 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     }
     const result = data as { draw_pile?: GameCard[] } | null;
     setJuanitaPeekCards(Array.isArray(result?.draw_pile) ? result.draw_pile : []);
+  };
+
+  const drawBendtCards = async () => {
+    if (!bendtTrickId || bendtLoading) return;
+    setBendtLoading(true);
+    setPlayMessage("");
+    const { data, error: drawError } = await supabase.rpc(
+      "draw_bendt_cards",
+      { p_trick_id: bendtTrickId }
+    );
+    setBendtLoading(false);
+    if (drawError) {
+      setPlayMessage(drawError.message);
+      return;
+    }
+    const result = data as { drawn_cards?: GameCard[] } | null;
+    const drawn = Array.isArray(result?.drawn_cards) ? result.drawn_cards : [];
+    setHand((previous) => [...previous, ...drawn]);
+    setBendtCanDraw(false);
+    setBendtDiscardIds([]);
+    setPlayMessage("Bendt a pioché deux cartes. Choisis-en deux à défausser.");
+  };
+
+  const toggleBendtDiscard = (cardId: string) => {
+    setBendtDiscardIds((previous) =>
+      previous.includes(cardId)
+        ? previous.filter((id) => id !== cardId)
+        : previous.length < 2
+          ? [...previous, cardId]
+          : previous
+    );
+  };
+
+  const confirmBendtDiscard = async () => {
+    if (!bendtTrickId || bendtDiscardIds.length !== 2 || bendtLoading) return;
+    setBendtLoading(true);
+    setPlayMessage("");
+    const { error: discardError } = await supabase.rpc(
+      "discard_bendt_cards",
+      { p_trick_id: bendtTrickId, p_card_ids: bendtDiscardIds }
+    );
+    setBendtLoading(false);
+    if (discardError) {
+      setPlayMessage(discardError.message);
+      return;
+    }
+    setHand((previous) => previous.filter((card) => !bendtDiscardIds.includes(card.id)));
+    setBendtDiscardIds([]);
+    setBendtTrickId(null);
+    setPlayMessage("Pouvoir de Bendt terminé : deux cartes défaussées.");
+    await loadGame();
   };
 
   const submitBid = async () => {
@@ -1536,6 +1601,53 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             disabled={!rosieTarget || rosieSaving}
           >
             {rosieSaving ? "VALIDATION..." : "CONFIRMER LE MENEUR"}
+          </button>
+        </section>
+      )}
+
+      {bendtCanDraw && (
+        <section className="walk-the-plank-choice" aria-live="polite">
+          <div className="game-section-heading">
+            <h2>🦹 BENDT LE BANDIT — PIoche & DÉFAUSSE</h2>
+          </div>
+          <p>Pioche deux cartes, puis défausse exactement deux cartes de ta main.</p>
+          <button
+            type="button"
+            className="lobby-primary play-card-button"
+            onClick={drawBendtCards}
+            disabled={bendtLoading}
+          >
+            {bendtLoading ? "PIoche..." : "PIOCHER DEUX CARTES"}
+          </button>
+        </section>
+      )}
+
+      {bendtTrickId && !bendtCanDraw && hand.length > 0 && (
+        <section className="walk-the-plank-choice" aria-live="polite">
+          <div className="game-section-heading">
+            <h2>🦹 BENDT — CHOISIS DEUX CARTES À DÉFAUSSER</h2>
+          </div>
+          <p>{bendtDiscardIds.length}/2 cartes sélectionnées</p>
+          <div className="plank-target-list">
+            {hand.map((card) => (
+              <button
+                type="button"
+                key={card.id}
+                className={bendtDiscardIds.includes(card.id) ? "plank-target selected" : "plank-target"}
+                onClick={() => toggleBendtDiscard(card.id)}
+                disabled={bendtLoading}
+              >
+                {cardSymbol(card.type)} {card.name} {card.value ?? ""}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="lobby-primary play-card-button"
+            onClick={confirmBendtDiscard}
+            disabled={bendtDiscardIds.length !== 2 || bendtLoading}
+          >
+            {bendtLoading ? "DÉFAUSSE..." : "CONFIRMER LA DÉFAUSSE"}
           </button>
         </section>
       )}
