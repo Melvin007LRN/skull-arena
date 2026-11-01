@@ -182,6 +182,7 @@ export default function GameScreen({
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
   const [roundSummary, setRoundSummary] = useState<RoundSummaryEntry[]>([]);
+  const [roundSummaryId, setRoundSummaryId] = useState("");
   const [dismissedRoundSummaryId, setDismissedRoundSummaryId] = useState("");
   const [roundTricksWon, setRoundTricksWon] = useState<Record<string, number>>({});
   const [round, setRound] = useState<GameRound | null>(null);
@@ -402,6 +403,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         .maybeSingle();
 
       if (previousRound?.id) {
+        setRoundSummaryId(previousRound.id);
         const { data: previousScores, error: previousScoresError } = await supabase
           .from("player_round_scores")
           .select("player_id, bid, tricks_won, base_points, bonus_points, total_points")
@@ -426,9 +428,11 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         }
       } else {
         setRoundSummary([]);
+        setRoundSummaryId("");
       }
     } else {
       setRoundSummary([]);
+      setRoundSummaryId("");
     }
 
     // PROGRESSION DES ENCHÈRES
@@ -1496,7 +1500,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
       </section>
 
-      {roundSummary.length > 0 && dismissedRoundSummaryId !== String(round.round_number - 1) && (
+      {roundSummary.length > 0 && roundSummaryId && dismissedRoundSummaryId !== roundSummaryId && (
         <section className="round-summary-panel" aria-label="Résultats de la manche précédente">
           <div className="round-summary-heading">
             <div>
@@ -1505,7 +1509,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             </div>
             <button
               type="button"
-              onClick={() => setDismissedRoundSummaryId(String(round.round_number - 1))}
+              onClick={() => setDismissedRoundSummaryId(roundSummaryId)}
               aria-label="Fermer le récapitulatif"
             >
               <X size={17} />
