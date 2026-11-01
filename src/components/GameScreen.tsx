@@ -584,6 +584,28 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   };
 }, [nextTrickAt]);
 
+  const confirmRosieLeader = async () => {
+    if (!rosieTrickId || !rosieTarget || rosieSaving) return;
+    setRosieSaving(true);
+    setPlayMessage("");
+    const { error: choiceError } = await supabase.rpc(
+      "choose_rosie_next_leader",
+      {
+        p_trick_id: rosieTrickId,
+        p_target_player_id: rosieTarget,
+      }
+    );
+    setRosieSaving(false);
+    if (choiceError) {
+      setPlayMessage(choiceError.message);
+      return;
+    }
+    setRosieCanChoose(false);
+    setRosieTarget("");
+    setPlayMessage("Rosie a choisi le meneur du prochain pli.");
+    await loadGame();
+  };
+
   const submitBid = async () => {
     if (!round || hasSubmittedBid || submittingBid) return;
 
@@ -1449,6 +1471,36 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           {playMessage && (
             <p className="play-message">{playMessage}</p>
           )}
+        </section>
+      )}
+
+      {rosieCanChoose && (
+        <section className="walk-the-plank-choice" aria-live="polite">
+          <div className="game-section-heading">
+            <h2>🌹 ROSIE LA DOUCE — CHOISIS LE MENEUR</h2>
+          </div>
+          <p>Tu as remporté un pli avec Rosie. Désigne le joueur qui commencera le prochain pli.</p>
+          <div className="plank-target-list">
+            {players.map((player) => (
+              <button
+                type="button"
+                key={player.player_id}
+                className={rosieTarget === player.player_id ? "plank-target selected" : "plank-target"}
+                onClick={() => setRosieTarget(player.player_id)}
+                disabled={rosieSaving}
+              >
+                {player.username}{player.player_id === userId ? " (TOI)" : ""}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="lobby-primary play-card-button"
+            onClick={confirmRosieLeader}
+            disabled={!rosieTarget || rosieSaving}
+          >
+            {rosieSaving ? "VALIDATION..." : "CONFIRMER LE MENEUR"}
+          </button>
         </section>
       )}
 
