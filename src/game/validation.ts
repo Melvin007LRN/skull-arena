@@ -63,10 +63,9 @@ export function determineLeadSuit(
       play.tigressMode,
     );
 
-    if (type === "escape" || type === "loot") {
-      continue;
-    }
-
+    // Les cartes spéciales (Pirate, Sirène, Skull King,
+    // Kraken, etc.) ne définissent pas la couleur demandée.
+    // On cherche la première carte numérique ou le Joker.
     if (type === "number") {
       return play.card.suit ?? null;
     }
@@ -74,8 +73,6 @@ export function determineLeadSuit(
     if (type === "joker") {
       return play.chosenSuit ?? null;
     }
-
-    return null;
   }
 
   return null;
