@@ -463,8 +463,15 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const juanitaTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "juanita"
   );
+  const juanitaPeekedPlayers = Array.isArray(
+    (resolvedMetadata as { juanita_peeked_player_ids?: string[] } | null)?.juanita_peeked_player_ids
+  )
+    ? (resolvedMetadata as { juanita_peeked_player_ids: string[] }).juanita_peeked_player_ids
+    : [];
   const canPeekWithJuanita = Boolean(
-    juanitaTrigger && lastResolvedTrick?.id &&
+    juanitaTrigger &&
+    !juanitaPeekedPlayers.includes(currentUserId) &&
+    lastResolvedTrick?.id &&
     lastResolvedTrick.trick_number < currentRound.round_number
   );
   setJuanitaCanPeek(canPeekWithJuanita);
