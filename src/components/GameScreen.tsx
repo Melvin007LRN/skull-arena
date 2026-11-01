@@ -190,6 +190,7 @@ export default function GameScreen({
   const [choosingPlankTarget, setChoosingPlankTarget] = useState(false);
 
 const [nextTrickAt, setNextTrickAt] = useState<string | null>(null);
+const [lastResolvedTrickNumber, setLastResolvedTrickNumber] = useState(0);
 const [pauseCountdown, setPauseCountdown] = useState(0);
   
   const loadGame = useCallback(async () => {
@@ -390,6 +391,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   console.error("ERREUR CHARGEMENT DU PLI :", trickError);
 } else if (trickData) {
   setCurrentTrick(trickData as CurrentTrick);
+  setLastResolvedTrickNumber(Math.max(0, trickData.trick_number - 1));
   setNextTrickAt(null);
 
   const { data: playsData, error: playsError } = await supabase
@@ -418,6 +420,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     .order("trick_number", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  setLastResolvedTrickNumber(lastResolvedTrick?.trick_number ?? 0);
 
   if (
     lastResolvedTrick?.resolved_at &&
@@ -531,7 +535,16 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       )
       .subscribe();
 
-useEffect(() => {
+
+
+    
+    return () => {
+      window.clearInterval(refreshInterval);
+      supabase.removeChannel(channel);
+    };
+  }, [roomId, loadGame]);
+
+  useEffect(() => {
   const updateCountdown = () => {
     if (!nextTrickAt) {
       setPauseCountdown(0);
@@ -558,13 +571,6 @@ useEffect(() => {
     window.clearInterval(countdownInterval);
   };
 }, [nextTrickAt]);
-
-    
-    return () => {
-      window.clearInterval(refreshInterval);
-      supabase.removeChannel(channel);
-    };
-  }, [roomId, loadGame]);
 
   const submitBid = async () => {
     if (!round || hasSubmittedBid || submittingBid) return;
@@ -1264,7 +1270,7 @@ useEffect(() => {
         letterSpacing: "1px",
       }}
     >
-      PROCHAIN PLI : N° {(currentTrick?.trick_number || 0) + 1}
+      PROCHAIN PLI : N° {lastResolvedTrickNumber + 1}
     </strong>
 
     <div
