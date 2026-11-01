@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   Anchor,
   ArrowLeft,
@@ -185,6 +185,8 @@ export default function GameScreen({
   const [playedCards, setPlayedCards] = useState<PlayedCard[]>([]);
   const [selectedCard, setSelectedCard] =
     useState<GameCard | null>(null);
+  const dragStartRef = useRef<{ cardId: string; x: number; y: number } | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [tigressMode, setTigressMode] =
     useState<"pirate" | "escape">("pirate");
   const [chosenValue, setChosenValue] = useState<number | null>(null);
@@ -868,6 +870,55 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     setHasSubmittedBid(true);
     setBidMessage("Ton annonce est enregistrée secrètement.");
 
+    await loadGame();
+  };
+
+  const handleHandCardPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, card: GameCard) => {
+    if (event.pointerType === "mouse" || !isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
+    dragStartRef.current = { cardId: card.id, x: event.clientX, y: event.clientY };
+    setDraggingCardId(card.id);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleHandCardPointerUp = (event: React.PointerEvent<HTMLButtonElement>, card: GameCard) => {
+    const start = dragStartRef.current;
+    dragStartRef.current = null;
+    setDraggingCardId(null);
+    if (!start || start.cardId !== card.id) return;
+    const deltaY = start.y - event.clientY;
+    const deltaX = Math.abs(event.clientX - start.x);
+    if (deltaY < 78 || deltaY < deltaX * 0.75) return;
+    setSelectedCard(card);
+    setChosenValue(card.selectableValue?.[0] ?? null);
+    setChosenSuit("green");
+    setPlayMessage("");
+    setShowPlayConfirmation(false);
+    const needsChoice = Boolean(card.selectableValue?.length || card.type === "joker" || card.type === "tigress" || card.type === "walk_the_plank");
+    if (!needsChoice) void playCardFromHand(card);
+  };
+
+  const playCardFromHand = async (card: GameCard) => {
+    if (!round || playingCard || !isMyTurn) return;
+    setSelectedCard(card);
+    setChosenValue(card.selectableValue?.[0] ?? null);
+    setChosenSuit("green");
+    setPlayMessage("");
+    if (card.selectableValue?.length || card.type === "joker" || card.type === "tigress" || card.type === "walk_the_plank") {
+      setPlayMessage("Choisis les options de cette carte avant de la jouer.");
+      return;
+    }
+    setPlayingCard(true);
+    const { error: playError } = await supabase.rpc("play_card", {
+      p_round_id: round.id,
+      p_card_id: card.id,
+      p_tigress_mode: null,
+      p_chosen_value: null,
+      p_chosen_suit: null,
+    });
+    setPlayingCard(false);
+    if (playError) { setPlayMessage(playError.message); return; }
+    setPlayMessage("Carte jouée !");
+    setSelectedCard(null);
     await loadGame();
   };
 
@@ -1975,9 +2026,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <p className="game-hand-hint">
-          Tes cartes sont privées. Seul ton compte peut consulter cette main.
-          {round.status === "playing" &&
-            " Sélectionne une carte pour la jouer."}
+          Tes cartes sont privées. Fais glisser une carte vers le haut, en direction de l’arène, pour la jouer. Sur les cartes à choix, le glissement ouvre d’abord leurs options.
         </p>
 
         {hand.length === 0 ? (
@@ -1992,10 +2041,11 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               return (
                 <button
                   type="button"
-                  className={`game-card ${
-                    isSelected ? "game-card-selected" : ""
-                  }`}
+                  className={`game-card game-card--${card.type} ${card.isExpansionCard ? "game-card--expansion" : ""} ${isSelected ? "game-card-selected" : ""} ${draggingCardId === card.id ? "game-card-dragging" : ""}`}
                   key={card.id}
+                  onPointerDown={(event) => handleHandCardPointerDown(event, card)}
+                  onPointerUp={(event) => handleHandCardPointerUp(event, card)}
+                  onPointerCancel={() => { dragStartRef.current = null; setDraggingCardId(null); }}
                   onClick={() => {
                     if (
                       round.status !== "playing" ||

@@ -150,8 +150,8 @@ export default function App() {
           </div>
 
           <h1>
-            RULE THE
-            <span>SEVEN SEAS</span>
+            SERAS-TU PRÊT À
+            <span>DEVENIR LE ROI DES PIRATES ?</span>
           </h1>
 
           <p className="hero-description">
@@ -192,14 +192,12 @@ export default function App() {
           </div>
         </div>
 
-        <div className="hero-emblem">
-          <div className="emblem-ring">
-            <div className="emblem-inner">
-              <Crown size={34} />
-              <Skull size={100} strokeWidth={1.2} />
-              <span>SKULL KING</span>
-              <small>MASTER OF THE SEAS</small>
-            </div>
+        <div className="hero-emblem" aria-label="Emblème Skull Arena">
+          <div className="emblem-logo">
+            <div className="emblem-logo-crown"><Crown size={38} /></div>
+            <div className="emblem-logo-skull"><Skull size={112} strokeWidth={1.35} /></div>
+            <strong>SKULL <span>ARENA</span></strong>
+            <small>THE PIRATE CHALLENGE</small>
           </div>
           <div className="emblem-glow" />
         </div>
@@ -242,7 +240,7 @@ export default function App() {
             </span>
           </button>
 
-          <button className="mode-card" onClick={enterLobby}>
+          <button className="mode-card" onClick={() => setShowLeaderboard(true)}>
             <div className="mode-icon">
               <Trophy size={28} />
             </div>

@@ -133,10 +133,6 @@ export default function Lobby({ onBack }: LobbyProps) {
   const [extensions, setExtensions] =
     useState<Extensions>(DEFAULT_EXTENSIONS);
 
-  const enabledExtensionCount = EXTENSION_OPTIONS.filter(
-    (extension) => extensions[extension.key]
-  ).length;
-
   const loadRooms = useCallback(async () => {
     const { data: userData } = await supabase.auth.getUser();
 
@@ -606,10 +602,6 @@ export default function Lobby({ onBack }: LobbyProps) {
                 maxLength={30}
               />
 
-              <span className="room-name-counter">
-                {roomName.length}/30 caractères
-              </span>
-
               <label htmlFor="max-players">
                 Nombre maximum de joueurs
               </label>
@@ -635,10 +627,6 @@ export default function Lobby({ onBack }: LobbyProps) {
                       <Puzzle size={18} />
                       EXTENSIONS ET CARTES OPTIONNELLES
                     </h2>
-                    <span>
-                      {enabledExtensionCount}/
-                      {EXTENSION_OPTIONS.length} activées
-                    </span>
                   </div>
                 </div>
 
