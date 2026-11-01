@@ -2703,3 +2703,12 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
     text-shadow: 0 2px 18px rgba(0,0,0,.8);
   }
 }
+
+
+/* Les pouvoirs spéciaux restent visibles en pleine largeur sans
+   décaler le plateau, l'équipage ou la main du joueur. */
+.skull-game > .walk-the-plank-choice {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
