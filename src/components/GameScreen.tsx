@@ -192,6 +192,10 @@ export default function GameScreen({
 const [nextTrickAt, setNextTrickAt] = useState<string | null>(null);
 const [lastResolvedTrickNumber, setLastResolvedTrickNumber] = useState(0);
 const [pauseCountdown, setPauseCountdown] = useState(0);
+  const [rosieTrickId, setRosieTrickId] = useState<string | null>(null);
+  const [rosieCanChoose, setRosieCanChoose] = useState(false);
+  const [rosieTarget, setRosieTarget] = useState("");
+  const [rosieSaving, setRosieSaving] = useState(false);
   
   const loadGame = useCallback(async () => {
     setError("");
