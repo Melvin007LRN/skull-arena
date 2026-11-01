@@ -157,6 +157,8 @@ export default function GameScreen({
 }: GameScreenProps) {
   const [userId, setUserId] = useState("");
   const [roomName, setRoomName] = useState("SKULL ARENA");
+  const [roomStatus, setRoomStatus] = useState("waiting");
+
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
   const [round, setRound] = useState<GameRound | null>(null);
@@ -215,8 +217,9 @@ export default function GameScreen({
     }
 
     setRoomName(room.room_name || "SKULL ARENA");
+    setRoomStatus(room.status || "waiting");
 
-    if (room.status !== "playing") {
+    if (room.status !== "playing" && room.status !== "finished") {
       setError("Cette partie n'est pas en cours.");
       setLoading(false);
       return;
@@ -247,16 +250,20 @@ export default function GameScreen({
       .maybeSingle();
 
     if (handError || !handData) {
-      setError("Ta main personnelle est introuvable.");
-      setLoading(false);
-      return;
+      if (room.status === "finished") {
+        setHand([]);
+      } else {
+        setError("Ta main personnelle est introuvable.");
+        setLoading(false);
+        return;
+      }
+    } else {
+      const currentHand = Array.isArray(handData.cards)
+        ? (handData.cards as GameCard[])
+        : [];
+
+      setHand(currentHand);
     }
-
-    const currentHand = Array.isArray(handData.cards)
-      ? (handData.cards as GameCard[])
-      : [];
-
-    setHand(currentHand);
 
     const { data: roomPlayers, error: playersError } = await supabase
       .from("room_players")
@@ -304,7 +311,7 @@ export default function GameScreen({
       }))
     );
 
-    // Classement du salon : seuls les membres de la partie peuvent le lire.
+    // CLASSEMENT DU SALON
     const { data: scoreboardData, error: scoreboardError } =
       await supabase.rpc("get_room_scoreboard", {
         p_room_id: roomId,
@@ -316,7 +323,7 @@ export default function GameScreen({
       console.error("ERREUR CLASSEMENT :", scoreboardError);
     }
 
-    // Progression des enchères.
+    // PROGRESSION DES ENCHÈRES
     if (
       currentRound.status === "bidding" ||
       currentRound.status === "playing" ||
@@ -357,7 +364,7 @@ export default function GameScreen({
       }
     }
 
-    // Chargement du pli en cours.
+    // CHARGEMENT DU PLI EN COURS
     const { data: trickData, error: trickError } = await supabase
       .from("game_tricks")
       .select(`
@@ -414,6 +421,26 @@ export default function GameScreen({
       .on(
         "postgres_changes",
         {
+          event: "UPDATE",
+          schema: "public",
+          table: "game_rooms",
+          filter: `id=eq.${roomId}`,
+        },
+        () => loadGame()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "player_scores",
+          filter: `room_id=eq.${roomId}`,
+        },
+        () => loadGame()
+      )
+      .on(
+        "postgres_changes",
+        {
           event: "*",
           schema: "public",
           table: "game_rounds",
@@ -450,25 +477,15 @@ export default function GameScreen({
         () => loadGame()
       )
       .on(
-  "postgres_changes",
-  {
-    event: "*",
-    schema: "public",
-    table: "trick_plays",
-  },
-  () => loadGame()
-)
-.on(
-  "postgres_changes",
-  {
-    event: "*",
-    schema: "public",
-    table: "player_scores",
-    filter: `room_id=eq.${roomId}`,
-  },
-  () => loadGame()
-)
-.subscribe();
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "trick_plays",
+        },
+        () => loadGame()
+      )
+      .subscribe();
 
     return () => {
       window.clearInterval(refreshInterval);
@@ -505,10 +522,12 @@ export default function GameScreen({
 
   const playSelectedCard = async () => {
     if (!round || !selectedCard || playingCard || !isMyTurn) return;
+
     if (selectedCard.selectableValue?.length && chosenValue === null) {
       setPlayMessage("Choisis la valeur de cette carte.");
       return;
     }
+
     if (
       selectedCard.type === "joker" &&
       !["green", "purple", "yellow"].includes(chosenSuit)
@@ -618,28 +637,31 @@ export default function GameScreen({
   );
 
   const playerCount = players.length;
+
   const allCardsPlayed =
     playerCount > 0 && playedCards.length >= playerCount;
 
-  // Détermine le prochain joueur à partir du capitaine du pli
-// et de l'ordre d'arrivée des joueurs dans le salon.
-const turnLeaderId =
-  currentTrick?.leader_player_id || round?.leader_player_id;
+  // ORDRE DE JEU
+  // L'ordre de passage suit l'ordre d'arrivée dans le salon,
+  // en partant du leader enregistré pour le pli en cours.
+  const turnLeaderId =
+    currentTrick?.leader_player_id || round?.leader_player_id;
 
-const turnLeaderIndex = players.findIndex(
-  (player) => player.player_id === turnLeaderId
-);
+  const turnLeaderIndex = players.findIndex(
+    (player) => player.player_id === turnLeaderId
+  );
 
-const expectedPlayer =
-  playerCount > 0 && turnLeaderIndex >= 0
-    ? players[(turnLeaderIndex + playedCards.length) % playerCount]
-    : null;
+  const expectedPlayer =
+    playerCount > 0 && turnLeaderIndex >= 0
+      ? players[(turnLeaderIndex + playedCards.length) % playerCount]
+      : null;
 
-const isMyTurn =
-  round?.status === "playing" &&
-  !currentPlayerHasPlayed &&
-  !allCardsPlayed &&
-  expectedPlayer?.player_id === userId;
+  const isMyTurn =
+    round?.status === "playing" &&
+    !currentPlayerHasPlayed &&
+    !allCardsPlayed &&
+    !isWaitingForPlankChoice &&
+    expectedPlayer?.player_id === userId;
 
   if (loading) {
     return (
@@ -663,6 +685,156 @@ const isMyTurn =
         <button onClick={onExit}>
           <ArrowLeft size={17} /> RETOUR AU SALON
         </button>
+      </main>
+    );
+  }
+
+  // ÉCRAN FINAL DE LA PARTIE
+  if (roomStatus === "finished") {
+    const winner = scoreboard.length > 0 ? scoreboard[0] : null;
+
+    return (
+      <main className="skull-game">
+        <header className="game-topbar">
+          <button className="game-back" onClick={onExit}>
+            <ArrowLeft size={18} />
+            SALON
+          </button>
+
+          <div className="game-brand">
+            <Skull size={27} />
+            <div>
+              <strong>SKULL ARENA</strong>
+              <span>{roomName.toUpperCase()}</span>
+            </div>
+          </div>
+
+          <button
+            className="game-refresh"
+            onClick={loadGame}
+            aria-label="Actualiser les résultats"
+          >
+            <RefreshCw size={19} />
+          </button>
+        </header>
+
+        <section
+          style={{
+            maxWidth: "760px",
+            margin: "30px auto",
+            padding: "20px",
+            textAlign: "center",
+          }}
+        >
+          <Crown
+            size={64}
+            color="#f6c94c"
+            style={{ margin: "0 auto 16px" }}
+          />
+
+          <h1 style={{ color: "#f6c94c", marginBottom: "8px" }}>
+            PARTIE TERMINÉE !
+          </h1>
+
+          <p style={{ opacity: 0.75 }}>
+            Les dix manches sont terminées. Voici les résultats de l'équipage.
+          </p>
+
+          {winner ? (
+            <div
+              style={{
+                margin: "28px 0",
+                padding: "24px",
+                borderRadius: "18px",
+                background: "rgba(246, 201, 76, 0.12)",
+                border: "1px solid rgba(246, 201, 76, 0.5)",
+              }}
+            >
+              <span style={{ color: "#f6c94c", fontSize: "13px" }}>
+                🏆 GRAND VAINQUEUR
+              </span>
+
+              <h2 style={{ fontSize: "30px", margin: "12px 0" }}>
+                {winner.username}
+              </h2>
+
+              <strong style={{ color: "#f6c94c", fontSize: "26px" }}>
+                {winner.total_score} POINTS
+              </strong>
+            </div>
+          ) : (
+            <p>Les résultats ne sont pas encore disponibles.</p>
+          )}
+
+          <div
+            style={{
+              marginTop: "28px",
+              padding: "18px",
+              borderRadius: "16px",
+              background: "rgba(12, 20, 35, 0.92)",
+              border: "1px solid rgba(246, 201, 76, 0.25)",
+              textAlign: "left",
+            }}
+          >
+            <h2 style={{ marginBottom: "18px" }}>
+              <Crown size={19} /> CLASSEMENT FINAL
+            </h2>
+
+            {scoreboard.length === 0 ? (
+              <p>Aucun résultat enregistré.</p>
+            ) : (
+              <div style={{ display: "grid", gap: "10px" }}>
+                {scoreboard.map((player) => (
+                  <div
+                    key={player.player_id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "40px minmax(0, 1fr) auto",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "13px",
+                      borderRadius: "10px",
+                      background:
+                        player.player_id === winner?.player_id
+                          ? "rgba(246, 201, 76, 0.13)"
+                          : "rgba(255,255,255,0.035)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    <strong style={{ color: "#f6c94c" }}>
+                      #{player.rank_position}
+                    </strong>
+
+                    <div>
+                      <strong>{player.username}</strong>
+                      <div style={{ fontSize: "12px", opacity: 0.7 }}>
+                        {player.games_won} victoire(s) ·{" "}
+                        {player.tricks_won} plis gagnés
+                      </div>
+                    </div>
+
+                    <strong style={{ color: "#f6c94c" }}>
+                      {player.total_score} pts
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            className="lobby-primary"
+            onClick={onExit}
+            style={{
+              marginTop: "25px",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
+            <ArrowLeft size={18} />
+            RETOUR AU SALON
+          </button>
+        </section>
       </main>
     );
   }
@@ -761,6 +933,7 @@ const isMyTurn =
                       {player.username}
                       {isCurrentPlayer ? " (TOI)" : ""}
                     </strong>
+
                     <div style={{ fontSize: "12px", opacity: 0.7 }}>
                       {player.tricks_won} plis gagnés ·{" "}
                       {player.rounds_played} manches
@@ -992,11 +1165,10 @@ const isMyTurn =
                   "En attente"}
               </strong>
             </div>
+
             <div>
               <span>PLI</span>
-              <strong>
-                {currentTrick?.trick_number || 1}
-              </strong>
+              <strong>{currentTrick?.trick_number || 1}</strong>
             </div>
           </div>
 
@@ -1056,6 +1228,7 @@ const isMyTurn =
               })
             )}
           </div>
+
           {isWaitingForPlankChoice && currentTrick && (
             <div className="walk-the-plank-choice">
               <div className="game-section-heading">
@@ -1131,9 +1304,13 @@ const isMyTurn =
               <strong>
                 <Lock size={17} /> CARTE POSÉE — EN ATTENTE DES AUTRES PIRATES
               </strong>
-            ) : (
+            ) : isMyTurn ? (
               <strong>
                 <Play size={17} /> À TON TOUR DE JOUER
+              </strong>
+            ) : (
+              <strong>
+                <Lock size={17} /> EN ATTENTE DU PROCHAIN PIRATE
               </strong>
             )}
           </div>
@@ -1241,6 +1418,7 @@ const isMyTurn =
                   onClick={() => {
                     if (
                       round.status !== "playing" ||
+                      !isMyTurn ||
                       currentPlayerHasPlayed ||
                       playingCard ||
                       isWaitingForPlankChoice
@@ -1248,9 +1426,7 @@ const isMyTurn =
                       return;
                     }
 
-                    setSelectedCard(
-                      isSelected ? null : card
-                    );
+                    setSelectedCard(isSelected ? null : card);
                     setChosenValue(card.selectableValue?.[0] ?? null);
                     setChosenSuit("green");
                     setPlayMessage("");
@@ -1258,6 +1434,7 @@ const isMyTurn =
                   }}
                   disabled={
                     round.status !== "playing" ||
+                    !isMyTurn ||
                     currentPlayerHasPlayed ||
                     playingCard ||
                     isWaitingForPlankChoice ||
@@ -1267,8 +1444,7 @@ const isMyTurn =
                     borderColor:
                       suitColors[card.suit || ""] || "#c9a45c",
                     cursor:
-                      round.status === "playing" &&
-                      !currentPlayerHasPlayed
+                      round.status === "playing" && isMyTurn
                         ? "pointer"
                         : "default",
                   }}
@@ -1286,8 +1462,7 @@ const isMyTurn =
                         : "SPÉCIALE"}
                     </span>
                     <strong>
-                      {card.value ??
-                        cardSymbol(card.type)}
+                      {card.value ?? cardSymbol(card.type)}
                     </strong>
                   </div>
 
@@ -1425,7 +1600,7 @@ const isMyTurn =
                   type="button"
                   className="lobby-primary"
                   onClick={playSelectedCard}
-                  disabled={playingCard}
+                  disabled={playingCard || !isMyTurn}
                 >
                   <Check size={18} />
                   {playingCard ? "ENVOI..." : "CONFIRMER"}
@@ -1468,4 +1643,3 @@ const isMyTurn =
     </main>
   );
 }
-          
