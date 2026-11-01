@@ -2506,3 +2506,31 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
   .skull-game .arena-mini-card strong { font-size: 21px; }
   .skull-game .arena-mini-card span { font-size: 8px; }
 }
+
+/* LIVE SCOREBOARD — compact crew ranking and animated podium */
+.skull-game .skull-scoreboard{margin:16px auto 20px;padding:15px clamp(12px,2vw,20px);border:1px solid rgba(218,177,99,.34);border-radius:18px;background:linear-gradient(145deg,rgba(24,23,22,.94),rgba(7,12,19,.96));box-shadow:0 12px 32px rgba(0,0,0,.28),inset 0 1px rgba(255,235,190,.07)}
+.skull-game .skull-scoreboard .game-section-heading{margin-bottom:12px}
+.skull-game .scoreboard-live{display:inline-flex;align-items:center;gap:7px;color:#b7d8a0;font-size:9px;letter-spacing:1.2px}
+.skull-game .scoreboard-live i{width:7px;height:7px;border-radius:50%;background:#8bd77c;box-shadow:0 0 10px #8bd77c;animation:scoreboardPulse 1.5s ease-in-out infinite}
+.skull-game .scoreboard-list{display:grid;gap:7px}
+.skull-game .scoreboard-row{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:54px;padding:8px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.035);transition:transform .22s,border-color .22s,background .22s}
+.skull-game .scoreboard-row--me{border-color:rgba(235,194,111,.48);background:rgba(201,151,68,.105)}
+.skull-game .scoreboard-row--top{animation:podiumArrive .45s cubic-bezier(.2,.8,.2,1) both}
+.skull-game .scoreboard-row--rank-1{border-color:rgba(255,218,126,.65);background:linear-gradient(100deg,rgba(164,117,40,.25),rgba(255,255,255,.045));box-shadow:inset 3px 0 #f4cb72,0 0 17px rgba(236,183,78,.09)}
+.skull-game .scoreboard-row--rank-2{border-color:rgba(195,205,218,.38)}
+.skull-game .scoreboard-row--rank-3{border-color:rgba(180,119,76,.4)}
+.skull-game .scoreboard-rank{display:grid;place-items:center;width:31px;height:31px;border-radius:50%;color:#e8c47f;background:rgba(255,255,255,.055);font:800 15px Georgia,serif}
+.skull-game .scoreboard-row--rank-1 .scoreboard-rank{color:#fff0b9;background:rgba(232,183,80,.2);box-shadow:0 0 13px rgba(242,192,88,.24);animation:championGlow 2.4s ease-in-out infinite}
+.skull-game .scoreboard-player{display:flex;min-width:0;flex-direction:column;gap:4px}
+.skull-game .scoreboard-player>strong{display:flex;align-items:center;gap:7px;overflow:hidden;color:#fff0d0;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.skull-game .scoreboard-player small{padding:2px 6px;border:1px solid rgba(235,194,111,.3);border-radius:20px;color:#f0d18f;font-size:8px;letter-spacing:.8px}
+.skull-game .scoreboard-player>span{color:#b9a987;font-size:9px}
+.skull-game .scoreboard-player>span i{color:#b38c50;font-style:normal}
+.skull-game .scoreboard-points{display:flex;align-items:baseline;gap:4px;color:#ffe0a0;font:900 15px Cinzel,Georgia,serif;white-space:nowrap}
+.skull-game .scoreboard-points small{color:#bda06b;font:700 8px Arial,sans-serif;letter-spacing:1px}
+.skull-game .scoreboard-empty{color:#c9b58e;font-size:12px}
+@keyframes scoreboardPulse{50%{opacity:.45;transform:scale(.78)}}
+@keyframes podiumArrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes championGlow{50%{box-shadow:0 0 19px rgba(242,192,88,.4)}}
+@media(prefers-reduced-motion:reduce){.skull-game .scoreboard-live i,.skull-game .scoreboard-row--rank-1 .scoreboard-rank,.skull-game .scoreboard-row--top{animation:none}}
+@media(max-width:600px){.skull-game .skull-scoreboard{padding:12px 10px}.skull-game .scoreboard-row{grid-template-columns:31px minmax(0,1fr) auto;gap:7px;padding:8px}.skull-game .scoreboard-player>strong{font-size:11px}.skull-game .scoreboard-points{font-size:13px}}

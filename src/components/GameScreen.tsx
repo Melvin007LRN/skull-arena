@@ -1446,72 +1446,27 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       </section>
 
       {/* CLASSEMENT EN DIRECT */}
-      <section
-        className="game-scoreboard"
-        style={{
-          margin: "18px 0",
-          padding: "18px",
-          borderRadius: "16px",
-          background: "rgba(12, 20, 35, 0.92)",
-          border: "1px solid rgba(246, 201, 76, 0.25)",
-        }}
-      >
+      <section className="game-scoreboard skull-scoreboard" aria-label="Classement de l'équipage">
         <div className="game-section-heading">
-          <h2>
-            <Crown size={19} /> CLASSEMENT DE L'ÉQUIPAGE
-          </h2>
-          <span>EN DIRECT</span>
+          <h2><Crown size={19} /> CLASSEMENT DE L'ÉQUIPAGE</h2>
+          <span className="scoreboard-live"><i /> EN DIRECT</span>
         </div>
-
         {scoreboard.length === 0 ? (
-          <p>Aucun score enregistré pour le moment.</p>
+          <p className="scoreboard-empty">Les scores apparaîtront dès la fin du premier pli.</p>
         ) : (
-          <div style={{ display: "grid", gap: "9px" }}>
-            {scoreboard.map((player) => {
+          <div className="scoreboard-list">
+            {[...scoreboard].sort((a, b) => a.rank_position - b.rank_position).map((player) => {
               const isCurrentPlayer = player.player_id === userId;
-
+              const podium = player.rank_position <= 3;
+              const medal = player.rank_position === 1 ? "♛" : player.rank_position === 2 ? "🥈" : player.rank_position === 3 ? "🥉" : `#${player.rank_position}`;
               return (
-                <div
-                  key={player.player_id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "36px minmax(0, 1fr) auto",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    background: isCurrentPlayer
-                      ? "rgba(246, 201, 76, 0.12)"
-                      : "rgba(255,255,255,0.035)",
-                    border: isCurrentPlayer
-                      ? "1px solid rgba(246, 201, 76, 0.45)"
-                      : "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  <strong style={{ color: "#f6c94c" }}>
-                    #{player.rank_position}
-                  </strong>
-
-                  <div style={{ minWidth: 0 }}>
-                    <strong>
-                      {player.username}
-                      {isCurrentPlayer ? " (TOI)" : ""}
-                    </strong>
-
-                    <div style={{ fontSize: "12px", opacity: 0.7 }}>
-                      {player.tricks_won} plis gagnés ·{" "}
-                      {player.rounds_played} manches
-                    </div>
+                <div key={player.player_id} className={`scoreboard-row ${podium ? `scoreboard-row--top scoreboard-row--rank-${player.rank_position}` : ""} ${isCurrentPlayer ? "scoreboard-row--me" : ""}`}>
+                  <span className="scoreboard-rank" aria-label={`Position ${player.rank_position}`}>{medal}</span>
+                  <div className="scoreboard-player">
+                    <strong>{player.username}{isCurrentPlayer ? <small>TOI</small> : null}</strong>
+                    <span>{player.tricks_won} plis remportés <i>·</i> {player.rounds_played} manches</span>
                   </div>
-
-                  <strong
-                    style={{
-                      color: "#f6c94c",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {player.total_score} pts
-                  </strong>
+                  <strong className="scoreboard-points">{player.total_score}<small>PTS</small></strong>
                 </div>
               );
             })}
