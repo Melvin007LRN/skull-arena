@@ -269,7 +269,8 @@ export default function GameScreen({
       .from("room_players")
       .select("player_id")
       .eq("room_id", roomId)
-      .order("joined_at", { ascending: true });
+      .order("joined_at", { ascending: true })
+.order("player_id", { ascending: true });
 
     if (playersError) {
       setError("Impossible de charger l'équipage.");
