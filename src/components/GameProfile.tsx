@@ -46,11 +46,15 @@ export default function GameProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { data, error: requestError } = await supabase.rpc("get_my_game_profile_stats");
+    const [{ data, error: requestError }, { data: userData }] = await Promise.all([supabase.rpc("get_my_game_profile_stats"), supabase.auth.getUser()]);
+    if (userData.user) { const { data: profileData } = await supabase.from("profiles").select("avatar_url").eq("id", userData.user.id).maybeSingle(); setAvatarUrl(profileData?.avatar_url ?? null); }
     if (requestError) {
       setError(requestError.message);
       setLoading(false);
@@ -66,6 +70,20 @@ export default function GameProfile() {
   }, [loadProfile]);
 
   const stats = payload?.statistics;
+  const uploadAvatar = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) { setAvatarError("Choisis une image de 5 Mo maximum."); return; }
+    setUploadingAvatar(true); setAvatarError("");
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) { setAvatarError("Connexion introuvable."); setUploadingAvatar(false); return; }
+    const path = `${auth.user.id}/avatar-${Date.now()}.${file.name.split(".").pop() || "jpg"}`;
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) { setAvatarError(uploadError.message); setUploadingAvatar(false); return; }
+    const { data: publicData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const { error: saveError } = await supabase.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", auth.user.id);
+    if (saveError) setAvatarError(saveError.message); else setAvatarUrl(publicData.publicUrl);
+    setUploadingAvatar(false);
+  };
   const unlocked = new Set((payload?.achievements ?? []).map((item) => item.code));
 
   return (
@@ -92,6 +110,7 @@ export default function GameProfile() {
         </div>
       </header>
 
+      <div className="profile-avatar-editor"><div className="profile-avatar-preview">{avatarUrl ? <img src={avatarUrl} alt="Photo de profil" /> : <span>☠</span>}</div><div><strong>Portrait du pirate</strong><p>Choisis ta photo de profil (5 Mo maximum).</p><label className="avatar-upload-button">{uploadingAvatar ? "ENVOI..." : "CHOISIR UNE PHOTO"}<input type="file" accept="image/*" disabled={uploadingAvatar} onChange={(event) => void uploadAvatar(event.target.files?.[0])} /></label>{avatarError && <small role="alert">{avatarError}</small>}</div></div>
       {error && <p role="alert" style={{ color: "#ff9b88" }}>{error}</p>}
       {loading && !payload && <p>Chargement de tes statistiques…</p>}
 
