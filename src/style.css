@@ -2296,3 +2296,122 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
   .quick-chat-dock { width: min(250px, calc(100vw - 24px)); }
   .game-round-info > div { min-width: 95px; padding: 8px 11px; }
 }
+
+
+/* PLAYER PORTRAITS — captain's crew cards */
+.skull-game .game-player-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  gap: 12px;
+}
+.skull-game .game-player {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(216,180,106,.34);
+  border-radius: 18px;
+  background: linear-gradient(145deg,rgba(48,34,22,.94),rgba(9,13,20,.96));
+  box-shadow: 0 10px 24px rgba(0,0,0,.32), inset 0 1px rgba(255,235,192,.08);
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+}
+.skull-game .game-player.current {
+  border-color: rgba(255,215,125,.9);
+  box-shadow: 0 0 0 1px rgba(255,207,106,.24), 0 0 24px rgba(255,177,64,.2), 0 12px 28px rgba(0,0,0,.42);
+}
+.skull-game .game-player-portrait-frame {
+  position: relative;
+  flex: 0 0 62px;
+  width: 62px;
+  height: 62px;
+  padding: 4px;
+  border: 2px solid #c99a4c;
+  border-radius: 50%;
+  background: linear-gradient(145deg,#fff0bb,#946021 48%,#3a2412);
+  box-shadow: 0 0 0 2px rgba(0,0,0,.75), 0 0 16px rgba(226,177,87,.22), inset 0 0 0 1px rgba(255,245,205,.6);
+}
+.skull-game .game-player-avatar {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%,#6d5235,#17120d 75%);
+  color: #f5d99c;
+}
+.skull-game .game-player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.skull-game .game-player-crown {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffe4a0;
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: 0 2px 6px #000,0 0 12px rgba(255,196,83,.7);
+}
+.skull-game .game-player-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.skull-game .game-player-info > strong {
+  overflow: hidden;
+  color: #fff0d0;
+  font: 800 14px/1.2 Cinzel,Georgia,serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.skull-game .game-player-info > span {
+  color: #c7a66d;
+  font-size: 9px;
+  letter-spacing: 1.3px;
+}
+.skull-game .game-player-round-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 5px;
+}
+.skull-game .game-player-round-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid rgba(224,181,98,.26);
+  border-radius: 999px;
+  background: rgba(0,0,0,.28);
+  color: #cdb98f;
+  font-size: 9px;
+  letter-spacing: .7px;
+}
+.skull-game .game-player-round-stats b {
+  color: #ffe6ad;
+  font-size: 11px;
+}
+.skull-game .game-player .leader-tag {
+  max-width: 90px;
+  padding: 5px 7px;
+  border: 1px solid rgba(239,192,101,.4);
+  border-radius: 999px;
+  background: rgba(226,174,77,.12);
+  font-size: 8px;
+  text-align: center;
+}
+@media (max-width: 600px) {
+  .skull-game .game-player-list { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .skull-game .game-player { padding: 8px; gap: 8px; border-radius: 14px; }
+  .skull-game .game-player-portrait-frame { flex-basis: 46px; width: 46px; height: 46px; }
+  .skull-game .game-player-info > strong { font-size: 11px; }
+  .skull-game .game-player-round-stats { gap: 4px; }
+  .skull-game .game-player-round-stats > span { padding: 3px 5px; font-size: 8px; }
+}

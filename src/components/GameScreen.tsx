@@ -171,6 +171,7 @@ export default function GameScreen({
 
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
+  const [roundTricksWon, setRoundTricksWon] = useState<Record<string, number>>({});
   const [round, setRound] = useState<GameRound | null>(null);
   const [hand, setHand] = useState<GameCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -347,6 +348,25 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         isHost: player.player_id === room.host_id,
       }))
     );
+
+    // PLIS DÉJÀ REMPORTÉS PENDANT CETTE MANCHE
+    const { data: resolvedTricks, error: resolvedTricksError } = await supabase
+      .from("game_tricks")
+      .select("winner_player_id")
+      .eq("round_id", currentRound.id)
+      .eq("status", "completed")
+      .not("winner_player_id", "is", null);
+
+    if (resolvedTricksError) {
+      console.error("ERREUR COMPTE DES PLIS :", resolvedTricksError);
+    } else {
+      const wins: Record<string, number> = {};
+      (resolvedTricks || []).forEach((trick) => {
+        const winnerId = trick.winner_player_id as string | null;
+        if (winnerId) wins[winnerId] = (wins[winnerId] || 0) + 1;
+      });
+      setRoundTricksWon(wins);
+    }
 
     // CLASSEMENT DU SALON
     const { data: scoreboardData, error: scoreboardError } =
@@ -2102,12 +2122,15 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                 key={player.player_id}
               >
                 {showBubble && latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
-                <div className="game-player-avatar">
-                  {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
-                    <Crown size={20} />
-                  ) : (
-                    <Skull size={20} />
-                  )}
+                <div className="game-player-portrait-frame">
+                  <div className="game-player-avatar">
+                    {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
+                      <Crown size={20} />
+                    ) : (
+                      <Skull size={20} />
+                    )}
+                  </div>
+                  {player.isHost && <span className="game-player-crown" aria-label="Capitaine">♛</span>}
                 </div>
 
                 <div className="game-player-info">
@@ -2118,6 +2141,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   <span>
                     {player.isHost ? "CAPITAINE" : "PIRATE"}
                   </span>
+                  <div className="game-player-round-stats">
+                    <span>MISE <b>{revealedBids.find((bid) => bid.player_id === player.player_id)?.bid ?? "—"}</b></span>
+                    <span>PLIS <b>{roundTricksWon[player.player_id] ?? 0}</b></span>
+                  </div>
                 </div>
 
                 {player.player_id === round.leader_player_id && (
