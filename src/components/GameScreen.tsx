@@ -311,7 +311,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, username")
+      .select("id, username, avatar_url")
       .in("id", playerIds);
 
     if (profilesError) {
@@ -564,17 +564,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
   const sendQuickChat = async (phrase: string) => {
     if (!userId || sendingChat) return;
-    setSendingChat(true);
-    setChatError("");
+    setSendingChat(true); setChatError("");
     const username = players.find((player) => player.player_id === userId)?.username || "Pirate";
-    const { error: sendError } = await supabase.from("room_chat_messages").insert({
-      room_id: roomId,
-      player_id: userId,
-      username,
-      phrase,
-    });
-    setSendingChat(false);
-    if (sendError) setChatError(sendError.message);
+    const { error: sendError } = await supabase.from("room_chat_messages").insert({ room_id: roomId, player_id: userId, username, phrase });
+    setSendingChat(false); if (sendError) setChatError(sendError.message);
   };
 
   useEffect(() => {
@@ -1895,37 +1888,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </section>
       )}
 
-      <section className="walk-the-plank-choice" aria-label="Discussion rapide">
-        <div className="game-section-heading">
-          <h2>💬 MESSAGES DE L'ÉQUIPAGE</h2>
-          <span>{chatMessages.length} messages récents</span>
-        </div>
-        <div style={{ display: "grid", gap: 6, maxHeight: 170, overflowY: "auto", marginBottom: 12 }}>
-          {chatMessages.length === 0 ? (
-            <p>Aucun message pour le moment. Lance les premiers encouragements !</p>
-          ) : chatMessages.map((message) => (
-            <div key={message.id} style={{ padding: "7px 10px", borderRadius: 8, background: message.player_id === userId ? "rgba(218,170,91,.14)" : "rgba(255,255,255,.05)" }}>
-              <strong>{message.username}</strong> : {message.phrase}
-            </div>
-          ))}
-        </div>
-        {quickPhrases.length > 0 ? (
-          <div className="plank-target-list">
-            {quickPhrases.map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                className="plank-target"
-                onClick={() => void sendQuickChat(item.phrase)}
-                disabled={sendingChat}
-              >
-                {item.phrase}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p>Les messages rapides seront disponibles dès que l'administrateur aura ajouté des phrases.</p>
-        )}
+      <section className="quick-chat-dock" aria-label="Messages rapides">
+        <div className="game-section-heading"><h2>💬 RÉACTIONS DE L'ÉQUIPAGE</h2><span>Une bulle, deux secondes</span></div>
+        <div className="quick-chat-options">{quickPhrases.map((item) => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>
         {chatError && <p role="alert" className="play-message">{chatError}</p>}
       </section>
 
