@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   Anchor,
   ArrowLeft,
@@ -873,7 +873,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     await loadGame();
   };
 
-  const handleHandCardPointerDown = (event: React.PointerEvent<HTMLButtonElement>, card: GameCard) => {
+  const handleHandCardPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, card: GameCard) => {
     if (event.pointerType === "mouse" || !isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
     dragStartRef.current = { cardId: card.id, x: event.clientX, y: event.clientY };
     setDraggingCardId(card.id);
