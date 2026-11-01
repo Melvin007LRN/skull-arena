@@ -233,7 +233,7 @@ export function calculateSpecialCaptureBonuses(
  * 7 : -5 points
  * 8 : +5 points
  *
- * Ils ne sont attribués que si l'annonce est exacte.
+ * Ces bonus de capture sont indépendants de la précision de l'annonce.
  */
 export function calculateExpansionBonuses(
   capturedCards: GameCard[],
@@ -319,7 +319,7 @@ export function calculatePlayerRoundScore(
 
   let bonusPoints = 0;
 
-  if (bidCorrect && includeCardBonuses) {
+  if (includeCardBonuses) {
     bonusPoints += calculateFourteenBonuses(
       stats.capturedCards,
     );
