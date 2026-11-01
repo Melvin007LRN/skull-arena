@@ -45,6 +45,7 @@ export default function GameProfile() {
   const [payload, setPayload] = useState<ProfilePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -74,9 +75,21 @@ export default function GameProfile() {
           <div style={{ color: "#d9aa5b", fontSize: 11, letterSpacing: 2, fontWeight: 800 }}>DOSSIER DU PIRATE</div>
           <h2 style={{ margin: "5px 0 0", fontSize: 25 }}>Mon profil</h2>
         </div>
-        <button type="button" onClick={() => void loadProfile()} disabled={loading} style={{ border: "1px solid #8d7048", color: "#f4ead7", background: "rgba(218,170,91,.12)", borderRadius: 10, padding: "9px 12px", cursor: "pointer" }}>
-          {loading ? "Chargement…" : "Actualiser"}
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button type="button" onClick={() => void loadProfile()} disabled={loading} style={{ border: "1px solid #8d7048", color: "#f4ead7", background: "rgba(218,170,91,.12)", borderRadius: 10, padding: "9px 12px", cursor: "pointer" }}>
+            {loading ? "Chargement…" : "Actualiser"}
+          </button>
+          <button type="button" onClick={async () => {
+            setSigningOut(true);
+            const { error: signOutError } = await supabase.auth.signOut();
+            if (signOutError) {
+              setError(signOutError.message);
+              setSigningOut(false);
+            }
+          }} disabled={signingOut} style={{ border: "1px solid rgba(255,130,110,.55)", color: "#ffd6cc", background: "rgba(150,45,35,.22)", borderRadius: 10, padding: "9px 12px", cursor: signingOut ? "wait" : "pointer" }}>
+            {signingOut ? "Déconnexion…" : "Se déconnecter"}
+          </button>
+        </div>
       </header>
 
       {error && <p role="alert" style={{ color: "#ff9b88" }}>{error}</p>}
