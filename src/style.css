@@ -2652,3 +2652,54 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
 @media (max-width: 380px) {
   .skull-game .game-crew .game-player-list { grid-template-columns: 1fr; }
 }
+
+
+/* MOBILE GAMEPLAY — paysage obligatoire */
+@media screen and (orientation: portrait) and (max-width: 900px) {
+  html:has(.skull-game),
+  body:has(.skull-game) {
+    overflow: hidden !important;
+    height: 100%;
+    overscroll-behavior: none;
+  }
+  .skull-game {
+    position: relative;
+    min-height: 100dvh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .skull-game > * {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  .skull-game::before {
+    content: "";
+    position: fixed;
+    z-index: 10000;
+    inset: 0;
+    display: block;
+    background:
+      radial-gradient(ellipse at 50% 38%, rgba(112,75,35,.25), transparent 42%),
+      linear-gradient(145deg, #17120d, #070b12 72%);
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .skull-game::after {
+    content: "⚓\A\A VEUILLEZ TOURNER\A VOTRE ÉCRAN\A\A SKULL ARENA SE JOUE EN FORMAT PAYSAGE";
+    white-space: pre-line;
+    position: fixed;
+    z-index: 10001;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    color: #f4d89d;
+    font: 800 clamp(17px, 4vw, 25px)/1.65 Cinzel, Georgia, serif;
+    letter-spacing: 1.4px;
+    text-align: center;
+    visibility: visible;
+    pointer-events: none;
+    text-shadow: 0 2px 18px rgba(0,0,0,.8);
+  }
+}
