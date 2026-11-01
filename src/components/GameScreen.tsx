@@ -1526,6 +1526,28 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <div className="arena-table">
+          <div className="arena-played-cards" aria-live="polite" aria-label="Cartes jouées dans le pli">
+            {playedCards.length === 0 ? (
+              <div className="arena-empty-play">
+                <Swords size={25} />
+                <span>{round.status === "bidding" ? "EN ATTENTE DES ENCHÈRES" : "À TOI DE JOUER"}</span>
+              </div>
+            ) : (
+              playedCards.map((play) => {
+                const playedCard = play.card as GameCard;
+                const playedBy = players.find((player) => player.player_id === play.player_id);
+                return (
+                  <div className="arena-played-card" key={play.id}>
+                    <span className="arena-played-by">{playedBy?.username ?? "Pirate"}</span>
+                    <div className={`arena-mini-card arena-mini-card--${playedCard.type}`}>
+                      <strong>{playedCard.value ?? cardSymbol(playedCard.type)}</strong>
+                      <span>{playedCard.name}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
           <div className="arena-decoration">
             <Skull size={62} />
             <strong>SKULL ARENA</strong>

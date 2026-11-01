@@ -2415,3 +2415,94 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
   .skull-game .game-player-round-stats { gap: 4px; }
   .skull-game .game-player-round-stats > span { padding: 3px 5px; font-size: 8px; }
 }
+
+
+/* LIVE TRICK — played cards in the centre of the arena */
+.skull-game .arena-table { position: relative; }
+.skull-game .arena-decoration {
+  opacity: .22;
+  pointer-events: none;
+}
+.skull-game .arena-played-cards {
+  position: absolute;
+  z-index: 4;
+  inset: 12% 8% 18%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(8px, 2vw, 22px);
+  pointer-events: none;
+}
+.skull-game .arena-empty-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  color: rgba(255,224,169,.72);
+  text-align: center;
+  font: 800 10px Cinzel,Georgia,serif;
+  letter-spacing: 1.5px;
+}
+.skull-game .arena-played-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  animation: arenaCardReveal .35s cubic-bezier(.2,.8,.2,1) both;
+}
+.skull-game .arena-played-by {
+  max-width: 90px;
+  overflow: hidden;
+  padding: 3px 8px;
+  border: 1px solid rgba(239,198,122,.45);
+  border-radius: 999px;
+  background: rgba(8,11,17,.88);
+  color: #f7dfb1;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.skull-game .arena-mini-card {
+  display: flex;
+  width: clamp(62px, 8vw, 88px);
+  height: clamp(90px, 12vw, 122px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 5px;
+  border: 2px solid #c79a50;
+  border-radius: 9px;
+  background: linear-gradient(145deg,#f4e3bf,#bfa16c 55%,#6d4c2d);
+  color: #21170e;
+  box-shadow: 0 7px 18px rgba(0,0,0,.5),0 0 14px rgba(235,185,94,.2);
+  text-align: center;
+}
+.skull-game .arena-mini-card strong {
+  font: 900 26px Cinzel,Georgia,serif;
+}
+.skull-game .arena-mini-card span {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.15;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.skull-game .arena-mini-card--pirate,
+.skull-game .arena-mini-card--skull_king,
+.skull-game .arena-mini-card--mermaid,
+.skull-game .arena-mini-card--kraken {
+  background: linear-gradient(145deg,#f8e8cb,#c7a36b 55%,#75502e);
+}
+@keyframes arenaCardReveal {
+  from { opacity: 0; transform: translateY(18px) scale(.82) rotate(-4deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+@media (max-width: 600px) {
+  .skull-game .arena-played-cards { inset: 10% 4% 22%; gap: 7px; }
+  .skull-game .arena-mini-card { width: 58px; height: 82px; padding: 6px 4px; }
+  .skull-game .arena-mini-card strong { font-size: 21px; }
+  .skull-game .arena-mini-card span { font-size: 8px; }
+}
