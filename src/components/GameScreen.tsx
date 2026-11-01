@@ -71,6 +71,13 @@ type CurrentTrick = {
   trick_number: number;
   status: string;
   leader_player_id: string;
+  resolution: {
+    status?: string;
+    walk_the_plank_player_id?: string;
+    walk_the_plank_target_player_id?: string;
+  } | null;
+  walk_the_plank_player_id: string | null;
+  walk_the_plank_target_player_id: string | null;
 };
 
 type GameScreenProps = {
@@ -166,6 +173,8 @@ export default function GameScreen({
   const [playMessage, setPlayMessage] = useState("");
   const [showPlayConfirmation, setShowPlayConfirmation] =
     useState(false);
+  const [plankTarget, setPlankTarget] = useState("");
+  const [choosingPlankTarget, setChoosingPlankTarget] = useState(false);
 
   const loadGame = useCallback(async () => {
     setError("");
@@ -328,7 +337,15 @@ export default function GameScreen({
     // Chargement du pli en cours.
     const { data: trickData, error: trickError } = await supabase
       .from("game_tricks")
-      .select("id, trick_number, status, leader_player_id")
+      .select(`
+        id,
+        trick_number,
+        status,
+        leader_player_id,
+        resolution,
+        walk_the_plank_player_id,
+        walk_the_plank_target_player_id
+      `)
       .eq("round_id", currentRound.id)
       .eq("status", "playing")
       .order("trick_number", { ascending: false })
@@ -356,6 +373,7 @@ export default function GameScreen({
     } else {
       setCurrentTrick(null);
       setPlayedCards([]);
+      setPlankTarget("");
     }
 
     setLoading(false);
@@ -385,25 +403,6 @@ export default function GameScreen({
         {
           event: "*",
           schema: "public",
-          table: "player_hands",
-        },
-        () => loadGame()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "room_players",
-          filter: `room_id=eq.${roomId}`,
-        },
-        () => loadGame()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
           table: "game_tricks",
         },
         () => loadGame()
@@ -417,21 +416,72 @@ export default function GameScreen({
         },
         () => loadGame()
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "player_hands",
+        },
+        () => loadGame()
+      )
       .subscribe();
 
     return () => {
       window.clearInterval(refreshInterval);
       supabase.removeChannel(channel);
     };
-  }, [roomId, loadGame]);
+  }, [loadGame, roomId]);
+
+  const currentPlayer = players.find(
+    (player) => player.player_id === userId
+  );
+
+  const currentPlayerHasPlayed = playedCards.some(
+    (play) => play.player_id === userId
+  );
+
+  const isMyTurn =
+    round?.status === "playing" &&
+    !currentPlayerHasPlayed &&
+    playedCards.length < players.length;
+
+  const isWaitingForPlankChoice =
+    currentTrick?.resolution?.status ===
+    "awaiting_walk_the_plank_target";
+
+  const plankPlayer = players.find(
+    (player) =>
+      player.player_id === currentTrick?.walk_the_plank_player_id
+  );
+
+  const availablePlankTargets = playedCards
+    .filter(
+      (play) =>
+        play.card.type === "pirate" ||
+        (play.card.type === "tigress" &&
+          play.tigress_mode === "pirate")
+    )
+    .map((play) => ({
+      player_id: play.player_id,
+      username:
+        players.find((player) => player.player_id === play.player_id)
+          ?.username || "Pirate",
+    }))
+    .filter(
+      (target, index, array) =>
+        array.findIndex(
+          (item) => item.player_id === target.player_id
+        ) === index
+    );
 
   const submitBid = async () => {
-    if (!round || hasSubmittedBid || submittingBid) return;
+    if (!round || submittingBid || hasSubmittedBid) return;
 
     setSubmittingBid(true);
     setBidMessage("");
 
-    const { error: bidError } = await supabase.rpc(
+    const { data, error: submitError } = await supabase.rpc(
       "submit_player_bid",
       {
         p_round_id: round.id,
@@ -439,478 +489,254 @@ export default function GameScreen({
       }
     );
 
-    setSubmittingBid(false);
-
-    if (bidError) {
-      setBidMessage(bidError.message);
+    if (submitError) {
+      setBidMessage(submitError.message);
+      setSubmittingBid(false);
       return;
     }
 
-    setHasSubmittedBid(true);
-    setBidMessage("Ton annonce est enregistrée secrètement.");
+    setBidMessage(
+      data?.all_bids_submitted
+        ? "Toutes les enchères sont validées. La manche commence !"
+        : "Enchère enregistrée. Attends les autres pirates."
+    );
 
     await loadGame();
+    setSubmittingBid(false);
   };
 
   const playSelectedCard = async () => {
-    if (!round || !selectedCard || playingCard) return;
-    if (selectedCard.selectableValue?.length && chosenValue === null) {
-      setPlayMessage("Choisis la valeur de cette carte.");
-      return;
-    }
-    if (selectedCard.type === "joker" && !["green", "purple", "yellow"].includes(chosenSuit)) {
-      setPlayMessage("Choisis une couleur valide pour le Joker.");
-      return;
-    }
+    if (!round || !selectedCard || playingCard || !isMyTurn) return;
 
     setPlayingCard(true);
     setPlayMessage("");
 
-    const { data, error: playError } = await supabase.rpc(
-      "play_card",
-      {
-        p_round_id: round.id,
-        p_card_id: selectedCard.id,
-        p_tigress_mode:
-          selectedCard.type === "tigress" ? tigressMode : null,
-        p_chosen_value: selectedCard.selectableValue?.length
-          ? chosenValue
-          : null,
-        p_chosen_suit: selectedCard.type === "joker"
-          ? chosenSuit
-          : null,
-      }
-    );
-
-    setPlayingCard(false);
+    const { data, error: playError } = await supabase.rpc("play_card", {
+      p_round_id: round.id,
+      p_card_id: selectedCard.id,
+      p_tigress_mode:
+        selectedCard.type === "tigress" ? tigressMode : null,
+      p_chosen_value: chosenValue,
+      p_chosen_suit:
+        selectedCard.type === "joker" ? chosenSuit : null,
+    });
 
     if (playError) {
       setPlayMessage(playError.message);
+      setPlayingCard(false);
       return;
     }
 
-    setPlayMessage("Carte jouée avec succès !");
+    setPlayMessage("Carte posée !");
     setSelectedCard(null);
+    setChosenValue(null);
     setShowPlayConfirmation(false);
 
-    console.log("RÉSULTAT POSE CARTE :", data);
-
     await loadGame();
+    setPlayingCard(false);
   };
 
-  const leader = players.find(
-    (player) => player.player_id === round?.leader_player_id
-  );
+  const confirmWalkThePlankTarget = async () => {
+    if (!currentTrick || !plankTarget || choosingPlankTarget) return;
 
-  const currentPlayer = players.find(
-    (player) => player.player_id === userId
-  );
+    setChoosingPlankTarget(true);
+    setPlayMessage("");
 
-  const submittedCount = bidProgress.filter(
-    (player) => player.has_bid
-  ).length;
+    const { error: targetError } = await supabase.rpc(
+      "choose_walk_the_plank_target",
+      {
+        p_trick_id: currentTrick.id,
+        p_target_player_id: plankTarget,
+      }
+    );
 
-  const allPlayersSubmitted =
-    bidProgress.length > 0 &&
-    submittedCount === bidProgress.length;
+    if (targetError) {
+      setPlayMessage(targetError.message);
+      setChoosingPlankTarget(false);
+      return;
+    }
 
-  const bidsAreRevealed =
-    revealedBids.length > 0 && allPlayersSubmitted;
-
-  const currentTrickLeader = players.find(
-    (player) =>
-      player.player_id ===
-      (currentTrick?.leader_player_id || round?.leader_player_id)
-  );
-
-  const currentPlayerHasPlayed = playedCards.some(
-    (play) => play.player_id === userId
-  );
-
-  const playerCount = players.length;
-  const allCardsPlayed =
-    playerCount > 0 && playedCards.length >= playerCount;
-
-  const isMyTurn =
-    round?.status === "playing" &&
-    !currentPlayerHasPlayed &&
-    !allCardsPlayed;
+    setPlayMessage("Cible du Supplice de la planche sélectionnée.");
+    setPlankTarget("");
+    await loadGame();
+    setChoosingPlankTarget(false);
+  };
 
   if (loading) {
     return (
-      <main className="game-loading">
-        <Skull size={42} />
-        <h2>PRÉPARATION DE L'ARÈNE</h2>
-        <p>Chargement de ton équipage et de tes cartes...</p>
+      <main className="game-screen">
+        <div className="game-loading">
+          <Anchor size={34} />
+          <p>Préparation de l'arène...</p>
+        </div>
       </main>
     );
   }
 
   if (error || !round) {
     return (
-      <main className="game-loading">
-        <Skull size={42} />
-        <h2>IMPOSSIBLE D'ACCÉDER À L'ARÈNE</h2>
-        <p>{error || "Une erreur est survenue."}</p>
-        <button onClick={loadGame}>
-          <RefreshCw size={17} /> RÉESSAYER
-        </button>
-        <button onClick={onExit}>
-          <ArrowLeft size={17} /> RETOUR AU SALON
-        </button>
+      <main className="game-screen">
+        <div className="game-error">
+          <Skull size={36} />
+          <h2>Impossible de rejoindre l'arène</h2>
+          <p>{error || "Partie introuvable."}</p>
+          <button type="button" onClick={onExit}>
+            <ArrowLeft size={17} /> RETOUR AU SALON
+          </button>
+          <button type="button" onClick={loadGame}>
+            <RefreshCw size={17} /> RÉESSAYER
+          </button>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="skull-game">
-      <header className="game-topbar">
-        <button className="game-back" onClick={onExit}>
-          <ArrowLeft size={18} />
-          SALON
+    <main className="game-screen">
+      <header className="game-header">
+        <button
+          type="button"
+          className="game-back-button"
+          onClick={onExit}
+        >
+          <ArrowLeft size={19} />
+          QUITTER
         </button>
 
-        <div className="game-brand">
-          <Skull size={27} />
-          <div>
-            <strong>SKULL ARENA</strong>
-            <span>{roomName.toUpperCase()}</span>
-          </div>
+        <div className="game-header-title">
+          <span>SKULL ARENA</span>
+          <h1>{roomName}</h1>
+          <small>MANCHE {round.round_number}</small>
         </div>
 
         <button
-          className="game-refresh"
+          type="button"
+          className="game-refresh-button"
           onClick={loadGame}
           aria-label="Actualiser la partie"
         >
-          <RefreshCw size={19} />
+          <RefreshCw size={18} />
         </button>
       </header>
 
-      <section className="game-round-info">
-        <div>
-          <span>MANCHE</span>
-          <strong>{round.round_number} / 10</strong>
+      {playMessage && (
+        <div className="game-message">
+          {playMessage}
         </div>
-
-        <div>
-          <span>ÉTAT</span>
-          <strong>{round.status.toUpperCase()}</strong>
-        </div>
-
-        <div>
-          <span>ÉQUIPAGE</span>
-          <strong>{players.length} PIRATES</strong>
-        </div>
-      </section>
-
-      <section className="game-arena">
-        <div className="arena-heading">
-          <Anchor size={17} />
-          <span>LE PLATEAU DES PIRATES</span>
-        </div>
-
-        <div className="arena-table">
-          <div className="arena-decoration">
-            <Skull size={62} />
-            <strong>SKULL ARENA</strong>
-            <span>QUE LE MEILLEUR PIRATE GAGNE</span>
-          </div>
-
-          <div className="arena-status">
-            <Swords size={19} />
-            <span>
-              {round.status === "bidding"
-                ? "LES MISES SONT EN ATTENTE"
-                : "LES ENCHÈRES SONT TERMINÉES"}
-            </span>
-          </div>
-        </div>
-      </section>
+      )}
 
       {/* ENCHÈRES */}
-      <section className="game-bidding-panel">
-        <div className="game-section-heading">
-          <h2>
-            <Lock size={19} /> LES ENCHÈRES
-          </h2>
-          <span>
-            {submittedCount}/{players.length} validées
-          </span>
-        </div>
-
-        {round.status === "bidding" && (
-          <>
-            <div className="bid-instructions">
-              <strong>Combien de plis vas-tu remporter ?</strong>
-              <p>
-                Choisis ton annonce. Les autres pirates ne verront
-                pas ton choix avant la validation de tous les joueurs.
-              </p>
-            </div>
-
-            {!hasSubmittedBid ? (
-              <>
-                <div className="bid-selector">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedBid((value) => Math.max(0, value - 1))
-                    }
-                    disabled={selectedBid <= 0 || submittingBid}
-                    aria-label="Diminuer l'annonce"
-                  >
-                    <Minus size={22} />
-                  </button>
-
-                  <div className="bid-number">
-                    <strong>{selectedBid}</strong>
-                    <span>
-                      {selectedBid === 0
-                        ? "AUCUN PLI"
-                        : selectedBid === 1
-                          ? "PLI ANNONCÉ"
-                          : "PLIS ANNONCÉS"}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedBid((value) =>
-                        Math.min(round.round_number, value + 1)
-                      )
-                    }
-                    disabled={
-                      selectedBid >= round.round_number ||
-                      submittingBid
-                    }
-                    aria-label="Augmenter l'annonce"
-                  >
-                    <Plus size={22} />
-                  </button>
-                </div>
-
-                <div className="bid-quick-options">
-                  {Array.from(
-                    { length: round.round_number + 1 },
-                    (_, index) => index
-                  ).map((value) => (
-                    <button
-                      type="button"
-                      key={value}
-                      className={
-                        selectedBid === value ? "selected" : ""
-                      }
-                      onClick={() => setSelectedBid(value)}
-                      disabled={submittingBid}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  className="lobby-primary bid-submit"
-                  onClick={submitBid}
-                  disabled={submittingBid}
-                >
-                  <Check size={19} />
-                  {submittingBid
-                    ? "VALIDATION..."
-                    : "VALIDER MON ANNONCE"}
-                </button>
-
-                <p className="bid-private-note">
-                  <Lock size={14} />
-                  Ton annonce restera secrète jusqu'à la validation
-                  du dernier joueur.
-                </p>
-              </>
-            ) : (
-              <div className="bid-submitted">
-                <Check size={26} />
-                <strong>ANNONCE VALIDÉE</strong>
-                <span>
-                  Ton choix est enregistré. Attends les autres pirates.
-                </span>
-                <Lock size={17} />
-              </div>
-            )}
-
-            {bidMessage && (
-              <p className="bid-message">{bidMessage}</p>
-            )}
-
-            <div className="bid-progress-list">
-              {bidProgress.map((player) => (
-                <div
-                  className="bid-progress-player"
-                  key={player.player_id}
-                >
-                  <span>{player.username}</span>
-                  {player.has_bid ? (
-                    <span className="bid-validated">
-                      <Check size={15} /> VALIDÉ
-                    </span>
-                  ) : (
-                    <span className="bid-waiting">EN ATTENTE</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {(round.status === "playing" ||
-          round.status === "completed") && (
-          <div className="bid-reveal">
-            <div className="bid-reveal-heading">
-              <Eye size={21} />
-              <strong>RÉVÉLATION DES ANNONCES</strong>
-            </div>
-
-            {bidsAreRevealed ? (
-              <div className="bid-reveal-list">
-                {revealedBids.map((bid) => (
-                  <div
-                    className={
-                      bid.player_id === userId
-                        ? "bid-reveal-player current"
-                        : "bid-reveal-player"
-                    }
-                    key={bid.player_id}
-                  >
-                    <span>{bid.username}</span>
-                    <strong>{bid.bid} pli(s)</strong>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>Les annonces sont en cours de récupération...</p>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* PLATEAU DU PLI */}
-      {round.status === "playing" && (
-        <section className="game-trick-panel">
+      {round.status === "bidding" && (
+        <section className="game-bidding-section">
           <div className="game-section-heading">
             <h2>
-              <Swords size={19} /> LE PLI EN COURS
+              <Eye size={19} /> ANNONCE TON ENCHÈRE
             </h2>
             <span>
-              {playedCards.length}/{players.length} cartes
+              {bidProgress.filter((item) => item.has_bid).length}/
+              {players.length}
             </span>
           </div>
 
-          <div className="trick-status-card">
-            <div>
-              <span>PREMIER JOUEUR</span>
-              <strong>
-                {currentTrickLeader?.username ||
-                  leader?.username ||
-                  "En attente"}
-              </strong>
-            </div>
-            <div>
-              <span>PLI</span>
-              <strong>
-                {currentTrick?.trick_number || 1}
-              </strong>
-            </div>
+          <p>
+            Choisis le nombre de plis que tu penses remporter pendant
+            cette manche.
+          </p>
+
+          <div className="bid-selector">
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedBid((value) => Math.max(0, value - 1))
+              }
+              disabled={selectedBid <= 0 || hasSubmittedBid}
+              aria-label="Diminuer l'enchère"
+            >
+              <Minus size={20} />
+            </button>
+
+            <strong>{selectedBid}</strong>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedBid((value) =>
+                  Math.min(round.round_number, value + 1)
+                )
+              }
+              disabled={
+                selectedBid >= round.round_number || hasSubmittedBid
+              }
+              aria-label="Augmenter l'enchère"
+            >
+              <Plus size={20} />
+            </button>
           </div>
 
-          <div className="trick-played-list">
-            {playedCards.length === 0 ? (
-              <div className="trick-empty">
-                <Anchor size={30} />
-                <strong>LE PLI N'A PAS ENCORE COMMENCÉ</strong>
-                <span>Le premier pirate peut jouer sa carte.</span>
+          <button
+            type="button"
+            className="lobby-primary"
+            onClick={submitBid}
+            disabled={submittingBid || hasSubmittedBid}
+          >
+            {submittingBid
+              ? "VALIDATION..."
+              : hasSubmittedBid
+                ? "ENCHÈRE VALIDÉE"
+                : "CONFIRMER MON ENCHÈRE"}
+          </button>
+
+          {bidMessage && <p className="game-message">{bidMessage}</p>}
+
+          <div className="bid-progress-list">
+            {bidProgress.map((player) => (
+              <div key={player.player_id}>
+                <span>{player.username}</span>
+                {player.has_bid ? (
+                  <span className="bid-ready">
+                    <Check size={15} /> PRÊT
+                  </span>
+                ) : (
+                  <span className="bid-waiting">
+                    <Lock size={14} /> EN ATTENTE
+                  </span>
+                )}
               </div>
-            ) : (
-              playedCards.map((play) => {
-                const player = players.find(
-                  (item) => item.player_id === play.player_id
-                );
-
-                return (
-                  <div
-                    className="trick-played-card"
-                    key={play.id}
-                  >
-                    <div className="trick-played-player">
-                      <span>{play.play_order}</span>
-                      <strong>
-                        {player?.username || "Pirate"}
-                      </strong>
-                      {play.player_id === userId && (
-                        <small>TOI</small>
-                      )}
-                    </div>
-
-                    <div
-                      className="trick-card-mini"
-                      style={{
-                        borderColor:
-                          suitColors[play.card?.suit || ""] ||
-                          "#c9a45c",
-                      }}
-                    >
-                      <span>
-                        {play.card?.value ??
-                          cardSymbol(play.card?.type || "")}
-                      </span>
-                      <strong>
-                        {play.card?.name || "Carte"}
-                      </strong>
-                      {play.tigress_mode && (
-                        <small>
-                          {play.tigress_mode === "pirate"
-                            ? "MODE PIRATE"
-                            : "MODE FUITE"}
-                        </small>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+            ))}
           </div>
-
-          <div className="trick-action-status">
-            {allCardsPlayed ? (
-              <strong>
-                <Check size={17} /> TOUTES LES CARTES SONT POSÉES
-              </strong>
-            ) : currentPlayerHasPlayed ? (
-              <strong>
-                <Lock size={17} /> CARTE POSÉE — EN ATTENTE DES AUTRES PIRATES
-              </strong>
-            ) : (
-              <strong>
-                <Play size={17} /> À TON TOUR DE JOUER
-              </strong>
-            )}
-          </div>
-
-          {playMessage && (
-            <p className="play-message">{playMessage}</p>
-          )}
         </section>
       )}
 
-      {/* ÉQUIPAGE */}
-      <section className="game-crew">
+      {/* ENCHÈRES RÉVÉLÉES */}
+      {revealedBids.length > 0 && (
+        <section className="game-bids-revealed">
+          <div className="game-section-heading">
+            <h2>
+              <Eye size={19} /> ENCHÈRES RÉVÉLÉES
+            </h2>
+          </div>
+
+          <div className="revealed-bids-list">
+            {revealedBids.map((bid) => (
+              <div key={bid.player_id}>
+                <span>{bid.username}</span>
+                <strong>{bid.bid}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* TABLEAU DES JOUEURS */}
+      <section className="game-players-section">
         <div className="game-section-heading">
           <h2>
-            <Users size={19} /> TON ÉQUIPAGE
+            <Users size={19} /> ÉQUIPAGE
           </h2>
-          <span>{players.length} joueurs</span>
+          <span>{players.length} pirates</span>
         </div>
 
-        <div className="game-player-list">
+        <div className="game-players-list">
           {players.map((player) => {
             const hasPlayed = playedCards.some(
               (play) => play.player_id === player.player_id
@@ -964,6 +790,131 @@ export default function GameScreen({
         </div>
       </section>
 
+      {/* PLI EN COURS */}
+      {round.status === "playing" && (
+        <section className="game-trick-section">
+          <div className="game-section-heading">
+            <h2>
+              <Swords size={19} /> PLI EN COURS
+            </h2>
+            <span>
+              {playedCards.length}/{players.length} cartes
+            </span>
+          </div>
+
+          {!currentTrick ? (
+            <div className="game-empty-hand">
+              Le prochain pli va commencer...
+            </div>
+          ) : (
+            <>
+              <div className="played-cards">
+                {playedCards.map((play) => {
+                  const player = players.find(
+                    (item) => item.player_id === play.player_id
+                  );
+
+                  return (
+                    <div className="played-card" key={play.id}>
+                      <div className="played-card-player">
+                        {player?.username || "Pirate"}
+                      </div>
+                      <div
+                        className="played-card-visual"
+                        style={{
+                          borderColor:
+                            suitColors[play.card.suit || ""] ||
+                            "#c9a45c",
+                        }}
+                      >
+                        <span>
+                          {play.card.value ??
+                            cardSymbol(play.card.type)}
+                        </span>
+                        <strong>{play.card.name}</strong>
+                        <small>
+                          {play.tigress_mode
+                            ? play.tigress_mode.toUpperCase()
+                            : cardTypeNames[play.card.type] ||
+                              play.card.type.toUpperCase()}
+                        </small>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {isWaitingForPlankChoice && currentTrick && (
+                <div className="walk-the-plank-choice">
+                  <h3>☠ SUPPLICE DE LA PLANCHE</h3>
+                  <p>
+                    {plankPlayer?.username || "Le joueur"} a joué le
+                    Supplice de la planche. Il doit choisir le pirate
+                    qui sera éliminé de ce pli.
+                  </p>
+
+                  {currentTrick.walk_the_plank_player_id === userId ? (
+                    <>
+                      <strong>CHOISIS TA CIBLE</strong>
+
+                      <div className="plank-target-list">
+                        {availablePlankTargets.map((target) => (
+                          <button
+                            type="button"
+                            key={target.player_id}
+                            className={
+                              plankTarget === target.player_id
+                                ? "selected"
+                                : ""
+                            }
+                            onClick={() =>
+                              setPlankTarget(target.player_id)
+                            }
+                            disabled={choosingPlankTarget}
+                          >
+                            <Skull size={17} />
+                            {target.username}
+                            {plankTarget === target.player_id && (
+                              <Check size={16} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="lobby-primary"
+                        onClick={confirmWalkThePlankTarget}
+                        disabled={!plankTarget || choosingPlankTarget}
+                      >
+                        {choosingPlankTarget
+                          ? "VALIDATION..."
+                          : "CONFIRMER LA CIBLE"}
+                      </button>
+                    </>
+                  ) : (
+                    <p>
+                      En attente du choix de{" "}
+                      <strong>
+                        {plankPlayer?.username || "l'adversaire"}
+                      </strong>
+                      ...
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {currentTrick.resolution?.status === "target_selected" && (
+                <div className="game-message">
+                  La cible du Supplice de la planche a été choisie.
+                  Le pli attend sa résolution.
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
       {/* MAIN DU JOUEUR */}
       <section className="game-hand-section">
         <div className="game-section-heading">
@@ -999,7 +950,8 @@ export default function GameScreen({
                     if (
                       round.status !== "playing" ||
                       currentPlayerHasPlayed ||
-                      playingCard
+                      playingCard ||
+                      isWaitingForPlankChoice
                     ) {
                       return;
                     }
@@ -1016,6 +968,7 @@ export default function GameScreen({
                     round.status !== "playing" ||
                     currentPlayerHasPlayed ||
                     playingCard ||
+                    isWaitingForPlankChoice ||
                     hand.length === 0
                   }
                   style={{
