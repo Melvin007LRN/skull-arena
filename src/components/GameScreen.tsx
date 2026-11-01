@@ -433,11 +433,22 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const resolvedMetadata = lastResolvedTrick?.resolution as
     | { pirate_power_triggers?: Array<{ player_id?: string; power?: string }> }
     | null;
-  const rosieTrigger = resolvedMetadata?.pirate_power_triggers?.some(
+  const powerTriggers = resolvedMetadata?.pirate_power_triggers ?? [];
+  const rosieTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "rosie"
-  ) ?? false;
+  );
   setRosieCanChoose(Boolean(rosieTrigger && lastResolvedTrick?.id));
   setRosieTrickId(rosieTrigger ? lastResolvedTrick?.id ?? null : null);
+  const juanitaTrigger = powerTriggers.some(
+    (trigger) => trigger.player_id === currentUserId && trigger.power === "juanita"
+  );
+  const canPeekWithJuanita = Boolean(
+    juanitaTrigger && lastResolvedTrick?.id &&
+    lastResolvedTrick.trick_number < currentRound.round_number
+  );
+  setJuanitaCanPeek(canPeekWithJuanita);
+  setJuanitaTrickId(canPeekWithJuanita ? lastResolvedTrick?.id ?? null : null);
+  if (!canPeekWithJuanita) setJuanitaPeekCards(null);
 
   if (
     lastResolvedTrick?.resolved_at &&
