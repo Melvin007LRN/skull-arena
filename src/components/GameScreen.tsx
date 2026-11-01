@@ -189,6 +189,9 @@ export default function GameScreen({
   const [plankTarget, setPlankTarget] = useState("");
   const [choosingPlankTarget, setChoosingPlankTarget] = useState(false);
 
+const [nextTrickAt, setNextTrickAt] = useState<string | null>(null);
+const [pauseCountdown, setPauseCountdown] = useState(0);
+  
   const loadGame = useCallback(async () => {
     setError("");
 
@@ -384,28 +387,47 @@ export default function GameScreen({
       .maybeSingle();
 
     if (trickError) {
-      console.error("ERREUR CHARGEMENT DU PLI :", trickError);
-    } else if (trickData) {
-      setCurrentTrick(trickData as CurrentTrick);
+  console.error("ERREUR CHARGEMENT DU PLI :", trickError);
+} else if (trickData) {
+  setCurrentTrick(trickData as CurrentTrick);
+  setNextTrickAt(null);
 
-      const { data: playsData, error: playsError } = await supabase
-        .from("trick_plays")
-        .select(
-          "id, player_id, card, play_order, tigress_mode, chosen_value, chosen_suit"
-        )
-        .eq("trick_id", trickData.id)
-        .order("play_order", { ascending: true });
+  const { data: playsData, error: playsError } = await supabase
+    .from("trick_plays")
+    .select(
+      "id, player_id, card, play_order, tigress_mode, chosen_value, chosen_suit"
+    )
+    .eq("trick_id", trickData.id)
+    .order("play_order", { ascending: true });
 
-      if (playsError) {
-        console.error("ERREUR CARTES JOUÉES :", playsError);
-      } else {
-        setPlayedCards((playsData || []) as PlayedCard[]);
-      }
-    } else {
-      setCurrentTrick(null);
-      setPlayedCards([]);
-      setPlankTarget("");
-    }
+  if (playsError) {
+    console.error("ERREUR CARTES JOUÉES :", playsError);
+  } else {
+    setPlayedCards((playsData || []) as PlayedCard[]);
+  }
+} else {
+  setCurrentTrick(null);
+  setPlayedCards([]);
+  setPlankTarget("");
+
+  const { data: lastResolvedTrick } = await supabase
+    .from("game_tricks")
+    .select("trick_number, resolved_at")
+    .eq("round_id", currentRound.id)
+    .eq("status", "resolved")
+    .order("trick_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (
+    lastResolvedTrick?.resolved_at &&
+    currentRound.status === "playing"
+  ) {
+    setNextTrickAt(lastResolvedTrick.resolved_at);
+  } else {
+    setNextTrickAt(null);
+  }
+}
 
     setLoading(false);
   }, [roomId]);
@@ -439,6 +461,27 @@ export default function GameScreen({
         },
         () => loadGame()
       )
+     
+.on(
+  "postgres_changes",
+  {
+    event: "*",
+    schema: "public",
+    table: "player_round_scores",
+    filter: `room_id=eq.${roomId}`,
+  },
+  () => loadGame()
+)
+.on(
+  "postgres_changes",
+  {
+    event: "*",
+    schema: "public",
+    table: "player_bids",
+  },
+  () => loadGame()
+)
+      
       .on(
         "postgres_changes",
         {
@@ -488,6 +531,35 @@ export default function GameScreen({
       )
       .subscribe();
 
+useEffect(() => {
+  const updateCountdown = () => {
+    if (!nextTrickAt) {
+      setPauseCountdown(0);
+      return;
+    }
+
+    const targetTime = new Date(nextTrickAt).getTime();
+    const remaining = Math.max(
+      0,
+      Math.ceil((targetTime + 10000 - Date.now()) / 1000)
+    );
+
+    setPauseCountdown(remaining);
+  };
+
+  updateCountdown();
+
+  const countdownInterval = window.setInterval(
+    updateCountdown,
+    250
+  );
+
+  return () => {
+    window.clearInterval(countdownInterval);
+  };
+}, [nextTrickAt]);
+
+    
     return () => {
       window.clearInterval(refreshInterval);
       supabase.removeChannel(channel);
@@ -1173,7 +1245,47 @@ export default function GameScreen({
             </div>
           </div>
 
-          <div className="trick-played-list">
+{!currentTrick && nextTrickAt && pauseCountdown > 0 && (
+  <div
+    style={{
+      margin: "14px 0",
+      padding: "20px",
+      borderRadius: "14px",
+      textAlign: "center",
+      background: "rgba(246, 201, 76, 0.10)",
+      border: "1px solid rgba(246, 201, 76, 0.35)",
+    }}
+  >
+    <strong
+      style={{
+        display: "block",
+        color: "#f6c94c",
+        fontSize: "15px",
+        letterSpacing: "1px",
+      }}
+    >
+      PROCHAIN PLI : N° {(currentTrick?.trick_number || 0) + 1}
+    </strong>
+
+    <div
+      style={{
+        fontSize: "38px",
+        fontWeight: 800,
+        color: "#ffffff",
+        margin: "8px 0",
+      }}
+    >
+      {pauseCountdown}s
+    </div>
+
+    <span style={{ color: "#b8c2d4" }}>
+      Le prochain pli commence dans quelques secondes...
+    </span>
+  </div>
+)}
+
+      
+         <div className="trick-played-list">
             {playedCards.length === 0 ? (
               <div className="trick-empty">
                 <Anchor size={30} />
