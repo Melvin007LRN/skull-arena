@@ -2553,3 +2553,102 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
 .skull-game .round-summary-positive{color:#a8df9b}
 .skull-game .round-summary-negative{color:#f0a09a}
 @media(max-width:600px){.skull-game .round-summary-panel{padding:11px}.skull-game .round-summary-heading strong{font-size:14px}.skull-game .round-summary-row{gap:6px;padding:7px}.skull-game .round-summary-player span{font-size:8px}.skull-game .round-summary-row>strong{font-size:10px}}
+
+
+/* =========================================================
+   GAME DASHBOARD — véritables zones de jeu, pas une longue pile
+   Plateau central, informations latérales, main toujours accessible.
+========================================================= */
+.skull-game {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(285px, 350px);
+  grid-template-areas:
+    "top top"
+    "meta meta"
+    "summary summary"
+    "arena scoreboard"
+    "bidding crew"
+    "trick crew"
+    "hand hand"
+    "footer footer";
+  align-items: start;
+  column-gap: clamp(14px, 2vw, 26px);
+  row-gap: 16px;
+  width: 100%;
+  max-width: 1680px;
+  margin-inline: auto;
+  padding: 0 clamp(12px, 2vw, 30px) 24px;
+}
+.skull-game > .game-topbar { grid-area: top; width: 100%; }
+.skull-game > .game-round-info { grid-area: meta; width: 100%; margin: 0; }
+.skull-game > .round-summary-panel { grid-area: summary; width: 100%; margin: 0; }
+.skull-game > .skull-scoreboard { grid-area: scoreboard; width: 100%; margin: 0; align-self: start; }
+.skull-game > .game-arena { grid-area: arena; width: 100%; min-width: 0; margin: 0; }
+.skull-game > .game-bidding-panel { grid-area: bidding; width: 100%; min-width: 0; margin: 0; }
+.skull-game > .game-trick-panel { grid-area: trick; width: 100%; min-width: 0; margin: 0; }
+.skull-game > .game-crew { grid-area: crew; width: 100%; min-width: 0; margin: 0; align-self: start; }
+.skull-game > .game-hand-section { grid-area: hand; width: 100%; min-width: 0; margin: 0; }
+.skull-game > .game-footer { grid-area: footer; width: 100%; }
+.skull-game .arena-table { min-height: clamp(300px, 34vw, 470px); }
+.skull-game .arena-decoration { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.skull-game .arena-played-cards { z-index: 5; }
+.skull-game .game-crew .game-player-list { grid-template-columns: 1fr; }
+.skull-game .game-crew .game-player { min-height: 82px; }
+.skull-game .game-hand-section { overflow: hidden; }
+.skull-game .game-hand { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.skull-game .game-bidding-panel,
+.skull-game .game-trick-panel,
+.skull-game .game-crew,
+.skull-game .game-hand-section { padding: clamp(13px, 1.5vw, 22px); }
+.skull-game .quick-chat-dock { position: fixed; z-index: 100; right: max(16px, calc((100vw - 1640px) / 2)); bottom: 18px; }
+.skull-game .game-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.skull-game .game-section-heading h2 { min-width: 0; }
+.skull-game .game-round-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px; }
+.skull-game .game-round-info > div { min-width: 125px; }
+.skull-game .game-footer { display: flex; justify-content: space-between; gap: 12px; padding: 12px 4px; }
+@media (max-width: 900px) {
+  .skull-game {
+    grid-template-columns: minmax(0, 1fr) minmax(245px, 300px);
+    column-gap: 12px;
+    row-gap: 12px;
+    padding-inline: 12px;
+  }
+  .skull-game .arena-table { min-height: 300px; }
+  .skull-game .game-crew .game-player { padding: 9px; gap: 8px; }
+  .skull-game .game-player-portrait-frame { flex-basis: 48px; width: 48px; height: 48px; }
+  .skull-game .game-player .leader-tag { display: none; }
+}
+@media (max-width: 680px) {
+  .skull-game {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "top"
+      "meta"
+      "summary"
+      "arena"
+      "bidding"
+      "trick"
+      "crew"
+      "hand"
+      "scoreboard"
+      "footer";
+    row-gap: 12px;
+    padding: 0 10px 90px;
+  }
+  .skull-game > .game-topbar { min-height: 66px; }
+  .skull-game .game-brand span { display: none; }
+  .skull-game .game-round-info { gap: 6px; padding: 8px 4px; }
+  .skull-game .game-round-info > div { min-width: 0; flex: 1 1 28%; padding: 8px 6px; }
+  .skull-game .game-round-info > div strong { font-size: 12px; }
+  .skull-game .arena-table { min-height: 270px; }
+  .skull-game .game-crew .game-player-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .skull-game .game-crew .game-player { min-width: 0; }
+  .skull-game .game-player-info > strong { font-size: 10px; }
+  .skull-game .game-hand { justify-content: flex-start; }
+  .skull-game .quick-chat-dock { right: 10px; bottom: 10px; }
+  .skull-game .game-footer { flex-wrap: wrap; font-size: 9px; }
+}
+@media (max-width: 380px) {
+  .skull-game .game-crew .game-player-list { grid-template-columns: 1fr; }
+}
