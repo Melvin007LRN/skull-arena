@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import AuthPanel from "./components/AuthPanel";
+import GameProfile from "./components/GameProfile";
 import Lobby from "./components/Lobby";
 import { supabase } from "./lib/supabase";
 
@@ -255,9 +256,11 @@ export default function App() {
               <X />
             </button>
 
-            <AuthPanel
-              onAuthenticated={handleAuthenticated}
-            />
+            {isAuthenticated ? (
+              <GameProfile />
+            ) : (
+              <AuthPanel onAuthenticated={handleAuthenticated} />
+            )}
           </div>
         </div>
       )}
