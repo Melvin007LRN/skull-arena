@@ -1,4 +1,4 @@
-import type { GameCard, Suit, ExtensionKey } from "./cards";
+import type { GameCard } from "./cards";
 
 import type { PlayedCard, TigressMode } from "./rules";
 
