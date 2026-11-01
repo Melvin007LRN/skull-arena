@@ -158,6 +158,10 @@ export default function GameScreen({
   const [userId, setUserId] = useState("");
   const [roomName, setRoomName] = useState("SKULL ARENA");
   const [roomStatus, setRoomStatus] = useState("waiting");
+  const [quickPhrases, setQuickPhrases] = useState<Array<{ id: string; phrase: string }>>([]);
+  const [chatMessages, setChatMessages] = useState<Array<{ id: string; player_id: string; username: string; phrase: string; created_at: string }>>([]);
+  const [sendingChat, setSendingChat] = useState(false);
+  const [chatError, setChatError] = useState("");
 
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
@@ -508,6 +512,62 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     setLoading(false);
   }, [roomId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let mounted = true;
+    const loadQuickChat = async () => {
+      const [{ data: phrases }, { data: messages }] = await Promise.all([
+        supabase.rpc("get_quick_chat_phrases"),
+        supabase.from("room_chat_messages")
+          .select("id,player_id,username,phrase,created_at")
+          .eq("room_id", roomId)
+          .order("created_at", { ascending: false })
+          .limit(25),
+      ]);
+      if (!mounted) return;
+      setQuickPhrases(
+        (Array.isArray(phrases) ? phrases : [])
+          .filter((item: { is_active?: boolean }) => item.is_active !== false)
+          .map((item: { id: string; phrase: string }) => ({ id: item.id, phrase: item.phrase }))
+      );
+      setChatMessages(Array.isArray(messages) ? [...messages].reverse() : []);
+    };
+    void loadQuickChat();
+    const channel = supabase
+      .channel(`room-chat-${roomId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "room_chat_messages",
+        filter: `room_id=eq.${roomId}`,
+      }, (payload) => {
+        const message = payload.new as { id: string; player_id: string; username: string; phrase: string; created_at: string };
+        setChatMessages((previous) => previous.some((item) => item.id === message.id)
+          ? previous
+          : [...previous.slice(-24), message]);
+      })
+      .subscribe();
+    return () => {
+      mounted = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [roomId, userId]);
+
+  const sendQuickChat = async (phrase: string) => {
+    if (!userId || sendingChat) return;
+    setSendingChat(true);
+    setChatError("");
+    const username = players.find((player) => player.player_id === userId)?.username || "Pirate";
+    const { error: sendError } = await supabase.from("room_chat_messages").insert({
+      room_id: roomId,
+      player_id: userId,
+      username,
+      phrase,
+    });
+    setSendingChat(false);
+    if (sendError) setChatError(sendError.message);
+  };
 
   useEffect(() => {
     loadGame();
@@ -1799,6 +1859,40 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           )}
         </section>
       )}
+
+      <section className="walk-the-plank-choice" aria-label="Discussion rapide">
+        <div className="game-section-heading">
+          <h2>💬 MESSAGES DE L'ÉQUIPAGE</h2>
+          <span>{chatMessages.length} messages récents</span>
+        </div>
+        <div style={{ display: "grid", gap: 6, maxHeight: 170, overflowY: "auto", marginBottom: 12 }}>
+          {chatMessages.length === 0 ? (
+            <p>Aucun message pour le moment. Lance les premiers encouragements !</p>
+          ) : chatMessages.map((message) => (
+            <div key={message.id} style={{ padding: "7px 10px", borderRadius: 8, background: message.player_id === userId ? "rgba(218,170,91,.14)" : "rgba(255,255,255,.05)" }}>
+              <strong>{message.username}</strong> : {message.phrase}
+            </div>
+          ))}
+        </div>
+        {quickPhrases.length > 0 ? (
+          <div className="plank-target-list">
+            {quickPhrases.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                className="plank-target"
+                onClick={() => void sendQuickChat(item.phrase)}
+                disabled={sendingChat}
+              >
+                {item.phrase}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p>Les messages rapides seront disponibles dès que l'administrateur aura ajouté des phrases.</p>
+        )}
+        {chatError && <p role="alert" className="play-message">{chatError}</p>}
+      </section>
 
       {/* ÉQUIPAGE */}
       <section className="game-crew">
