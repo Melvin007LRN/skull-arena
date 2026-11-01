@@ -163,6 +163,7 @@ export default function GameScreen({
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; player_id: string; username: string; phrase: string; created_at: string }>>([]);
   const [sendingChat, setSendingChat] = useState(false);
   const [chatError, setChatError] = useState("");
+  const [chatNow, setChatNow] = useState(Date.now());
 
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
