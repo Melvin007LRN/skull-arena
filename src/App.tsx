@@ -16,11 +16,14 @@ import {
 
 import AuthPanel from "./components/AuthPanel";
 import GameProfile from "./components/GameProfile";
+import AdminPanel from "./components/AdminPanel";
 import Lobby from "./components/Lobby";
 import { supabase } from "./lib/supabase";
 
 export default function App() {
   const [showProfile, setShowProfile] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
@@ -38,6 +41,13 @@ export default function App() {
         user?.email?.split("@")[0] ||
         ""
       );
+      if (user) {
+        void supabase.rpc("is_skull_admin").then(({ data }) => {
+          if (mounted) setIsAdmin(data === true);
+        });
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     const {
@@ -52,9 +62,16 @@ export default function App() {
         user?.email?.split("@")[0] ||
         ""
       );
+      setIsAdmin(false);
+      if (user) {
+        void supabase.rpc("is_skull_admin").then(({ data }) => {
+          if (mounted) setIsAdmin(data === true);
+        });
+      }
 
       if (!user) {
         setShowLobby(false);
+        setShowAdmin(false);
       }
     });
 
@@ -101,6 +118,11 @@ export default function App() {
           </div>
         </div>
 
+        {isAdmin && (
+          <button className="profile-button" onClick={() => setShowAdmin(true)}>
+            <Lock size={17} /> ADMIN
+          </button>
+        )}
         <button
           className="profile-button"
           onClick={() => setShowProfile(true)}
@@ -244,6 +266,17 @@ export default function App() {
         <span>SKULL ARENA © 2026</span>
         <span>BUILT FOR PIRATES</span>
       </footer>
+
+      {showAdmin && isAdmin && (
+        <div className="modal-overlay">
+          <div className="modal auth-modal">
+            <button className="close-button" onClick={() => setShowAdmin(false)} aria-label="Fermer">
+              <X />
+            </button>
+            <AdminPanel />
+          </div>
+        </div>
+      )}
 
       {showProfile && (
         <div className="modal-overlay">
