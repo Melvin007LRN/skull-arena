@@ -150,7 +150,7 @@ export default function App() {
           </div>
 
           <h1>
-            SERA-TU PRÊT À
+            SERAS-TU PRÊT À
             <span>DEVENIR LE ROI DES PIRATES ?</span>
           </h1>
 
