@@ -42,6 +42,7 @@ type GameRound = {
   round_number: number;
   status: string;
   leader_player_id: string | null;
+  last_volley_skip_player_ids?: string[];
 };
 
 type BidProgress = {
@@ -253,7 +254,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     const { data: roundData, error: roundError } = await supabase
       .from("game_rounds")
-      .select("id, room_id, round_number, status, leader_player_id")
+      .select("id, room_id, round_number, status, leader_player_id, last_volley_skip_player_ids")
       .eq("room_id", roomId)
       .order("round_number", { ascending: false })
       .limit(1)
@@ -984,29 +985,46 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       (currentTrick?.leader_player_id || round?.leader_player_id)
   );
 
+  const playerCount = players.length;
+  const skippedOnFinalTrick =
+    Boolean(round && currentTrick && currentTrick.trick_number === round.round_number);
+  const skippedPlayerIds = skippedOnFinalTrick
+    ? (round?.last_volley_skip_player_ids || [])
+    : [];
+  const activePlayers = players.filter(
+    (player) => !skippedPlayerIds.includes(player.player_id)
+  );
+  const activePlayerCount = activePlayers.length;
+  const volleyPlayers = playedCards
+    .filter((play) => play.card?.type === "last_volley")
+    .sort((a, b) => a.play_order - b.play_order)
+    .map((play) => play.player_id);
+  const normalPlaysComplete =
+    activePlayerCount > 0 && playedCards.length >= activePlayerCount;
+  const expectedVolleyPlayer = normalPlaysComplete
+    ? volleyPlayers[playedCards.length - activePlayerCount] || null
+    : null;
+  const isExtraVolleyTurn = expectedVolleyPlayer === userId;
   const currentPlayerHasPlayed = playedCards.some(
     (play) => play.player_id === userId
-  );
-
-  const playerCount = players.length;
+  ) && !isExtraVolleyTurn;
 
   const allCardsPlayed =
-    playerCount > 0 && playedCards.length >= playerCount;
+    activePlayerCount > 0 &&
+    playedCards.length >= activePlayerCount + volleyPlayers.length;
 
-  // ORDRE DE JEU
-  // L'ordre de passage suit l'ordre d'arrivée dans le salon,
-  // en partant du leader enregistré pour le pli en cours.
+  // ORDRE DE JEU : les joueurs exclus du dernier pli sont ignorés.
   const turnLeaderId =
     currentTrick?.leader_player_id || round?.leader_player_id;
-
-  const turnLeaderIndex = players.findIndex(
+  const turnLeaderIndex = activePlayers.findIndex(
     (player) => player.player_id === turnLeaderId
   );
-
   const expectedPlayer =
-    playerCount > 0 && turnLeaderIndex >= 0
-      ? players[(turnLeaderIndex + playedCards.length) % playerCount]
-      : null;
+    !normalPlaysComplete && activePlayerCount > 0 && turnLeaderIndex >= 0
+      ? activePlayers[(turnLeaderIndex + playedCards.length) % activePlayerCount]
+      : expectedVolleyPlayer
+        ? players.find((player) => player.player_id === expectedVolleyPlayer) || null
+        : null;
 
   const isMyTurn =
     round?.status === "playing" &&
