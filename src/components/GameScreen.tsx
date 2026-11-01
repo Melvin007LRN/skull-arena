@@ -450,15 +450,25 @@ export default function GameScreen({
         () => loadGame()
       )
       .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "trick_plays",
-        },
-        () => loadGame()
-      )
-      .subscribe();
+  "postgres_changes",
+  {
+    event: "*",
+    schema: "public",
+    table: "trick_plays",
+  },
+  () => loadGame()
+)
+.on(
+  "postgres_changes",
+  {
+    event: "*",
+    schema: "public",
+    table: "player_scores",
+    filter: `room_id=eq.${roomId}`,
+  },
+  () => loadGame()
+)
+.subscribe();
 
     return () => {
       window.clearInterval(refreshInterval);
@@ -494,7 +504,7 @@ export default function GameScreen({
   };
 
   const playSelectedCard = async () => {
-    if (!round || !selectedCard || playingCard) return;
+    if (!round || !selectedCard || playingCard || !isMyTurn) return;
     if (selectedCard.selectableValue?.length && chosenValue === null) {
       setPlayMessage("Choisis la valeur de cette carte.");
       return;
@@ -611,10 +621,25 @@ export default function GameScreen({
   const allCardsPlayed =
     playerCount > 0 && playedCards.length >= playerCount;
 
-  const isMyTurn =
-    round?.status === "playing" &&
-    !currentPlayerHasPlayed &&
-    !allCardsPlayed;
+  // Détermine le prochain joueur à partir du capitaine du pli
+// et de l'ordre d'arrivée des joueurs dans le salon.
+const turnLeaderId =
+  currentTrick?.leader_player_id || round?.leader_player_id;
+
+const turnLeaderIndex = players.findIndex(
+  (player) => player.player_id === turnLeaderId
+);
+
+const expectedPlayer =
+  playerCount > 0 && turnLeaderIndex >= 0
+    ? players[(turnLeaderIndex + playedCards.length) % playerCount]
+    : null;
+
+const isMyTurn =
+  round?.status === "playing" &&
+  !currentPlayerHasPlayed &&
+  !allCardsPlayed &&
+  expectedPlayer?.player_id === userId;
 
   if (loading) {
     return (
