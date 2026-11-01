@@ -17,12 +17,14 @@ import {
 import AuthPanel from "./components/AuthPanel";
 import GameProfile from "./components/GameProfile";
 import AdminPanel from "./components/AdminPanel";
+import Leaderboard from "./components/Leaderboard";
 import Lobby from "./components/Lobby";
 import { supabase } from "./lib/supabase";
 
 export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -118,6 +120,9 @@ export default function App() {
           </div>
         </div>
 
+        <button className="profile-button" onClick={() => setShowLeaderboard(true)}>
+          <Trophy size={17} /> CLASSEMENT
+        </button>
         {isAdmin && (
           <button className="profile-button" onClick={() => setShowAdmin(true)}>
             <Lock size={17} /> ADMIN
@@ -266,6 +271,17 @@ export default function App() {
         <span>SKULL ARENA © 2026</span>
         <span>BUILT FOR PIRATES</span>
       </footer>
+
+      {showLeaderboard && (
+        <div className="modal-overlay">
+          <div className="modal auth-modal">
+            <button className="close-button" onClick={() => setShowLeaderboard(false)} aria-label="Fermer">
+              <X />
+            </button>
+            <Leaderboard />
+          </div>
+        </div>
+      )}
 
       {showAdmin && isAdmin && (
         <div className="modal-overlay">
