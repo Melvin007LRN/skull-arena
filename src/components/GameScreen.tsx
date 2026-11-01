@@ -476,7 +476,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const harryTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "harry"
   );
-  const canUseHarry = Boolean(harryTrigger && lastResolvedTrick?.id);
+  const canUseHarry = Boolean(
+    harryTrigger && lastResolvedTrick?.id &&
+    lastResolvedTrick.trick_number < currentRound.round_number
+  );
   setHarryCanAdjust(canUseHarry);
   setHarryTrickId(canUseHarry ? lastResolvedTrick?.id ?? null : null);
   const rascalTrigger = powerTriggers.some(
