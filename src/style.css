@@ -1345,3 +1345,153 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+
+/* SKULL ARENA — selectors matching the live React game screen */
+.skull-game {
+  min-height: 100vh;
+  color: #f4ead6;
+  background:
+    radial-gradient(ellipse at 50% 34%,rgba(168,117,45,.18),transparent 50%),
+    linear-gradient(180deg,#080808,#17110b 58%,#080808);
+}
+.skull-game .game-topbar {
+  background: rgba(8,8,8,.88);
+  border-bottom: 1px solid rgba(216,180,106,.25);
+  box-shadow: 0 10px 32px rgba(0,0,0,.3);
+  backdrop-filter: blur(14px);
+}
+.skull-game .game-brand { color: #f4d89d; text-shadow: 0 0 20px rgba(216,180,106,.24); }
+.skull-game .game-round-info {
+  color: #f0d7a0;
+  border: 1px solid rgba(216,180,106,.24);
+  background: linear-gradient(135deg,rgba(216,180,106,.12),rgba(0,0,0,.3));
+  border-radius: 12px;
+}
+.skull-game .arena-table {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(225,188,112,.58);
+  border-radius: 26px;
+  background:
+    radial-gradient(ellipse at 50% 42%,rgba(130,83,34,.28),transparent 58%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 2px,transparent 2px 8px),
+    linear-gradient(145deg,#382719,#1b110b 52%,#2c1c10);
+  box-shadow: inset 0 0 0 5px rgba(0,0,0,.3),inset 0 0 0 6px rgba(223,183,104,.16),0 24px 60px rgba(0,0,0,.48);
+}
+.skull-game .arena-table::after {
+  content: "☠  THE CAPTAIN'S TABLE  ☠";
+  display: block;
+  padding: 10px 0 2px;
+  color: rgba(255,224,160,.34);
+  font: 700 9px/1.4 Cinzel,serif;
+  letter-spacing: 3px;
+  text-align: center;
+  pointer-events: none;
+}
+.skull-game .arena-decoration { color: rgba(255,222,151,.55); filter: drop-shadow(0 0 12px rgba(216,180,106,.3)); }
+.skull-game .game-bidding-panel,
+.skull-game .game-trick-panel,
+.skull-game .game-scoreboard,
+.skull-game .game-crew,
+.skull-game .game-hand-section,
+.skull-game .selected-card-panel {
+  border: 1px solid rgba(216,180,106,.26);
+  border-radius: 18px;
+  background: linear-gradient(145deg,rgba(39,29,19,.94),rgba(10,10,10,.97));
+  box-shadow: 0 16px 38px rgba(0,0,0,.3),inset 0 1px rgba(255,224,155,.045);
+}
+.skull-game .game-section-heading h2,
+.skull-game .game-section-heading svg,
+.skull-game .arena-heading { color: #e7c57e; }
+.skull-game .game-hand {
+  display: flex;
+  align-items: flex-end;
+  perspective: 1000px;
+  gap: clamp(5px,1vw,12px);
+  padding: 20px 10px 14px;
+}
+.skull-game .game-card {
+  flex: 0 0 auto;
+  position: relative;
+  overflow: hidden;
+  color: #26190d;
+  border: 2px solid rgba(220,181,103,.8);
+  border-radius: 13px;
+  background: linear-gradient(145deg,#f3e6c9,#cdb88d 76%,#9c8255);
+  box-shadow: 0 12px 24px rgba(0,0,0,.42),inset 0 0 0 3px rgba(255,255,255,.24);
+  transform-origin: 50% 100%;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,filter .22s;
+}
+.skull-game .game-card::before {
+  content: "";
+  position: absolute;
+  inset: -60% -120%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(110deg,transparent 42%,rgba(255,255,255,.46) 49%,transparent 56%);
+  transform: translateX(-65%) rotate(12deg);
+  transition: transform .55s ease;
+}
+.skull-game .game-card:hover:not(:disabled)::before,
+.skull-game .game-card-selected::before { transform: translateX(65%) rotate(12deg); }
+.skull-game .game-card:hover:not(:disabled) {
+  transform: translateY(-13px) rotate(-1deg) scale(1.045);
+  z-index: 5;
+  box-shadow: 0 22px 34px rgba(0,0,0,.58),0 0 22px rgba(255,211,126,.22);
+}
+.skull-game .game-card-selected {
+  transform: translateY(-20px) scale(1.055);
+  z-index: 6;
+  box-shadow: 0 0 0 2px #ffe2a0,0 0 28px rgba(255,210,119,.48),0 22px 34px rgba(0,0,0,.5);
+}
+.skull-game .game-card-top { color: #5b411f; border-bottom: 1px solid rgba(95,64,27,.28); }
+.skull-game .game-card-art {
+  background: radial-gradient(circle at 50% 45%,rgba(255,255,255,.5),transparent 52%),repeating-linear-gradient(135deg,rgba(111,78,34,.06) 0 2px,transparent 2px 7px);
+}
+.skull-game .game-card-symbol { filter: drop-shadow(0 4px 3px rgba(42,27,10,.28)); }
+.skull-game .game-card-name { color: #291b0d; font-family: Cinzel,serif; font-weight: 900; }
+.skull-game .trick-played-card {
+  animation: skull-play-reveal .42s cubic-bezier(.2,.8,.2,1) both;
+  border: 1px solid rgba(226,188,113,.38);
+  background: linear-gradient(145deg,rgba(216,180,106,.1),rgba(0,0,0,.22));
+}
+.skull-game .trick-card-mini {
+  color: #26190d;
+  border: 1px solid #d8b46a;
+  background: linear-gradient(145deg,#f1e3c5,#c4ac7c);
+  box-shadow: 0 9px 20px rgba(0,0,0,.36);
+}
+@keyframes skull-play-reveal {
+  0% { opacity: 0; transform: translateY(-18px) scale(.86) rotate(-3deg); }
+  70% { opacity: 1; transform: translateY(2px) scale(1.025) rotate(1deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+.skull-game .lobby-primary,
+.skull-game .play-card-button,
+.skull-game .bid-submit {
+  color: #1a1207;
+  background: linear-gradient(135deg,#fff0bd 0%,#d8ad5b 42%,#96651e 100%);
+  border: 1px solid #f7d88e;
+  box-shadow: 0 7px 22px rgba(180,126,42,.22),inset 0 1px rgba(255,255,255,.65);
+  font-weight: 900;
+}
+.skull-game .lobby-primary:hover:not(:disabled),
+.skull-game .play-card-button:hover:not(:disabled),
+.skull-game .bid-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(213,166,79,.35),0 0 0 1px rgba(255,224,155,.25);
+}
+.skull-game .game-player-list,
+.skull-game .bid-progress-player,
+.skull-game .trick-status-card {
+  border-color: rgba(216,180,106,.2);
+  background: rgba(0,0,0,.2);
+}
+.skull-game .leader-tag { color: #ffe2a0; }
+@media(max-width:700px) {
+  .skull-game .arena-table { border-radius: 18px; }
+  .skull-game .game-hand { overflow-x: auto; justify-content: flex-start; padding: 22px 8px 14px; }
+  .skull-game .game-card:hover:not(:disabled) { transform: translateY(-8px) scale(1.02); }
+}
