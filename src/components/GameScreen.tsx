@@ -196,6 +196,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const [rosieCanChoose, setRosieCanChoose] = useState(false);
   const [rosieTarget, setRosieTarget] = useState("");
   const [rosieSaving, setRosieSaving] = useState(false);
+  const [juanitaTrickId, setJuanitaTrickId] = useState<string | null>(null);
+  const [juanitaCanPeek, setJuanitaCanPeek] = useState(false);
+  const [juanitaPeekCards, setJuanitaPeekCards] = useState<GameCard[] | null>(null);
+  const [juanitaPeekLoading, setJuanitaPeekLoading] = useState(false);
   
   const loadGame = useCallback(async () => {
     setError("");
