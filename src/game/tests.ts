@@ -829,6 +829,64 @@ export function runGameTests(): GameTestResult[] {
     assert(result.winnerPlayerId === "player-1", "L'égalité n'a pas été départagée en faveur du premier joueur.");
   });
 
+
+  // TEST 34 : pouvoir de Rosie
+  test("Rosie déclenche le choix du prochain leader", () => {
+    const rosie = makeCard("pirate-rosie", "pirate", { piratePower: "rosie" });
+    const result = resolveTrick([makePlay("player-1", rosie, 0)]);
+    assert(result.piratePowerTriggers.length === 1, "Le pouvoir de Rosie n'a pas été déclenché.");
+    assert(result.piratePowerTriggers[0].playerId === "player-1", "Le pouvoir de Rosie est attribué au mauvais joueur.");
+    assert(result.piratePowerTriggers[0].power === "rosie", "Le mauvais pouvoir est déclenché.");
+  });
+
+  // TEST 35 : pouvoir de Bendt
+  test("Bendt déclenche son pouvoir de pioche et défausse", () => {
+    const bendt = makeCard("pirate-bendt", "pirate", { piratePower: "bendt" });
+    const result = resolveTrick([makePlay("player-1", bendt, 0)]);
+    assert(result.piratePowerTriggers.some((trigger) => trigger.power === "bendt" && trigger.playerId === "player-1"), "Le pouvoir de Bendt n'a pas été déclenché.");
+  });
+
+  // TEST 36 : pouvoir de Rascal
+  test("Rascal déclenche son pari supplémentaire", () => {
+    const rascal = makeCard("pirate-rascal", "pirate", { piratePower: "rascal" });
+    const result = resolveTrick([makePlay("player-1", rascal, 0)]);
+    assert(result.piratePowerTriggers.some((trigger) => trigger.power === "rascal"), "Le pouvoir de Rascal n'a pas été déclenché.");
+  });
+
+  // TEST 37 : pouvoir de Juanita
+  test("Juanita déclenche la consultation du paquet restant", () => {
+    const juanita = makeCard("pirate-juanita", "pirate", { piratePower: "juanita" });
+    const result = resolveTrick([makePlay("player-1", juanita, 0)]);
+    assert(result.piratePowerTriggers.some((trigger) => trigger.power === "juanita"), "Le pouvoir de Juanita n'a pas été déclenché.");
+  });
+
+  // TEST 38 : pouvoir de Harry
+  test("Harry déclenche la modification de son annonce", () => {
+    const harry = makeCard("pirate-harry", "pirate", { piratePower: "harry" });
+    const result = resolveTrick([makePlay("player-1", harry, 0)]);
+    assert(result.piratePowerTriggers.some((trigger) => trigger.power === "harry"), "Le pouvoir de Harry n'a pas été déclenché.");
+  });
+
+  // TEST 39 : Mary Throne
+  test("Mary Throne identifie son gagnant sans déclencher un pouvoir classique", () => {
+    const mary = makeCard("mary-throne", "pirate");
+    const result = resolveTrick([makePlay("player-1", mary, 0)]);
+    assert(result.maryThroneWinnerPlayerId === "player-1", "Le gagnant de Mary Throne n'est pas identifié.");
+    assert(result.piratePowerTriggers.length === 0, "Mary Throne déclenche à tort un pouvoir de Pirate classique.");
+  });
+
+  // TEST 40 : Second récupère les pouvoirs des Pirates capturés
+  test("Second déclenche les pouvoirs des Pirates qu'il capture", () => {
+    const rosie = makeCard("pirate-rosie", "pirate", { piratePower: "rosie" });
+    const second = makeCard("test-second", "second");
+    const result = resolveTrick([
+      makePlay("player-1", rosie, 0),
+      makePlay("player-2", second, 1),
+    ]);
+    assert(result.winnerPlayerId === "player-2", "Second n'a pas remporté le pli.");
+    assert(result.piratePowerTriggers.some((trigger) => trigger.playerId === "player-2" && trigger.power === "rosie"), "Second n'a pas récupéré le pouvoir de Rosie.");
+  });
+
   return results;
 }
 
