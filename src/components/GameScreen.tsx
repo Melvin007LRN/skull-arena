@@ -437,8 +437,12 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const rosieTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "rosie"
   );
-  setRosieCanChoose(Boolean(rosieTrigger && lastResolvedTrick?.id));
-  setRosieTrickId(rosieTrigger ? lastResolvedTrick?.id ?? null : null);
+  const canChooseWithRosie = Boolean(
+    rosieTrigger && lastResolvedTrick?.id &&
+    lastResolvedTrick.trick_number < currentRound.round_number
+  );
+  setRosieCanChoose(canChooseWithRosie);
+  setRosieTrickId(canChooseWithRosie ? lastResolvedTrick?.id ?? null : null);
   const juanitaTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "juanita"
   );
