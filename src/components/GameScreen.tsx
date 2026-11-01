@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import {
   Anchor,
@@ -26,6 +25,7 @@ type GameCard = {
   suit?: string;
   value?: number;
   selectableValue?: number[];
+  extension?: string;
   isExpansionCard?: boolean;
   piratePower?: string;
 };
@@ -160,6 +160,8 @@ export default function GameScreen({
     useState<GameCard | null>(null);
   const [tigressMode, setTigressMode] =
     useState<"pirate" | "escape">("pirate");
+  const [chosenValue, setChosenValue] = useState<number | null>(null);
+  const [chosenSuit, setChosenSuit] = useState<string>("green");
   const [playingCard, setPlayingCard] = useState(false);
   const [playMessage, setPlayMessage] = useState("");
   const [showPlayConfirmation, setShowPlayConfirmation] =
@@ -452,6 +454,14 @@ export default function GameScreen({
 
   const playSelectedCard = async () => {
     if (!round || !selectedCard || playingCard) return;
+    if (selectedCard.selectableValue?.length && chosenValue === null) {
+      setPlayMessage("Choisis la valeur de cette carte.");
+      return;
+    }
+    if (selectedCard.type === "joker" && !["green", "purple", "yellow"].includes(chosenSuit)) {
+      setPlayMessage("Choisis une couleur valide pour le Joker.");
+      return;
+    }
 
     setPlayingCard(true);
     setPlayMessage("");
@@ -463,8 +473,12 @@ export default function GameScreen({
         p_card_id: selectedCard.id,
         p_tigress_mode:
           selectedCard.type === "tigress" ? tigressMode : null,
-        p_chosen_value: null,
-        p_chosen_suit: null,
+        p_chosen_value: selectedCard.selectableValue?.length
+          ? chosenValue
+          : null,
+        p_chosen_suit: selectedCard.type === "joker"
+          ? chosenSuit
+          : null,
       }
     );
 
@@ -993,6 +1007,8 @@ export default function GameScreen({
                     setSelectedCard(
                       isSelected ? null : card
                     );
+                    setChosenValue(card.selectableValue?.[0] ?? null);
+                    setChosenSuit("green");
                     setPlayMessage("");
                     setShowPlayConfirmation(false);
                   }}
@@ -1067,6 +1083,8 @@ export default function GameScreen({
                 type="button"
                 onClick={() => {
                   setSelectedCard(null);
+                  setChosenValue(null);
+                  setChosenSuit("green");
                   setShowPlayConfirmation(false);
                 }}
                 aria-label="Annuler la sélection"
@@ -1074,6 +1092,43 @@ export default function GameScreen({
                 <X size={19} />
               </button>
             </div>
+
+            {selectedCard.selectableValue?.length ? (
+              <div className="tigress-choice">
+                <strong>CHOISIS LA VALEUR DE TA CARTE</strong>
+                <div>
+                  {selectedCard.selectableValue.map((value) => (
+                    <button
+                      type="button"
+                      key={value}
+                      className={chosenValue === value ? "selected" : ""}
+                      onClick={() => setChosenValue(value)}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {selectedCard.type === "joker" && (
+              <div className="tigress-choice">
+                <strong>CHOISIS LA COULEUR DU JOKER</strong>
+                <div>
+                  {(["green", "purple", "yellow"] as const).map((suit) => (
+                    <button
+                      type="button"
+                      key={suit}
+                      className={chosenSuit === suit ? "selected" : ""}
+                      onClick={() => setChosenSuit(suit)}
+                      style={{ borderColor: suitColors[suit] }}
+                    >
+                      {suitNames[suit]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {selectedCard.type === "tigress" && (
               <div className="tigress-choice">
