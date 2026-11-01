@@ -176,13 +176,16 @@ export default function AuthPanel({
     if (!sessionEmail) return;
 
     let active = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active || !data.user) return;
+    const subscribeToProfileUpdates = async () => {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (!active || error || !data.user) return;
 
       const playerId = data.user.id;
 
-      const channel = supabase
+      channel = supabase
         .channel(`profile-stats-${playerId}`)
         .on(
           "postgres_changes",
@@ -205,12 +208,17 @@ export default function AuthPanel({
           () => loadStats()
         )
         .subscribe();
+    };
 
-      return channel;
-    });
+    void subscribeToProfileUpdates();
 
     return () => {
       active = false;
+
+      if (channel) {
+        void supabase.removeChannel(channel);
+        channel = null;
+      }
     };
   }, [sessionEmail, loadStats]);
 
