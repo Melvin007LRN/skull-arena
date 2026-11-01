@@ -743,6 +743,92 @@ export function runGameTests(): GameTestResult[] {
     );
   });
 
+
+  // TEST 30 : extension désactivée
+  test("Une carte d'extension désactivée ne peut pas être jouée", () => {
+    const expansionCard = makeCard("expansion-green-7", "number", {
+      suit: "green",
+      value: 7,
+      extension: "expansion_2025",
+      isExpansionCard: true,
+    });
+
+    const result = validateCardPlay({
+      playerId: "player-1",
+      hand: [expansionCard],
+      playedCards: [],
+      card: expansionCard,
+      extensions: { expansion_2025: false },
+    });
+
+    assert(!result.valid, "Une carte d'extension désactivée a été autorisée.");
+  });
+
+  // TEST 31 : Joker doit suivre la couleur
+  test("Le Joker doit respecter la couleur demandée", () => {
+    const joker = makeCard("test-joker", "joker", {
+      value: 15,
+      selectableValue: [15],
+      extension: "expansion_2025",
+      isExpansionCard: true,
+    });
+    const lead = makeCard("test-green-8", "number", {
+      suit: "green",
+      value: 8,
+    });
+
+    const result = validateCardPlay({
+      playerId: "player-1",
+      hand: [joker],
+      playedCards: [makePlay("player-2", lead, 0)],
+      card: joker,
+      chosenValue: 15,
+      chosenSuit: "yellow",
+      extensions: { expansion_2025: true },
+    });
+
+    assert(!result.valid, "Le Joker a pu ignorer la couleur demandée.");
+  });
+
+  // TEST 32 : valeur sélectionnable obligatoire
+  test("Une carte 0/14 exige un choix explicite", () => {
+    const card = makeCard("exp-green-0-14", "number", {
+      suit: "green",
+      selectableValue: [0, 14],
+      extension: "expansion_2025",
+      isExpansionCard: true,
+    });
+
+    const result = validateCardPlay({
+      playerId: "player-1",
+      hand: [card],
+      playedCards: [],
+      card,
+      extensions: { expansion_2025: true },
+    });
+
+    assert(!result.valid, "La carte 0/14 a été jouée sans choisir sa valeur.");
+  });
+
+  // TEST 33 : égalité des cartes numériques
+  test("En cas d'égalité numérique, la première carte jouée gagne", () => {
+    const first = makeCard("green-10-first", "number", {
+      suit: "green",
+      value: 10,
+    });
+    const second = makeCard("green-10-second", "number", {
+      suit: "green",
+      value: 10,
+    });
+
+    const result = resolveTrick([
+      makePlay("player-1", first, 0),
+      makePlay("player-2", second, 1),
+    ]);
+
+    assert(result.winnerPlayerId === "player-1", "L'égalité n'a pas été départagée en faveur du premier joueur.");
+  });
+
   return results;
 }
 
