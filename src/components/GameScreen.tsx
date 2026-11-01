@@ -418,7 +418,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
   const { data: lastResolvedTrick } = await supabase
     .from("game_tricks")
-    .select("trick_number, resolved_at")
+    .select("id, trick_number, resolved_at, resolution")
     .eq("round_id", currentRound.id)
     .eq("status", "resolved")
     .order("trick_number", { ascending: false })
@@ -426,6 +426,14 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     .maybeSingle();
 
   setLastResolvedTrickNumber(lastResolvedTrick?.trick_number ?? 0);
+  const resolvedMetadata = lastResolvedTrick?.resolution as
+    | { pirate_power_triggers?: Array<{ player_id?: string; power?: string }> }
+    | null;
+  const rosieTrigger = resolvedMetadata?.pirate_power_triggers?.some(
+    (trigger) => trigger.player_id === currentUserId && trigger.power === "rosie"
+  ) ?? false;
+  setRosieCanChoose(Boolean(rosieTrigger && lastResolvedTrick?.id));
+  setRosieTrickId(rosieTrigger ? lastResolvedTrick?.id ?? null : null);
 
   if (
     lastResolvedTrick?.resolved_at &&
