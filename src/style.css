@@ -1125,3 +1125,223 @@ footer {
     flex-wrap: wrap;
   }
 }
+
+
+/* =========================================================
+   SKULL ARENA — THE GOLDEN PIRATE SHIP
+   Global visual pass: obsidian, antique gold, warm parchment.
+========================================================= */
+:root {
+  --gold: #d8b46a;
+  --gold-light: #ffe4a0;
+  --gold-deep: #8c6428;
+  --panel: rgba(14, 16, 19, .94);
+  --wood: #24170f;
+  --parchment: #ead9b5;
+}
+html { background: #070707; }
+body {
+  color: #f4ead6;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(175,128,49,.12), transparent 42%),
+    linear-gradient(180deg,#090909 0%,#11100d 58%,#070707 100%);
+}
+button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 3px;
+}
+.arena, .lobby-page {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(192,146,66,.14), transparent 44%),
+    linear-gradient(145deg,#070707 0%,#15120d 55%,#080808 100%);
+}
+.arena::before {
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.76)),
+    repeating-linear-gradient(90deg,transparent 0 78px,rgba(218,180,106,.018) 79px 80px);
+}
+.brand-icon, .lobby-brand > svg {
+  filter: drop-shadow(0 0 12px rgba(255,211,126,.3));
+}
+.primary-button, .lobby-primary, .join-code-row button, .public-room-row button {
+  color: #1a1207;
+  background: linear-gradient(135deg,#fff0bd 0%,#d8ad5b 42%,#96651e 100%);
+  border: 1px solid #f7d88e;
+  box-shadow: 0 7px 22px rgba(180,126,42,.22), inset 0 1px rgba(255,255,255,.65);
+  text-shadow: 0 1px rgba(255,255,255,.25);
+}
+.primary-button:hover:not(:disabled), .lobby-primary:hover:not(:disabled),
+.join-code-row button:hover:not(:disabled), .public-room-row button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(213,166,79,.35), 0 0 0 1px rgba(255,224,155,.25);
+}
+.secondary-button, .lobby-secondary, .profile-button, .lobby-back, .lobby-refresh {
+  color: #f2dcae;
+  background: linear-gradient(145deg,rgba(255,255,255,.055),rgba(0,0,0,.36));
+  border-color: rgba(216,180,106,.38);
+}
+.mode-card, .lobby-create-panel, .lobby-join-panel, .public-rooms, .room-panel,
+.modal, .walk-the-plank-choice, .game-crew, .game-hand-section,
+.game-bidding, .game-trick-section, .game-scoreboard, .game-round-summary {
+  background:
+    linear-gradient(145deg,rgba(37,29,19,.92),rgba(10,10,10,.97));
+  border: 1px solid rgba(216,180,106,.3);
+  box-shadow: 0 18px 48px rgba(0,0,0,.38), inset 0 1px rgba(255,224,155,.045);
+}
+.mode-card:hover, .public-room-row:hover {
+  border-color: rgba(255,220,145,.7);
+  box-shadow: 0 16px 38px rgba(0,0,0,.48),0 0 25px rgba(216,180,106,.08);
+}
+.lobby-page { position: relative; isolation: isolate; }
+.lobby-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .25;
+  background:
+    repeating-linear-gradient(0deg,transparent 0 42px,rgba(216,180,106,.025) 43px 44px),
+    radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,.7) 100%);
+}
+.lobby-content h1, .hero h1, .section-heading h2 {
+  text-shadow: 0 5px 22px rgba(0,0,0,.65);
+}
+.room-code-box {
+  background: linear-gradient(135deg,rgba(216,180,106,.12),rgba(0,0,0,.3));
+  border-color: rgba(255,220,145,.5);
+}
+.game-screen, .game-page, .game-arena {
+  background:
+    radial-gradient(ellipse at 50% 44%,rgba(119,79,31,.19),transparent 55%),
+    linear-gradient(180deg,#090909,#17120c 55%,#080808);
+}
+/* The play surface reads as a captain's table: dark oak, brass seams. */
+.game-trick-section, .trick-table, .game-table, .trick-area {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(224,185,105,.58) !important;
+  border-radius: 24px !important;
+  background:
+    radial-gradient(ellipse at 50% 45%,rgba(93,59,25,.24),transparent 60%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 2px,transparent 2px 9px),
+    linear-gradient(145deg,#382516,#1b110b 48%,#2b1b10) !important;
+  box-shadow: inset 0 0 0 5px rgba(0,0,0,.24), inset 0 0 0 6px rgba(225,185,104,.16), 0 24px 60px rgba(0,0,0,.5);
+}
+.game-trick-section::after, .trick-table::after, .game-table::after, .trick-area::after {
+  content: "☠  SKULL ARENA  •  THE CAPTAIN'S TABLE  ☠";
+  display: block;
+  margin: 12px auto 0;
+  color: rgba(255,224,160,.32);
+  font: 700 9px/1.4 Cinzel,serif;
+  letter-spacing: 3px;
+  text-align: center;
+  pointer-events: none;
+}
+.game-card {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(225,185,104,.78) !important;
+  border-radius: 13px !important;
+  color: #24180d !important;
+  background:
+    radial-gradient(circle at 50% 28%,rgba(255,255,255,.92),transparent 42%),
+    linear-gradient(145deg,#f3e6c9,#cdb88d 75%,#9c8255) !important;
+  box-shadow: 0 12px 24px rgba(0,0,0,.42), inset 0 0 0 3px rgba(255,255,255,.25);
+  transform-origin: 50% 100%;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s, filter .22s;
+  touch-action: manipulation;
+}
+.game-card::before {
+  content: "";
+  position: absolute;
+  inset: -60% -120%;
+  pointer-events: none;
+  background: linear-gradient(110deg,transparent 42%,rgba(255,255,255,.42) 49%,transparent 56%);
+  transform: translateX(-65%) rotate(12deg);
+  transition: transform .55s ease;
+}
+.game-card:hover::before, .game-card-selected::before { transform: translateX(65%) rotate(12deg); }
+.game-card:hover:not(:disabled) {
+  transform: translateY(-13px) rotate(-1deg) scale(1.045);
+  z-index: 5;
+  box-shadow: 0 22px 34px rgba(0,0,0,.58),0 0 22px rgba(255,211,126,.22);
+}
+.game-card-selected {
+  transform: translateY(-20px) scale(1.055) !important;
+  z-index: 6;
+  box-shadow: 0 0 0 2px #ffe2a0,0 0 28px rgba(255,210,119,.48),0 22px 34px rgba(0,0,0,.5) !important;
+}
+.game-card-top { border-bottom: 1px solid rgba(95,64,27,.28) !important; }
+.game-card-art {
+  background:
+    radial-gradient(circle at 50% 45%,rgba(255,255,255,.48),transparent 52%),
+    repeating-linear-gradient(135deg,rgba(111,78,34,.06) 0 2px,transparent 2px 7px);
+}
+.game-card-symbol { filter: drop-shadow(0 4px 3px rgba(42,27,10,.28)); }
+.game-card-name {
+  color: #291b0d !important;
+  font-family: Cinzel,serif;
+  font-weight: 900;
+}
+.game-hand {
+  align-items: flex-end;
+  perspective: 900px;
+  padding: 20px 12px 12px;
+  gap: clamp(5px,1.1vw,13px);
+}
+.game-hand .game-card {
+  animation: hand-rise .45s both;
+  animation-delay: calc(var(--card-index, 0) * 35ms);
+}
+@keyframes hand-rise {
+  from { opacity: 0; transform: translateY(24px) rotate(2deg); }
+  to { opacity: 1; }
+}
+.trick-played-card, .trick-card-mini {
+  border-color: rgba(226,188,113,.42) !important;
+  background: linear-gradient(145deg,#e9d8b5,#bca276) !important;
+  color: #24180d !important;
+  box-shadow: 0 9px 20px rgba(0,0,0,.36);
+  animation: card-land .38s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes card-land {
+  0% { opacity: 0; transform: translateY(-24px) scale(.82) rotate(-5deg); }
+  70% { transform: translateY(3px) scale(1.035) rotate(1deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+.game-player.current, .player-row:has(.you-label) {
+  border-color: rgba(255,221,145,.6);
+  background: linear-gradient(90deg,rgba(216,180,106,.14),rgba(0,0,0,.15));
+}
+.leader-tag, .host-label {
+  color: #ffe2a0 !important;
+}
+.game-section-heading h2, .game-section-heading svg {
+  color: #e6c47e;
+}
+.selected-card-panel, .tigress-choice, .play-confirmation {
+  border-color: rgba(225,185,104,.38) !important;
+  background: linear-gradient(145deg,rgba(53,39,22,.9),rgba(12,11,9,.95)) !important;
+}
+.game-empty-hand {
+  border: 1px dashed rgba(216,180,106,.35);
+  background: rgba(0,0,0,.22);
+  color: #cdbb98;
+}
+.lobby-message, .play-message {
+  color: #ffe4a0 !important;
+  background: rgba(216,180,106,.09) !important;
+  border: 1px solid rgba(216,180,106,.3);
+  border-radius: 10px;
+}
+@media (max-width: 700px) {
+  .game-hand { overflow-x: auto; justify-content: flex-start; padding: 22px 8px 14px; }
+  .game-card { flex: 0 0 auto; }
+  .game-trick-section, .trick-table, .game-table, .trick-area { border-radius: 17px !important; }
+  .game-card:hover:not(:disabled) { transform: translateY(-8px) scale(1.02); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
