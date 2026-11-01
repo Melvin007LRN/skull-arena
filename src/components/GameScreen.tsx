@@ -92,6 +92,16 @@ type ScoreboardEntry = {
   rank_position: number;
 };
 
+type RoundSummaryEntry = {
+  player_id: string;
+  username: string;
+  bid: number;
+  tricks_won: number;
+  base_points: number;
+  bonus_points: number;
+  total_points: number;
+};
+
 type GameScreenProps = {
   roomId: string;
   onExit: () => void;
@@ -171,6 +181,8 @@ export default function GameScreen({
 
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
+  const [roundSummary, setRoundSummary] = useState<RoundSummaryEntry[]>([]);
+  const [dismissedRoundSummaryId, setDismissedRoundSummaryId] = useState("");
   const [roundTricksWon, setRoundTricksWon] = useState<Record<string, number>>({});
   const [round, setRound] = useState<GameRound | null>(null);
   const [hand, setHand] = useState<GameCard[]>([]);
@@ -378,6 +390,45 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       setScoreboard(scoreboardData as ScoreboardEntry[]);
     } else if (scoreboardError) {
       console.error("ERREUR CLASSEMENT :", scoreboardError);
+    }
+
+    // RÉCAPITULATIF DE LA MANCHE PRÉCÉDENTE
+    if (currentRound.round_number > 1) {
+      const { data: previousRound } = await supabase
+        .from("game_rounds")
+        .select("id")
+        .eq("room_id", roomId)
+        .eq("round_number", currentRound.round_number - 1)
+        .maybeSingle();
+
+      if (previousRound?.id) {
+        const { data: previousScores, error: previousScoresError } = await supabase
+          .from("player_round_scores")
+          .select("player_id, bid, tricks_won, base_points, bonus_points, total_points")
+          .eq("round_id", previousRound.id)
+          .order("total_points", { ascending: false });
+
+        if (previousScoresError) {
+          console.error("ERREUR RÉCAPITULATIF DE MANCHE :", previousScoresError);
+        } else {
+          const summaryRows = previousScores || [];
+          const summaryPlayerIds = summaryRows.map((entry) => entry.player_id);
+          const { data: summaryProfiles } = summaryPlayerIds.length
+            ? await supabase.from("profiles").select("id, username").in("id", summaryPlayerIds)
+            : { data: [] };
+          const summaryNames = new Map(
+            (summaryProfiles || []).map((profile) => [profile.id, profile.username || "Pirate inconnu"])
+          );
+          setRoundSummary(summaryRows.map((entry) => ({
+            ...entry,
+            username: summaryNames.get(entry.player_id) || "Pirate inconnu",
+          })) as RoundSummaryEntry[]);
+        }
+      } else {
+        setRoundSummary([]);
+      }
+    } else {
+      setRoundSummary([]);
     }
 
     // PROGRESSION DES ENCHÈRES
@@ -1444,6 +1495,38 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           <strong>{players.length} PIRATES</strong>
         </div>
       </section>
+
+      {roundSummary.length > 0 && dismissedRoundSummaryId !== String(round.round_number - 1) && (
+        <section className="round-summary-panel" aria-label="Résultats de la manche précédente">
+          <div className="round-summary-heading">
+            <div>
+              <span>RÉSULTATS DE LA MANCHE {round.round_number - 1}</span>
+              <strong>Le score est tombé !</strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDismissedRoundSummaryId(String(round.round_number - 1))}
+              aria-label="Fermer le récapitulatif"
+            >
+              <X size={17} />
+            </button>
+          </div>
+          <div className="round-summary-list">
+            {roundSummary.map((entry, index) => (
+              <div className="round-summary-row" key={entry.player_id}>
+                <span className="round-summary-rank">{index + 1}</span>
+                <div className="round-summary-player">
+                  <strong>{entry.username}</strong>
+                  <span>Mise {entry.bid} · {entry.tricks_won} pli(s) · bonus {entry.bonus_points >= 0 ? "+" : ""}{entry.bonus_points}</span>
+                </div>
+                <strong className={entry.total_points >= 0 ? "round-summary-positive" : "round-summary-negative"}>
+                  {entry.total_points > 0 ? "+" : ""}{entry.total_points} pts
+                </strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CLASSEMENT EN DIRECT */}
       <section className="game-scoreboard skull-scoreboard" aria-label="Classement de l'équipage">

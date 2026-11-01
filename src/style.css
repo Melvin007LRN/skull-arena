@@ -2534,3 +2534,22 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
 @keyframes championGlow{50%{box-shadow:0 0 19px rgba(242,192,88,.4)}}
 @media(prefers-reduced-motion:reduce){.skull-game .scoreboard-live i,.skull-game .scoreboard-row--rank-1 .scoreboard-rank,.skull-game .scoreboard-row--top{animation:none}}
 @media(max-width:600px){.skull-game .skull-scoreboard{padding:12px 10px}.skull-game .scoreboard-row{grid-template-columns:31px minmax(0,1fr) auto;gap:7px;padding:8px}.skull-game .scoreboard-player>strong{font-size:11px}.skull-game .scoreboard-points{font-size:13px}}
+
+
+/* ROUND SUMMARY — compact score recap while the next round is prepared */
+.skull-game .round-summary-panel{margin:14px auto 18px;padding:14px;border:1px solid rgba(229,190,111,.42);border-radius:16px;background:linear-gradient(135deg,rgba(48,35,21,.96),rgba(12,18,27,.97));box-shadow:0 10px 28px rgba(0,0,0,.26)}
+.skull-game .round-summary-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.skull-game .round-summary-heading>div{display:grid;gap:4px}
+.skull-game .round-summary-heading span{color:#d4b579;font-size:9px;font-weight:900;letter-spacing:1.4px}
+.skull-game .round-summary-heading strong{color:#fff0d0;font:800 16px Cinzel,Georgia,serif}
+.skull-game .round-summary-heading button{display:grid;place-items:center;width:32px;height:32px;border:1px solid rgba(255,226,177,.2);border-radius:9px;background:rgba(255,255,255,.06);color:#f5dfb5}
+.skull-game .round-summary-list{display:grid;gap:6px}
+.skull-game .round-summary-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:9px;padding:8px 9px;border:1px solid rgba(255,255,255,.065);border-radius:10px;background:rgba(255,255,255,.035)}
+.skull-game .round-summary-rank{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:rgba(230,190,112,.13);color:#f2d49b;font:800 12px Georgia,serif}
+.skull-game .round-summary-player{display:grid;min-width:0;gap:3px}
+.skull-game .round-summary-player strong{overflow:hidden;color:#fff0d0;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.skull-game .round-summary-player span{color:#bcae91;font-size:9px}
+.skull-game .round-summary-row>strong{font:900 12px Cinzel,Georgia,serif;white-space:nowrap}
+.skull-game .round-summary-positive{color:#a8df9b}
+.skull-game .round-summary-negative{color:#f0a09a}
+@media(max-width:600px){.skull-game .round-summary-panel{padding:11px}.skull-game .round-summary-heading strong{font-size:14px}.skull-game .round-summary-row{gap:6px;padding:7px}.skull-game .round-summary-player span{font-size:8px}.skull-game .round-summary-row>strong{font-size:10px}}
