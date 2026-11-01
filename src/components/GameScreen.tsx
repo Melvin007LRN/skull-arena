@@ -2026,9 +2026,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <p className="game-hand-hint">
-          Tes cartes sont privées. Seul ton compte peut consulter cette main.
-          {round.status === "playing" &&
-            " Sélectionne une carte pour la jouer."}
+          Tes cartes sont privées. Fais glisser une carte vers le haut, en direction de l’arène, pour la jouer. Sur les cartes à choix, le glissement ouvre d’abord leurs options.
         </p>
 
         {hand.length === 0 ? (
