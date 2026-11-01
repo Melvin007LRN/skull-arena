@@ -1016,7 +1016,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   // ORDRE DE JEU : les joueurs exclus du dernier pli sont ignorés.
   const turnLeaderId =
     currentTrick?.leader_player_id || round?.leader_player_id;
-  const turnLeaderIndex = activePlayers.findIndex(
+  const turnLeaderIndex = players.findIndex(
     (player) => player.player_id === turnLeaderId
   );
   const orderedActivePlayers =
