@@ -578,14 +578,46 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   };
 
   useEffect(() => {
-    loadGame();
+    let mounted = true;
+    let refreshInProgress = false;
+    let refreshPending = false;
+    let refreshTimer: number | null = null;
 
+    const refreshSafely = async () => {
+      if (!mounted) return;
+      if (refreshInProgress) {
+        refreshPending = true;
+        return;
+      }
+
+      refreshInProgress = true;
+      do {
+        refreshPending = false;
+        await loadGame();
+      } while (mounted && refreshPending);
+      refreshInProgress = false;
+    };
+
+    const scheduleRefresh = () => {
+      if (refreshTimer !== null) {
+        window.clearTimeout(refreshTimer);
+      }
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = null;
+        void refreshSafely();
+      }, 120);
+    };
+
+    void refreshSafely();
+
+    // Filet de sécurité en cas de perte temporaire du canal Realtime.
     const refreshInterval = window.setInterval(() => {
-      loadGame();
-    }, 3000);
+      void refreshSafely();
+    }, 5000);
 
-    const channel = supabase
-      .channel(`game-screen-${roomId}`)
+    let channel = supabase.channel(`game-screen-${roomId}`);
+
+    channel = channel
       .on(
         "postgres_changes",
         {
@@ -594,7 +626,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "game_rooms",
           filter: `id=eq.${roomId}`,
         },
-        () => loadGame()
+        scheduleRefresh
       )
       .on(
         "postgres_changes",
@@ -604,29 +636,18 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "player_scores",
           filter: `room_id=eq.${roomId}`,
         },
-        () => loadGame()
+        scheduleRefresh
       )
-     
-.on(
-  "postgres_changes",
-  {
-    event: "*",
-    schema: "public",
-    table: "player_round_scores",
-    filter: `room_id=eq.${roomId}`,
-  },
-  () => loadGame()
-)
-.on(
-  "postgres_changes",
-  {
-    event: "*",
-    schema: "public",
-    table: "player_bids",
-  },
-  () => loadGame()
-)
-      
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "player_round_scores",
+          filter: `room_id=eq.${roomId}`,
+        },
+        scheduleRefresh
+      )
       .on(
         "postgres_changes",
         {
@@ -635,16 +656,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "game_rounds",
           filter: `room_id=eq.${roomId}`,
         },
-        () => loadGame()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "player_hands",
-        },
-        () => loadGame()
+        scheduleRefresh
       )
       .on(
         "postgres_changes",
@@ -654,36 +666,67 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           table: "room_players",
           filter: `room_id=eq.${roomId}`,
         },
-        () => loadGame()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "game_tricks",
-        },
-        () => loadGame()
-      )
-      .on(
+        scheduleRefresh
+      );
+
+    // Ces tables sont liées à la manche courante : on évite les
+    // notifications globales provenant des autres salons.
+    if (round?.id) {
+      channel = channel
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "player_bids",
+            filter: `round_id=eq.${round.id}`,
+          },
+          scheduleRefresh
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "player_hands",
+            filter: `round_id=eq.${round.id}`,
+          },
+          scheduleRefresh
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "game_tricks",
+            filter: `round_id=eq.${round.id}`,
+          },
+          scheduleRefresh
+        );
+    }
+
+    if (currentTrick?.id) {
+      channel = channel.on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "trick_plays",
+          filter: `trick_id=eq.${currentTrick.id}`,
         },
-        () => loadGame()
-      )
-      .subscribe();
+        scheduleRefresh
+      );
+    }
 
+    channel.subscribe();
 
-
-    
     return () => {
+      mounted = false;
       window.clearInterval(refreshInterval);
-      supabase.removeChannel(channel);
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      void supabase.removeChannel(channel);
     };
-  }, [roomId, loadGame]);
+  }, [roomId, loadGame, round?.id, currentTrick?.id]);
 
   useEffect(() => {
   const updateCountdown = () => {
