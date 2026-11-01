@@ -207,6 +207,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const [harryTrickId, setHarryTrickId] = useState<string | null>(null);
   const [harryCanAdjust, setHarryCanAdjust] = useState(false);
   const [harryLoading, setHarryLoading] = useState(false);
+  const [rascalTrickId, setRascalTrickId] = useState<string | null>(null);
+  const [rascalCanBet, setRascalCanBet] = useState(false);
+  const [rascalLoading, setRascalLoading] = useState(false);
   
   const loadGame = useCallback(async () => {
     setError("");
@@ -476,6 +479,15 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const canUseHarry = Boolean(harryTrigger && lastResolvedTrick?.id);
   setHarryCanAdjust(canUseHarry);
   setHarryTrickId(canUseHarry ? lastResolvedTrick?.id ?? null : null);
+  const rascalTrigger = powerTriggers.some(
+    (trigger) => trigger.player_id === currentUserId && trigger.power === "rascal"
+  );
+  const canUseRascal = Boolean(
+    rascalTrigger && lastResolvedTrick?.id &&
+    lastResolvedTrick.trick_number < currentRound.round_number
+  );
+  setRascalCanBet(canUseRascal);
+  setRascalTrickId(canUseRascal ? lastResolvedTrick?.id ?? null : null);
 
   if (
     lastResolvedTrick?.resolved_at &&
@@ -733,6 +745,29 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     setHarryCanAdjust(false);
     setHarryTrickId(null);
     setPlayMessage(`Harry modifie ta mise : ${result?.old_bid ?? "?"} → ${result?.new_bid ?? "?"}.`);
+    await loadGame();
+  };
+
+  const chooseRascalBet = async (stake: 0 | 10 | 20) => {
+    if (!rascalTrickId || rascalLoading) return;
+    setRascalLoading(true);
+    setPlayMessage("");
+    const { error: rascalError } = await supabase.rpc(
+      "choose_rascal_extra_bet",
+      { p_trick_id: rascalTrickId, p_stake: stake }
+    );
+    setRascalLoading(false);
+    if (rascalError) {
+      setPlayMessage(rascalError.message);
+      return;
+    }
+    setRascalCanBet(false);
+    setRascalTrickId(null);
+    setPlayMessage(
+      stake === 0
+        ? "Rascal choisit de ne pas miser de points supplémentaires."
+        : `Rascal engage ${stake} points supplémentaires : ils seront ajoutés si ta mise est exacte, retirés sinon.`
+    );
     await loadGame();
   };
 
@@ -1631,6 +1666,29 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           >
             {rosieSaving ? "VALIDATION..." : "CONFIRMER LE MENEUR"}
           </button>
+        </section>
+      )}
+
+      {rascalCanBet && (
+        <section className="walk-the-plank-choice" aria-live="polite">
+          <div className="game-section-heading">
+            <h2>🎲 RASCAL LE FLAMBEUR — PARI BONUS</h2>
+          </div>
+          <p>Choisis ton pari : s'il correspond à ta mise exacte, tu gagnes les points. Sinon, tu les perds.</p>
+          <div className="plank-target-list">
+            {([0, 10, 20] as const).map((stake) => (
+              <button
+                type="button"
+                key={stake}
+                className="plank-target"
+                onClick={() => chooseRascalBet(stake)}
+                disabled={rascalLoading}
+              >
+                {stake === 0 ? "NE PAS MISER" : `MISER ${stake} POINTS`}
+              </button>
+            ))}
+          </div>
+          {rascalLoading && <p>VALIDATION DU PARI...</p>}
         </section>
       )}
 
