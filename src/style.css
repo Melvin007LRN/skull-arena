@@ -2712,3 +2712,153 @@ h1,h2,h3,.brand-name,.lobby-brand strong{font-family:"Cinzel",Georgia,serif}
   width: 100%;
   min-width: 0;
 }
+
+
+/* ==========================================================
+   SKULL ARENA — FIXED TABLE VIEW
+   No document scrolling. Crew surrounds the central felt table.
+   Only the hand and compact side panels may scroll internally.
+========================================================== */
+html:has(.skull-game),
+body:has(.skull-game),
+#root:has(.skull-game) {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+.skull-game {
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 8px 14px 10px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 310px);
+  grid-template-rows: auto auto minmax(230px, 1fr) minmax(105px, auto) minmax(125px, auto);
+  grid-template-areas:
+    "top top"
+    "meta meta"
+    "arena sidebar"
+    "bidding trick"
+    "hand hand";
+  gap: 8px 12px !important;
+  align-items: stretch;
+}
+.skull-game > .game-topbar { grid-area: top; min-height: 42px; padding: 3px 8px; }
+.skull-game > .game-round-info { grid-area: meta; min-height: 40px; padding: 4px 8px; margin: 0 !important; }
+.skull-game > .round-summary-panel { grid-area: sidebar; align-self: start; max-height: 120px; overflow: auto; margin: 0 !important; padding: 8px; }
+.skull-game > .game-scoreboard { grid-area: sidebar; align-self: end; max-height: 45%; overflow: auto; margin: 0 !important; padding: 8px; }
+.skull-game > .game-arena { grid-area: arena; position: relative; min-width: 0; min-height: 0; height: 100%; margin: 0 !important; padding: 0; display: flex; flex-direction: column; }
+.skull-game > .game-bidding-panel { grid-area: bidding; min-width: 0; min-height: 0; max-height: 100%; overflow: auto; margin: 0 !important; padding: 9px 12px; }
+.skull-game > .game-trick-panel { grid-area: trick; min-width: 0; min-height: 0; max-height: 100%; overflow: auto; margin: 0 !important; padding: 9px 12px; }
+.skull-game > .game-crew {
+  grid-area: arena;
+  position: relative;
+  z-index: 8;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.skull-game > .game-crew > .game-section-heading { display: none !important; }
+.skull-game .game-crew .game-player-list { position: absolute; inset: 0; display: block; pointer-events: none; }
+.skull-game .game-crew .game-player {
+  position: absolute;
+  width: clamp(145px, 19vw, 205px);
+  min-height: 58px;
+  padding: 6px 8px;
+  gap: 7px;
+  pointer-events: auto;
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(25,21,17,.96), rgba(7,12,20,.97));
+}
+.skull-game .game-crew .game-player:nth-child(1) { top: 4px; left: 50%; transform: translateX(-50%); }
+.skull-game .game-crew .game-player:nth-child(2) { right: 4px; top: 50%; transform: translateY(-50%); }
+.skull-game .game-crew .game-player:nth-child(3) { bottom: 4px; left: 50%; transform: translateX(-50%); }
+.skull-game .game-crew .game-player:nth-child(4) { left: 4px; top: 50%; transform: translateY(-50%); }
+.skull-game .game-crew .game-player:nth-child(5) { left: 4px; top: 4px; }
+.skull-game .game-crew .game-player:nth-child(6) { right: 4px; top: 4px; }
+.skull-game .game-crew .game-player-portrait-frame { width: 40px; height: 40px; flex-basis: 40px; padding: 3px; }
+.skull-game .game-crew .game-player-info > strong { font-size: 10px; }
+.skull-game .game-crew .game-player-info > span { font-size: 8px; }
+.skull-game .game-crew .game-player-round-stats { gap: 3px; margin-top: 2px; }
+.skull-game .game-crew .game-player-round-stats > span { padding: 2px 5px; font-size: 7px; }
+.skull-game .game-crew .game-player-round-stats b { font-size: 9px; }
+.skull-game .game-crew .leader-tag { display: none; }
+.skull-game > .game-hand-section { grid-area: hand; min-width: 0; min-height: 0; max-height: 100%; overflow: hidden; margin: 0 !important; padding: 7px 10px; }
+.skull-game .game-hand-section .game-section-heading { margin-bottom: 4px; }
+.skull-game .game-hand-hint { display: none; }
+.skull-game .game-hand { display: flex; align-items: center; gap: 7px; height: calc(100% - 25px); min-height: 0; overflow-x: auto; overflow-y: hidden; padding: 3px 2px 7px; }
+.skull-game .game-hand .game-card { flex: 0 0 auto; height: min(15vh, 126px); min-height: 88px; width: auto; aspect-ratio: .68; }
+.skull-game .game-arena .arena-heading { position: relative; z-index: 2; margin: 2px 0 0 10px; font-size: 10px; }
+.skull-game .game-arena .arena-table { flex: 1; min-height: 0 !important; height: auto; margin: 0; border-radius: 48% / 42%; }
+.skull-game .game-arena .arena-played-cards { inset: 20% 19% 20%; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 9px; }
+.skull-game .game-arena .arena-mini-card { width: clamp(45px, 5vw, 68px); height: clamp(65px, 8vh, 92px); }
+.skull-game .game-arena .arena-mini-card strong { font-size: clamp(16px, 2vw, 23px); }
+.skull-game .game-arena .arena-mini-card span { font-size: 7px; }
+.skull-game .game-arena .arena-played-by { font-size: 8px; }
+.skull-game .game-arena .arena-status { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 8px; }
+.skull-game .game-bidding-panel .game-section-heading,
+.skull-game .game-trick-panel .game-section-heading { margin-bottom: 4px; }
+.skull-game .game-bidding-panel h2,
+.skull-game .game-trick-panel h2 { font-size: 11px; }
+.skull-game .bid-instructions p,
+.skull-game .bid-private-note { margin: 4px 0; font-size: 9px; }
+.skull-game .bid-selector { margin: 5px 0; }
+.skull-game .bid-quick-options { gap: 4px; margin: 4px 0; }
+.skull-game .bid-submit { min-height: 30px; padding: 5px 9px; font-size: 9px; }
+.skull-game .bid-progress-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 3px 8px; }
+.skull-game .bid-progress-player { padding: 3px 0; font-size: 8px; }
+.skull-game .trick-played-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.skull-game .trick-played-card { display: flex; align-items: center; gap: 5px; padding: 4px; }
+.skull-game .trick-card-mini { min-width: 42px; padding: 4px; }
+.skull-game .trick-status-card { display: flex; gap: 14px; padding: 5px; }
+.skull-game .trick-status-card span { font-size: 7px; }
+.skull-game .trick-status-card strong { font-size: 9px; }
+.skull-game .trick-action-status { margin-top: 5px; font-size: 8px; }
+.skull-game .game-footer { display: none !important; }
+.skull-game > .quick-chat-dock { position: fixed; z-index: 100; right: 12px; bottom: calc(15vh + 12px); width: 210px; }
+.skull-game > .walk-the-plank-choice { position: fixed; z-index: 120; left: 50%; top: 50%; transform: translate(-50%,-50%); width: min(520px, 88vw); max-height: 70dvh; overflow: auto; box-shadow: 0 20px 80px #000; }
+@media (max-width: 900px) and (orientation: landscape) {
+  .skull-game { grid-template-columns: minmax(0,1fr) minmax(205px,27vw); padding: 5px 8px 7px !important; gap: 6px !important; grid-template-rows: auto auto minmax(190px,1fr) minmax(95px,auto) minmax(105px,auto); }
+  .skull-game .game-crew .game-player { width: clamp(112px,18vw,155px); min-height: 48px; padding: 4px 5px; }
+  .skull-game .game-crew .game-player-portrait-frame { width: 32px; height: 32px; flex-basis: 32px; }
+  .skull-game .game-crew .game-player-round-stats > span { font-size: 6px; padding: 2px 3px; }
+  .skull-game .game-hand .game-card { height: min(14vh,100px); }
+  .skull-game .game-scoreboard { max-height: 42%; }
+}
+@media (max-width: 680px) and (orientation: landscape) {
+  .skull-game { grid-template-columns: minmax(0,1fr) 190px; grid-template-rows: 38px 34px minmax(150px,1fr) 86px 92px; padding: 3px 5px !important; gap: 4px !important; }
+  .skull-game .game-topbar { min-height: 34px; }
+  .skull-game .game-back, .skull-game .game-refresh { padding: 3px 6px; font-size: 9px; }
+  .skull-game .game-brand svg { width: 18px; }
+  .skull-game .game-brand strong { font-size: 10px; }
+  .skull-game .game-round-info > div { min-width: 70px; padding: 3px 6px; }
+  .skull-game .game-round-info > div span { font-size: 6px; }
+  .skull-game .game-round-info > div strong { font-size: 9px; }
+  .skull-game .game-crew .game-player { width: 105px; min-height: 42px; }
+  .skull-game .game-crew .game-player:nth-child(2), .skull-game .game-crew .game-player:nth-child(4) { top: 50%; }
+  .skull-game .game-crew .game-player-portrait-frame { width: 26px; height: 26px; flex-basis: 26px; }
+  .skull-game .game-crew .game-player-info > strong { font-size: 8px; }
+  .skull-game .game-crew .game-player-round-stats > span { display: none; }
+  .skull-game .game-arena .arena-table { border-radius: 46% / 40%; }
+  .skull-game .game-arena .arena-played-cards { inset: 22% 22% 22%; }
+  .skull-game .game-bidding-panel, .skull-game .game-trick-panel { padding: 5px; }
+  .skull-game .game-hand .game-card { height: 78px; }
+  .skull-game > .quick-chat-dock { bottom: 94px; width: 165px; }
+}
+@media (orientation: portrait) and (max-width: 900px) {
+  .skull-game { position: fixed; inset: 0; height: 100dvh; overflow: hidden; }
+}
