@@ -2862,3 +2862,9 @@ body:has(.skull-game),
 @media (orientation: portrait) and (max-width: 900px) {
   .skull-game { position: fixed; inset: 0; height: 100dvh; overflow: hidden; }
 }
+
+/* Seating support for full crews (up to eight pirates). */
+.skull-game .game-crew .game-player:nth-child(5) { left: 5px; top: 5px; right: auto; bottom: auto; transform: none; }
+.skull-game .game-crew .game-player:nth-child(6) { right: 5px; top: 5px; left: auto; bottom: auto; transform: none; }
+.skull-game .game-crew .game-player:nth-child(7) { left: 5px; bottom: 5px; top: auto; right: auto; transform: none; }
+.skull-game .game-crew .game-player:nth-child(8) { right: 5px; bottom: 5px; top: auto; left: auto; transform: none; }
