@@ -160,6 +160,9 @@ export default function GameScreen({
   const [userId, setUserId] = useState("");
   const [roomName, setRoomName] = useState("SKULL ARENA");
   const [roomStatus, setRoomStatus] = useState("waiting");
+  const [countdownEndsAt, setCountdownEndsAt] = useState<string | null>(null);
+  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+  const [showGo, setShowGo] = useState(false);
   const [quickPhrases, setQuickPhrases] = useState<Array<{ id: string; phrase: string }>>([]);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; player_id: string; username: string; phrase: string; created_at: string }>>([]);
   const [sendingChat, setSendingChat] = useState(false);
@@ -237,7 +240,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     const { data: room, error: roomError } = await supabase
       .from("game_rooms")
-      .select("room_name, status, host_id")
+      .select("room_name, status, host_id, countdown_ends_at")
       .eq("id", roomId)
       .single();
 
@@ -249,6 +252,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     setRoomName(room.room_name || "SKULL ARENA");
     setRoomStatus(room.status || "waiting");
+    setCountdownEndsAt(room.countdown_ends_at || null);
 
     if (room.status !== "playing" && room.status !== "finished") {
       setError("Cette partie n'est pas en cours.");
@@ -727,6 +731,44 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       void supabase.removeChannel(channel);
     };
   }, [roomId, loadGame, round?.id, currentTrick?.id]);
+
+  useEffect(() => {
+    if (!countdownEndsAt) {
+      setCountdownValue(null);
+      setShowGo(false);
+      return;
+    }
+
+    const target = new Date(countdownEndsAt).getTime();
+    if (!Number.isFinite(target)) return;
+
+    let goTimer: number | null = null;
+    let goShown = false;
+
+    const updateLaunchCountdown = () => {
+      const remainingMs = target - Date.now();
+      if (remainingMs > 0) {
+        setCountdownValue(Math.ceil(remainingMs / 1000));
+        setShowGo(false);
+        return;
+      }
+
+      setCountdownValue(null);
+      if (!goShown) {
+        goShown = true;
+        setShowGo(true);
+        goTimer = window.setTimeout(() => setShowGo(false), 850);
+      }
+    };
+
+    updateLaunchCountdown();
+    const interval = window.setInterval(updateLaunchCountdown, 100);
+
+    return () => {
+      window.clearInterval(interval);
+      if (goTimer !== null) window.clearTimeout(goTimer);
+    };
+  }, [countdownEndsAt]);
 
   useEffect(() => {
   const updateCountdown = () => {
@@ -1313,6 +1355,36 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
   return (
     <main className="skull-game">
+      {(countdownValue !== null || showGo) && (
+        <div
+          role="status"
+          aria-live="assertive"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            display: "grid",
+            placeItems: "center",
+            background: "rgba(5, 8, 14, 0.82)",
+            backdropFilter: "blur(8px)",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              color: "#ffe6a0",
+              fontFamily: "Georgia, serif",
+              fontSize: "clamp(76px, 18vw, 150px)",
+              fontWeight: 900,
+              textShadow: "0 0 18px rgba(255,174,49,.9), 0 0 54px rgba(255,120,25,.65)",
+              animation: "skullLaunchPulse .65s ease-in-out infinite alternate",
+            }}
+          >
+            {showGo ? "GO !" : countdownValue}
+          </div>
+        </div>
+      )}
+      <style>{`@keyframes skullLaunchPulse { from { transform: scale(.88); opacity:.75; } to { transform: scale(1.06); opacity:1; } }`}</style>
       <header className="game-topbar">
         <button className="game-back" onClick={onExit}>
           <ArrowLeft size={18} />
