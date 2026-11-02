@@ -162,6 +162,14 @@ function validateJokerSuit(
     };
   }
 
+  if (leadSuit === "black" && chosenSuit !== undefined) {
+    return {
+      valid: false,
+      message: "Aucune couleur ne doit être choisie après une carte noire.",
+      leadSuit,
+    };
+  }
+
   if (
     leadSuit !== null &&
     leadSuit !== "black" &&
