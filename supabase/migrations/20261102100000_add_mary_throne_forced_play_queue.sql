@@ -51,11 +51,12 @@ BEGIN
   END IF;
 
   SELECT gr.room_id, gr.id, gr.round_number, gt.trick_number,
-         gr.extensions, gt.winner_player_id
+         room.extensions, gt.winner_player_id
     INTO v_room_id, v_round_id, v_round_number, v_trick_number,
          v_extensions, v_winner_id
   FROM public.game_tricks gt
   JOIN public.game_rounds gr ON gr.id = gt.round_id
+  JOIN public.game_rooms room ON room.id = gr.room_id
   WHERE gt.id = p_trick_id
     AND gt.status = 'resolved'
     AND gt.resolution->>'mary_throne_winner_player_id' = v_user_id::text
