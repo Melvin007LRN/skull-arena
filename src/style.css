@@ -3105,3 +3105,102 @@ body:has(.skull-game),
     max-height: calc(100dvh - 24px) !important;
   }
 }
+
+
+/* CLEAN TABLE LAYOUT — portraits, score rail, chat and hand fan */
+.skull-game { position:relative!important; overflow:hidden!important; }
+.skull-game > .game-topbar { position:relative!important; justify-content:center!important; }
+.skull-game .game-brand { margin-inline:auto!important; }
+.skull-game .game-chat-trigger {
+ position:absolute!important; left:4px!important; top:50%!important; transform:translateY(-50%)!important;
+ z-index:2200!important; width:36px!important; height:36px!important; border-radius:50%!important;
+ display:grid!important; place-items:center!important; border:1px solid #b68d51!important;
+ background:#111923!important; color:#f6d69a!important; font-size:17px!important;
+ box-shadow:0 3px 12px #0008!important; touch-action:manipulation;
+}
+.skull-game .game-table-actions { display:none!important; }
+.skull-game > .game-scoreboard-rail {
+ position:absolute!important; z-index:12!important; left:5px!important; top:50%!important;
+ transform:translateY(-50%)!important; width:clamp(92px,13vw,150px)!important;
+ max-height:58%!important; overflow-y:auto!important; padding:7px 6px!important;
+ border:0!important; border-radius:0 10px 10px 0!important; border-left:2px solid #b58b4e!important;
+ background:linear-gradient(90deg,#080d14dd,#080d1480)!important; box-shadow:none!important;
+ pointer-events:auto!important;
+}
+.skull-game .game-scoreboard-rail .game-section-heading { margin:0 0 6px!important; }
+.skull-game .game-scoreboard-rail .game-section-heading h2 { font-size:9px!important; gap:4px!important; }
+.skull-game .game-scoreboard-rail .scoreboard-live { display:none!important; }
+.skull-game .game-scoreboard-rail .scoreboard-list { display:flex!important; flex-direction:column!important; gap:4px!important; }
+.skull-game .game-scoreboard-rail .scoreboard-row { display:grid!important; grid-template-columns:16px minmax(0,1fr) auto!important; gap:4px!important; padding:4px 2px!important; border:0!important; border-bottom:1px solid #ffffff18!important; background:transparent!important; border-radius:0!important; }
+.skull-game .game-scoreboard-rail .scoreboard-rank { font-size:10px!important; }
+.skull-game .game-scoreboard-rail .scoreboard-player strong { font-size:8px!important; white-space:nowrap!important; overflow:hidden!important; text-overflow:ellipsis!important; }
+.skull-game .game-scoreboard-rail .scoreboard-player span { display:none!important; }
+.skull-game .game-scoreboard-rail .scoreboard-points { font-size:9px!important; }
+.skull-game .game-scoreboard-rail .scoreboard-points small { font-size:6px!important; }
+.skull-game > .game-crew { position:absolute!important; inset:0!important; z-index:10!important; pointer-events:none!important; }
+.skull-game .game-crew .game-section-heading { display:none!important; }
+.skull-game .game-crew .game-player-list { position:absolute!important; inset:0!important; display:block!important; pointer-events:none!important; }
+.skull-game .game-crew .game-player {
+ position:absolute!important; width:clamp(34px,5vw,52px)!important; height:clamp(34px,5vw,52px)!important;
+ min-height:0!important; padding:0!important; margin:0!important; border:0!important; border-radius:50%!important;
+ background:transparent!important; box-shadow:none!important; display:block!important; pointer-events:auto!important;
+}
+.skull-game .game-crew .game-player-portrait-frame {
+ position:absolute!important; inset:0!important; width:100%!important; height:100%!important;
+ flex:none!important; padding:2px!important; border:2px solid #d2ad6b!important; border-radius:50%!important;
+ background:#111923!important; box-shadow:0 3px 12px #0009!important;
+}
+.skull-game .game-crew .game-player-avatar { width:100%!important; height:100%!important; border-radius:50%!important; overflow:hidden!important; }
+.skull-game .game-crew .game-player-avatar img { width:100%!important; height:100%!important; object-fit:cover!important; border-radius:50%!important; }
+.skull-game .game-crew .game-player-info,
+.skull-game .game-crew .game-player-crown,
+.skull-game .game-crew .leader-tag,
+.skull-game .game-crew .player-play-status,
+.skull-game .game-crew .opponent-hand-fan { display:none!important; }
+.skull-game .game-crew .game-player.current .game-player-portrait-frame { border-color:#ffe09b!important; box-shadow:0 0 0 3px #f5cc7655,0 0 18px #f5cc76aa!important; }
+.skull-game .game-arena .arena-heading { display:none!important; }
+.skull-game .game-arena .arena-decoration { opacity:.12!important; }
+.skull-game .game-arena .arena-played-cards { z-index:4!important; }
+.skull-game > .game-hand-section {
+ background:transparent!important; border:0!important; outline:0!important; box-shadow:none!important;
+ border-radius:0!important; padding:2px 4px 0!important; overflow:visible!important;
+}
+.skull-game .game-hand-section .game-section-heading { display:none!important; }
+.skull-game .game-hand-hint,.skull-game .game-empty-hand { display:none!important; }
+.skull-game .game-hand {
+ display:flex!important; align-items:flex-end!important; justify-content:center!important;
+ gap:0!important; overflow:visible!important; padding:8px 10px 0!important; height:100%!important;
+}
+.skull-game .game-hand .game-card {
+ position:relative!important; flex:0 1 auto!important; width:clamp(46px,7vw,78px)!important;
+ height:clamp(72px,13vh,112px)!important; min-height:0!important; aspect-ratio:.68!important;
+ margin-left:clamp(-17px,-1.6vw,-8px)!important; border:0!important; outline:0!important;
+ border-radius:8px!important; box-shadow:0 5px 14px #0009!important;
+ transform-origin:50% 100%!important;
+}
+.skull-game .game-hand .game-card:first-child { margin-left:0!important; }
+.skull-game .game-hand .game-card:nth-child(1) { transform:rotate(-14deg) translateY(5px); }
+.skull-game .game-hand .game-card:nth-child(2) { transform:rotate(-10deg) translateY(2px); }
+.skull-game .game-hand .game-card:nth-child(3) { transform:rotate(-6deg); }
+.skull-game .game-hand .game-card:nth-child(4) { transform:rotate(-2deg); }
+.skull-game .game-hand .game-card:nth-child(5) { transform:rotate(2deg); }
+.skull-game .game-hand .game-card:nth-child(6) { transform:rotate(6deg); }
+.skull-game .game-hand .game-card:nth-child(7) { transform:rotate(10deg) translateY(2px); }
+.skull-game .game-hand .game-card:nth-child(n+8) { transform:rotate(13deg) translateY(5px); }
+.skull-game .game-hand .game-card-selected,
+.skull-game .game-hand .game-card-dragging { transform:translateY(-18px) scale(1.05)!important; z-index:40!important; }
+.skull-game .game-modal-backdrop { z-index:3000!important; }
+.skull-game .chat-modal { width:min(360px,calc(100vw - 28px))!important; }
+@media (max-width:900px) and (orientation:landscape) {
+ .skull-game > .game-scoreboard-rail { width:90px!important; left:2px!important; }
+ .skull-game .game-crew .game-player { width:34px!important; height:34px!important; }
+ .skull-game .game-hand .game-card { width:clamp(42px,6vw,62px)!important; height:clamp(62px,12vh,88px)!important; }
+ .skull-game .game-hand .game-card:nth-child(n) { margin-left:-12px!important; }
+}
+@media (max-width:680px) and (orientation:landscape) {
+ .skull-game .game-chat-trigger { width:30px!important;height:30px!important;left:2px!important; }
+ .skull-game > .game-scoreboard-rail { width:76px!important;max-height:52%!important;padding:4px 3px!important; }
+ .skull-game .game-scoreboard-rail .scoreboard-row { grid-template-columns:12px minmax(0,1fr) auto!important; }
+ .skull-game .game-crew .game-player { width:29px!important;height:29px!important; }
+ .skull-game .game-hand .game-card { width:42px!important;height:62px!important; }
+}
