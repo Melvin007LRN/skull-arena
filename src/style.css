@@ -3053,3 +3053,55 @@ body:has(.skull-game),
 @media (max-width:900px) and (orientation:portrait) {
  .skull-game .game-table-actions button { font-size:8px; }
 }
+
+
+/* Mobile bidding controls: keep the bid chooser above the table layers and fully tappable. */
+.skull-game > .game-bidding-panel {
+  position: fixed !important;
+  z-index: 2000 !important;
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate3d(-50%, -50%, 0) !important;
+  width: min(360px, calc(100vw - 28px)) !important;
+  max-width: calc(100vw - 28px) !important;
+  max-height: min(78dvh, 520px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.skull-game > .game-bidding-panel button,
+.skull-game > .game-bidding-panel .bid-selector,
+.skull-game > .game-bidding-panel .bid-quick-options {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+}
+.skull-game > .game-bidding-panel button {
+  min-width: 38px;
+  min-height: 38px;
+  -webkit-tap-highlight-color: transparent;
+}
+.skull-game > .game-bidding-panel .bid-quick-options button {
+  min-width: 42px;
+  min-height: 42px;
+}
+@media (max-width: 900px) {
+  .skull-game > .game-bidding-panel {
+    z-index: 2000 !important;
+    width: min(390px, calc(100vw - 24px)) !important;
+    max-height: min(82dvh, 560px) !important;
+    padding: 14px !important;
+  }
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  .skull-game > .game-bidding-panel {
+    width: min(340px, calc(100vw - 24px)) !important;
+    max-height: calc(100dvh - 24px) !important;
+  }
+}
