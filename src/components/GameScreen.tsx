@@ -2352,6 +2352,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                     currentPlayerHasPlayed ||
                     playingCard ||
                     isWaitingForPlankChoice ||
+                    (forcedCardId !== null && card.id !== forcedCardId) ||
                     hand.length === 0
                   }
                   style={{
@@ -2500,7 +2501,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               <button
                 type="button"
                 className="lobby-primary play-card-button"
-                disabled={!isMyTurn || playingCard}
+                disabled={!isMyTurn || playingCard || (forcedCardId !== null && selectedCard.id !== forcedCardId)}
                 onClick={() => setShowPlayConfirmation(true)}
               >
                 <Play size={18} />
@@ -2516,7 +2517,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   type="button"
                   className="lobby-primary"
                   onClick={playSelectedCard}
-                  disabled={playingCard || !isMyTurn}
+                  disabled={playingCard || !isMyTurn || (forcedCardId !== null && selectedCard.id !== forcedCardId)}
                 >
                   <Check size={18} />
                   {playingCard ? "ENVOI..." : "CONFIRMER"}
