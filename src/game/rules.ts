@@ -303,14 +303,37 @@ export function resolveTrick(
     (a, b) => a.order - b.order,
   );
 
-  const playerIds = plays.map(
-    (play) => play.playerId,
-  );
+  const playsByPlayer = new Map<string, PlayedCard[]>();
+  for (const play of plays) {
+    const playerPlays = playsByPlayer.get(play.playerId) ?? [];
+    playerPlays.push(play);
+    playsByPlayer.set(play.playerId, playerPlays);
+  }
 
-  if (new Set(playerIds).size !== playerIds.length) {
-    throw new Error(
-      "Un joueur ne peut jouer qu'une carte par pli.",
+  const repeatedPlayers = [...playsByPlayer.values()].filter(
+    (playerPlays) => playerPlays.length > 1,
+  );
+  if (repeatedPlayers.length > 0) {
+    const repeated = repeatedPlayers[0].sort(
+      (a, b) => a.order - b.order,
     );
+    const lastVolleyCards = plays.filter(
+      (play) => play.card.type === "last_volley",
+    );
+    const lastPlay = plays[plays.length - 1];
+
+    if (
+      repeatedPlayers.length !== 1 ||
+      repeated.length !== 2 ||
+      repeated[0].card.type !== "last_volley" ||
+      lastVolleyCards.length !== 1 ||
+      lastPlay.playerId !== repeated[0].playerId ||
+      lastPlay.order !== repeated[1].order
+    ) {
+      throw new Error(
+        "Une carte supplémentaire n'est autorisée qu'après Dernière Salve.",
+      );
+    }
   }
 
   for (const play of plays) {
