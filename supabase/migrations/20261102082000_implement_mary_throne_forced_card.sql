@@ -164,10 +164,34 @@ BEGIN
     RAISE EXCEPTION 'Cette carte ne permet pas de choisir une valeur.';
   END IF;
 
-  -- Vérifie le Joker.
+  -- Vérifie le Joker. Si le noir a déjà été demandé, aucune couleur ne doit être déclarée.
   IF v_card->>'type' = 'joker' THEN
-    IF p_chosen_suit NOT IN ('green', 'purple', 'yellow') THEN
-      RAISE EXCEPTION 'Le Joker doit choisir une couleur valide, sauf noir.';
+    SELECT CASE
+      WHEN first_play.card->>'type' = 'number' THEN first_play.card->>'suit'
+      WHEN first_play.card->>'type' = 'joker' THEN first_play.chosen_suit
+      ELSE NULL
+    END
+    INTO v_lead_suit
+    FROM public.game_tricks active_trick
+    JOIN LATERAL (
+      SELECT tp.card, tp.chosen_suit
+      FROM public.trick_plays tp
+      WHERE tp.trick_id = active_trick.id
+        AND tp.card->>'type' IN ('number', 'joker')
+      ORDER BY tp.play_order
+      LIMIT 1
+    ) first_play ON true
+    WHERE active_trick.round_id = p_round_id
+      AND active_trick.status = 'playing'
+    ORDER BY active_trick.trick_number DESC
+    LIMIT 1;
+
+    IF v_lead_suit = 'black' THEN
+      IF p_chosen_suit IS NOT NULL THEN
+        RAISE EXCEPTION 'Quand le noir est demandé, le Joker ne déclare aucune couleur.';
+      END IF;
+    ELSIF p_chosen_suit NOT IN ('green', 'purple', 'yellow') THEN
+      RAISE EXCEPTION 'Le Joker doit choisir une couleur valide.';
     END IF;
   ELSIF p_chosen_suit IS NOT NULL THEN
     RAISE EXCEPTION 'Le choix de couleur est réservé au Joker.';
@@ -485,4 +509,3 @@ BEGIN
   );
 END;
 $function$
-
