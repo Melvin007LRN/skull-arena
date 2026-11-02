@@ -1479,10 +1479,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           </div>
         </div>
 
-        <div className="game-table-actions">
-          <button type="button" onClick={() => setShowChatWindow(true)} aria-label="Ouvrir le chat">💬 CHAT</button>
-          <button type="button" onClick={() => setShowScoreboardWindow(true)} aria-label="Ouvrir le classement">🏆 CLASSEMENT</button>
-        </div>
+        <button type="button" className="game-chat-trigger" onClick={() => setShowChatWindow(true)} aria-label="Ouvrir les discussions">💬</button>
         <button
           className="game-refresh"
           onClick={loadGame}
@@ -1542,7 +1539,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       )}
 
       {/* CLASSEMENT EN DIRECT */}
-      {showScoreboardWindow && <div className="game-modal-backdrop" onClick={() => setShowScoreboardWindow(false)}><section className="game-scoreboard skull-scoreboard game-modal-window" onClick={(event) => event.stopPropagation()} aria-label="Classement de l'équipage">
+      <aside className="game-scoreboard skull-scoreboard game-scoreboard-rail" onClick={(event) => event.stopPropagation()} aria-label="Classement de l'équipage">
         <div className="game-section-heading">
           <h2><Crown size={19} /> CLASSEMENT DE L'ÉQUIPAGE</h2>
           <span className="scoreboard-live"><i /> EN DIRECT</span>
@@ -1568,7 +1565,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             })}
           </div>
         )}
-      </section></div>}
+      </aside>
 
       <section className="game-arena">
         <div className="arena-heading">
@@ -2179,13 +2176,11 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
             return (
               <div
-                className={
-                  `game-player game-player-seat-${relativeSeat} ${player.player_id === userId ? "current" : ""}`
-                }
+                className={`game-player game-player-seat-${relativeSeat} ${player.player_id === userId ? "current" : ""}`}
                 key={player.player_id}
+                style={{ left: `${50 + 43 * Math.cos((2 * Math.PI * relativeSeat / Math.max(players.length, 1)) - Math.PI / 2)}%`, top: `${50 + 42 * Math.sin((2 * Math.PI * relativeSeat / Math.max(players.length, 1)) - Math.PI / 2)}%`, transform: "translate(-50%, -50%)" }}
               >
                 {showBubble && latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
-                {player.player_id !== userId && <div className="opponent-hand-fan" aria-label={`Main de ${player.username}`}><span>{Array.from({length: Math.max(0, round.round_number - (hasPlayed ? 1 : 0))}).map((_,i)=><i key={i} style={{transform:`translateX(${i*5}px) rotate(${(i-(Math.max(0,round.round_number-1))/2)*4}deg)`}} />)}</span></div>}
                 <div className="game-player-portrait-frame">
                   <div className="game-player-avatar">
                     {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
