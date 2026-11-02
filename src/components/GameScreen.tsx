@@ -1227,9 +1227,11 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     (play) => play.player_id === userId
   ) && !isExtraVolleyTurn;
 
+  const expectedPlayCount =
+    activePlayerCount + volleyPlayers.length;
   const allCardsPlayed =
     activePlayerCount > 0 &&
-    playedCards.length >= activePlayerCount + volleyPlayers.length;
+    playedCards.length >= expectedPlayCount;
 
   // ORDRE DE JEU : les joueurs exclus du dernier pli sont ignorés.
   const turnLeaderId =
@@ -1581,7 +1583,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         <div className="arena-table">
           <button type="button" className={`arena-played-cards arena-played-stack ${playedCards.length ? "has-played-cards" : ""}`} onClick={() => playedCards.length && setShowPlayedCardsWindow(true)} aria-label="Afficher les cartes jouées dans l'ordre">
             {playedCards.length === 0 ? <div className="arena-empty-play"><Swords size={25} /><span>{round.status === "bidding" ? "EN ATTENTE DES ENCHÈRES" : "À TOI DE JOUER"}</span></div> : <>
-              <span className="played-stack-count">{playedCards.length} / {players.length} CARTES</span>
+              <span className="played-stack-count">{playedCards.length} / {expectedPlayCount || players.length} CARTES</span>
               {playedCards.slice(-3).map((play, index) => <div className="arena-stack-card" key={play.id} style={{ transform: `translate(${index * 5}px, ${-index * 3}px) rotate(${(index - 1) * 5}deg)`, zIndex:index+1 }}>
                 <strong>{(play.card as GameCard).value ?? cardSymbol((play.card as GameCard).type)}</strong>
                 <small>{players.find(p => p.player_id === play.player_id)?.username ?? "Pirate"}</small>
@@ -1779,7 +1781,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               <Swords size={19} /> LE PLI EN COURS
             </h2>
             <span>
-              {playedCards.length}/{players.length} cartes
+              {playedCards.length}/{expectedPlayCount || players.length} cartes
             </span>
           </div>
 
