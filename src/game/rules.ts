@@ -321,7 +321,20 @@ export function resolveTrick(
   );
 
   if (maryForcedPlays.length > 1) {
-    throw new Error("Une seule carte imposée par Mary Throne est autorisée par joueur et par pli.");
+    throw new Error("Une seule carte imposée par Mary Throne est autorisée par pli.");
+  }
+
+  const maryForcedPlay = maryForcedPlays[0];
+  if (maryForcedPlay) {
+    const targetPlays = playsByPlayer.get(maryForcedPlay.playerId) ?? [];
+    if (
+      targetPlays.length < 2 ||
+      targetPlays[targetPlays.length - 1].order !== maryForcedPlay.order
+    ) {
+      throw new Error(
+        "La carte imposée par Mary Throne doit être une pose supplémentaire après la carte normale.",
+      );
+    }
   }
 
   if (repeatedPlayers.length > 0) {
