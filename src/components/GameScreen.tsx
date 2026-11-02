@@ -908,7 +908,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     }
     setMaryCanChoose(false);
     setMaryTarget("");
-    setPlayMessage("Mary Throne a choisi une carte au hasard. Elle sera imposée à la prochaine manche.");
+    setPlayMessage("Mary Throne a choisi une carte au hasard. Elle devra être jouée en pose supplémentaire au prochain pli de cette manche.");
     await loadGame();
   };
 
@@ -2203,7 +2203,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             <div>
               <span>POUVOIR DE PIRATE</span>
               <strong>MARY THRONE</strong>
-              <small>Choisis un adversaire. Une carte aléatoire de sa main sera gardée secrète et devra être jouée à la prochaine manche.</small>
+              <small>Choisis un adversaire. Une carte aléatoire de sa main sera gardée secrète et devra être jouée en plus au prochain pli de cette manche.</small>
             </div>
           </div>
           <div className="tigress-choice">
