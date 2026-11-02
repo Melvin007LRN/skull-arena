@@ -202,4 +202,11 @@ describe("Mary Throne — pose supplémentaire au pli suivant", () => {
       { playerId: "target", card: forcedCard, order: 2 },
     ])).toThrow(/pose supplémentaire/);
   });
+
+  it("refuse une carte marquée imposée si elle est la seule pose du joueur", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: forcedCard, order: 0, isMaryForcedPlay: true },
+      { playerId: "other", card: normalTwelve, order: 1 },
+    ])).toThrow(/pose supplémentaire après la carte normale/);
+  });
 });
