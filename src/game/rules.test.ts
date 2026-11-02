@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveTrick } from "./rules";
+import { buildExtraPlayQueue, resolveTrick } from "./rules";
 import type { GameCard } from "./cards";
 
 const mary: GameCard = {
@@ -125,5 +125,22 @@ describe("Contrôles Dernière Salve", () => {
       { playerId: "p1", card: greenTwelve, order: 2 },
       { playerId: "p1", card: extra, order: 3 },
     ])).toThrow(/Dernière Salve/);
+  });
+});
+
+
+describe("Ordre des poses supplémentaires", () => {
+  it("place les poses Dernière Salve avant les cartes imposées par Mary", () => {
+    expect(buildExtraPlayQueue(["p2", "p1"], ["p3"])).toEqual([
+      "p2", "p1", "p3",
+    ]);
+  });
+
+  it("autorise un même joueur à avoir deux poses supplémentaires distinctes", () => {
+    expect(buildExtraPlayQueue(["p1"], ["p1"])).toEqual(["p1", "p1"]);
+  });
+
+  it("retourne une file vide sans effet spécial", () => {
+    expect(buildExtraPlayQueue([], [])).toEqual([]);
   });
 });
