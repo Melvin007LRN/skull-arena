@@ -2868,3 +2868,188 @@ body:has(.skull-game),
 .skull-game .game-crew .game-player:nth-child(6) { right: 5px; top: 5px; left: auto; bottom: auto; transform: none; }
 .skull-game .game-crew .game-player:nth-child(7) { left: 5px; bottom: 5px; top: auto; right: auto; transform: none; }
 .skull-game .game-crew .game-player:nth-child(8) { right: 5px; bottom: 5px; top: auto; left: auto; transform: none; }
+
+
+/* UNO-inspired table ergonomics: relative seats, tactile hand and clear turn feedback. */
+.skull-game .game-crew .game-player {
+  transition: left .28s ease, right .28s ease, top .28s ease, bottom .28s ease,
+    transform .28s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.skull-game .game-crew .game-player.current {
+  border-color: rgba(255,214,128,.9);
+  box-shadow: 0 0 0 2px rgba(255,204,103,.16), 0 0 24px rgba(232,177,78,.22);
+}
+.skull-game .game-crew .game-player-seat-0 {
+  left: 50%; right: auto; top: auto; bottom: 4px;
+  transform: translateX(-50%);
+}
+.skull-game .game-crew .game-player-seat-1 {
+  left: 4px; right: auto; top: auto; bottom: 18%; transform: none;
+}
+.skull-game .game-crew .game-player-seat-2 {
+  left: 4px; right: auto; top: 50%; bottom: auto; transform: translateY(-50%);
+}
+.skull-game .game-crew .game-player-seat-3 {
+  left: 4px; right: auto; top: 4px; bottom: auto; transform: none;
+}
+.skull-game .game-crew .game-player-seat-4 {
+  left: 50%; right: auto; top: 4px; bottom: auto; transform: translateX(-50%);
+}
+.skull-game .game-crew .game-player-seat-5 {
+  left: auto; right: 4px; top: 4px; bottom: auto; transform: none;
+}
+.skull-game .game-crew .game-player-seat-6 {
+  left: auto; right: 4px; top: 50%; bottom: auto; transform: translateY(-50%);
+}
+.skull-game .game-crew .game-player-seat-7 {
+  left: auto; right: 4px; top: auto; bottom: 18%; transform: none;
+}
+.skull-game .game-hand .game-card {
+  touch-action: pan-x;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 100%;
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+.skull-game .game-hand .game-card:focus-visible {
+  outline: 3px solid #f6d38c;
+  outline-offset: 3px;
+}
+.skull-game .game-hand .game-card-selected {
+  transform: translateY(-12px);
+  filter: brightness(1.12);
+  box-shadow: 0 12px 26px rgba(0,0,0,.4), 0 0 0 1px rgba(255,215,135,.65);
+}
+.skull-game .game-hand .game-card-dragging {
+  transform: translateY(-22px) scale(1.04);
+  filter: brightness(1.18);
+  box-shadow: 0 18px 35px rgba(0,0,0,.48), 0 0 22px rgba(255,211,129,.3);
+  z-index: 20;
+}
+.skull-game .arena-played-card {
+  animation: skullCardArrival .28s cubic-bezier(.2,.8,.2,1) both;
+}
+.skull-game .arena-mini-card {
+  box-shadow: 0 8px 18px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.1);
+}
+.skull-game .game-player.current .game-player-avatar {
+  box-shadow: 0 0 0 2px rgba(255,213,135,.5), 0 0 18px rgba(255,193,91,.28);
+}
+@keyframes skullCardArrival {
+  from { opacity: 0; transform: translateY(14px) scale(.88) rotate(-3deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  .skull-game .game-crew .game-player { width: clamp(108px, 16vw, 148px); }
+  .skull-game .game-crew .game-player-seat-1,
+  .skull-game .game-crew .game-player-seat-2,
+  .skull-game .game-crew .game-player-seat-3 { left: 2px; }
+  .skull-game .game-crew .game-player-seat-5,
+  .skull-game .game-crew .game-player-seat-6,
+  .skull-game .game-crew .game-player-seat-7 { right: 2px; left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skull-game .game-crew .game-player,
+  .skull-game .game-hand .game-card { transition: none; }
+  .skull-game .arena-played-card { animation: none; }
+}
+
+
+/* =========================================================
+   SKULL ARENA — TABLE FIRST / MODAL CONTROLS
+   Layout inspired by Melvin's hand-drawn table reference.
+========================================================= */
+.skull-game {
+  grid-template-columns: minmax(0,1fr) !important;
+  grid-template-rows: 42px 34px minmax(0,1fr) 116px !important;
+  grid-template-areas: "top" "meta" "arena" "hand" !important;
+  gap: 5px !important;
+  padding: 5px 8px 7px !important;
+}
+.skull-game > .game-topbar { grid-area:top; display:flex; align-items:center; gap:10px; min-height:0; }
+.skull-game > .game-round-info { grid-area:meta; min-height:0; margin:0!important; display:flex; justify-content:center; gap:8px; padding:2px 6px; }
+.skull-game > .game-round-info > div { min-width:0; padding:3px 10px; }
+.skull-game > .round-summary-panel { display:none!important; }
+.skull-game > .game-arena { grid-area:arena; position:relative; min-height:0; height:100%; margin:0!important; }
+.skull-game > .game-crew { grid-area:arena; position:absolute; inset:0; z-index:8; pointer-events:none; }
+.skull-game > .game-crew > .game-section-heading { display:none!important; }
+.skull-game .game-crew .game-player-list { position:absolute; inset:0; display:block; pointer-events:none; }
+.skull-game .game-crew .game-player { position:absolute; width:clamp(92px,14vw,150px); min-height:38px; padding:4px 6px; gap:5px; pointer-events:auto; z-index:2; }
+.skull-game .game-crew .game-player-seat-0 { left:50%; bottom:4px; top:auto; transform:translateX(-50%); }
+.skull-game .game-crew .game-player-seat-1 { left:3px; top:50%; bottom:auto; transform:translateY(-50%); }
+.skull-game .game-crew .game-player-seat-2 { left:18%; top:3px; bottom:auto; transform:none; }
+.skull-game .game-crew .game-player-seat-3 { left:50%; top:3px; bottom:auto; transform:translateX(-50%); }
+.skull-game .game-crew .game-player-seat-4 { right:18%; top:3px; bottom:auto; left:auto; transform:none; }
+.skull-game .game-crew .game-player-seat-5 { right:3px; top:50%; bottom:auto; left:auto; transform:translateY(-50%); }
+.skull-game .game-crew .game-player-seat-6 { right:18%; bottom:3px; top:auto; left:auto; transform:none; }
+.skull-game .game-crew .game-player-seat-7 { left:18%; bottom:3px; top:auto; transform:none; }
+.skull-game .game-crew .game-player-portrait-frame { width:27px; height:27px; flex-basis:27px; padding:2px; }
+.skull-game .game-crew .game-player-info > strong { font-size:clamp(8px,1vw,11px); }
+.skull-game .game-crew .game-player-info > span,
+.skull-game .game-crew .game-player-round-stats,
+.skull-game .game-crew .leader-tag,
+.skull-game .game-crew .player-play-status { display:none!important; }
+.skull-game .game-player.current { border-color:#f3c879; }
+.skull-game .game-arena .arena-heading { position:absolute; left:50%; top:7px; transform:translateX(-50%); z-index:3; margin:0; font-size:9px; opacity:.65; white-space:nowrap; }
+.skull-game .game-arena .arena-table { position:absolute; inset:4% 12% 5%; min-height:0!important; height:auto; margin:0; border-radius:50% / 45%; }
+.skull-game .game-arena .arena-decoration { opacity:.28; pointer-events:none; }
+.skull-game .game-arena .arena-decoration svg { width:38px; height:38px; }
+.skull-game .game-arena .arena-decoration strong { font-size:12px; }
+.skull-game .game-arena .arena-decoration span { font-size:7px; }
+.skull-game .game-arena .arena-status { bottom:5px; font-size:8px; }
+.skull-game .game-arena .arena-played-cards { position:absolute; inset:25% 30%; display:grid; place-items:center; }
+.skull-game .game-arena .arena-played-stack { appearance:none; border:0; color:inherit; background:transparent; cursor:pointer; padding:0; width:100%; height:100%; }
+.skull-game .arena-stack-card { position:absolute; left:50%; top:50%; width:clamp(48px,6vw,72px); height:clamp(66px,9vh,94px); margin:-38px 0 0 -24px; border:2px solid #d8b777; border-radius:8px; background:linear-gradient(145deg,#f8edcf,#bda77e); color:#282016; box-shadow:0 7px 17px #0009; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.skull-game .arena-stack-card strong { font-size:22px; }
+.skull-game .arena-stack-card small { font-size:7px; max-width:90%; overflow:hidden; }
+.skull-game .played-stack-count,.skull-game .played-stack-hint { position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; font-size:8px; color:#f7e1b2; text-shadow:0 2px 6px #000; }
+.skull-game .played-stack-count { top:7%; }.skull-game .played-stack-hint { bottom:7%; }
+.skull-game > .game-bidding-panel { position:fixed; z-index:40; left:50%; top:50%; transform:translate(-50%,-50%); width:min(360px,82vw); max-height:75dvh; overflow:auto; box-shadow:0 18px 60px #000c; }
+.skull-game > .game-trick-panel { position:fixed; z-index:30; right:8px; top:54px; width:min(210px,28vw); max-height:34dvh; overflow:auto; opacity:.92; }
+.skull-game > .game-hand-section { grid-area:hand; position:relative; min-height:0; max-height:116px; margin:0!important; padding:5px 8px 3px; overflow:hidden; }
+.skull-game .game-hand-section .game-section-heading { margin:0 0 2px; }
+.skull-game .game-hand-section .game-section-heading h2 { font-size:10px; }
+.skull-game .game-hand-section .game-section-heading span { font-size:9px; }
+.skull-game .game-hand-hint { display:none!important; }
+.skull-game .game-hand { height:calc(100% - 19px); min-height:0; display:flex; justify-content:center; align-items:flex-end; gap:clamp(2px,.7vw,8px); overflow-x:auto; overflow-y:visible; padding:2px 4px 0; }
+.skull-game .game-hand .game-card { height:clamp(70px,13vh,108px); min-height:0; width:auto; aspect-ratio:.68; flex:0 0 auto; }
+.skull-game .opponent-hand-fan { position:absolute; z-index:1; left:50%; top:100%; transform:translate(-50%,-4px); pointer-events:none; }
+.skull-game .opponent-hand-fan span { display:flex; justify-content:center; }
+.skull-game .opponent-hand-fan i { display:block; width:12px; height:18px; margin-left:-5px; border:1px solid #d5b36d; border-radius:3px; background:repeating-linear-gradient(135deg,#263d50 0 3px,#111d2a 3px 6px); box-shadow:0 2px 4px #0009; }
+.skull-game .game-player-seat-0 .opponent-hand-fan { display:none; }
+.skull-game .game-player-seat-1 .opponent-hand-fan,.skull-game .game-player-seat-5 .opponent-hand-fan { top:50%; left:100%; transform:translate(-2px,-50%); }
+.skull-game .game-player-seat-2 .opponent-hand-fan,.skull-game .game-player-seat-3 .opponent-hand-fan,.skull-game .game-player-seat-4 .opponent-hand-fan { top:100%; }
+.skull-game .game-player-seat-6 .opponent-hand-fan,.skull-game .game-player-seat-7 .opponent-hand-fan { top:0; transform:translate(-50%,-100%); }
+.skull-game .quick-chat-dock { display:none!important; }
+.skull-game .game-table-actions { display:flex; gap:5px; margin-left:auto; }
+.skull-game .game-table-actions button { border:1px solid #a88751; border-radius:20px; background:#171b22; color:#f3d49b; padding:5px 9px; font-size:9px; font-weight:800; white-space:nowrap; }
+.game-modal-backdrop { position:fixed; inset:0; z-index:500; display:grid; place-items:center; padding:16px; background:#03070dcc; backdrop-filter:blur(8px); }
+.game-modal-window { width:min(520px,92vw); max-height:82dvh; overflow:auto; padding:16px; border:1px solid #b18a50; border-radius:16px; background:linear-gradient(145deg,#1c2026,#090d13); color:#f6e6c8; box-shadow:0 22px 80px #000c; }
+.game-modal-window > header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+.game-modal-window > header strong { font-family:Georgia,serif; letter-spacing:1px; }
+.game-modal-window > header button { border:0; background:transparent; color:inherit; }
+.played-cards-modal ol { list-style:none; margin:0; padding:0; display:grid; gap:7px; }
+.played-cards-modal li { display:grid; grid-template-columns:24px minmax(90px,1fr) 1.5fr; gap:8px; align-items:center; padding:8px; border-radius:8px; background:#ffffff0b; font-size:12px; }
+.chat-modal-messages { display:grid; gap:5px; max-height:35dvh; overflow:auto; margin-bottom:12px; }
+.chat-modal-messages p { display:flex; flex-direction:column; gap:2px; padding:7px 9px; margin:0; border-radius:8px; background:#ffffff0b; }
+.chat-modal-messages b { color:#e7c17e; font-size:10px; }
+.chat-modal-messages span { font-size:12px; }
+@media (max-width:900px) and (orientation:landscape) {
+ .skull-game { grid-template-rows:36px 28px minmax(0,1fr) 98px!important; }
+ .skull-game > .game-hand-section { max-height:98px; }
+ .skull-game .game-hand .game-card { height:78px; }
+ .skull-game .game-arena .arena-table { inset:5% 16% 6%; }
+ .skull-game > .game-bidding-panel { width:min(320px,65vw); }
+}
+@media (max-width:680px) and (orientation:landscape) {
+ .skull-game { grid-template-rows:32px 25px minmax(0,1fr) 88px!important; padding:2px 4px 4px!important; }
+ .skull-game > .game-hand-section { max-height:88px; }
+ .skull-game .game-hand .game-card { height:70px; }
+ .skull-game .game-table-actions button { padding:3px 5px; font-size:7px; }
+ .skull-game .game-crew .game-player { width:82px; min-height:32px; padding:2px 4px; }
+ .skull-game .game-crew .game-player-portrait-frame { width:21px; height:21px; flex-basis:21px; }
+}
+@media (max-width:900px) and (orientation:portrait) {
+ .skull-game .game-table-actions button { font-size:8px; }
+}

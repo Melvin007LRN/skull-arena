@@ -178,6 +178,9 @@ export default function GameScreen({
   const [sendingChat, setSendingChat] = useState(false);
   const [chatError, setChatError] = useState("");
   const [chatNow, setChatNow] = useState(Date.now());
+  const [showScoreboardWindow, setShowScoreboardWindow] = useState(false);
+  const [showChatWindow, setShowChatWindow] = useState(false);
+  const [showPlayedCardsWindow, setShowPlayedCardsWindow] = useState(false);
 
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [scoreboard, setScoreboard] = useState<ScoreboardEntry[]>([]);
@@ -203,6 +206,7 @@ export default function GameScreen({
   const [selectedCard, setSelectedCard] =
     useState<GameCard | null>(null);
   const dragStartRef = useRef<{ cardId: string; x: number; y: number } | null>(null);
+  const suppressCardClickRef = useRef(false);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [tigressMode, setTigressMode] =
     useState<"pirate" | "escape">("pirate");
@@ -1034,7 +1038,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   };
 
   const handleHandCardPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, card: GameCard) => {
-    if (event.pointerType === "mouse" || !isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
+    if (!isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
     dragStartRef.current = { cardId: card.id, x: event.clientX, y: event.clientY };
     setDraggingCardId(card.id);
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -1048,6 +1052,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     const deltaY = start.y - event.clientY;
     const deltaX = Math.abs(event.clientX - start.x);
     if (deltaY < 78 || deltaY < deltaX * 0.75) return;
+    suppressCardClickRef.current = true;
     setSelectedCard(card);
     setChosenValue(card.selectableValue?.[0] ?? null);
     setChosenSuit("green");
@@ -1474,6 +1479,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           </div>
         </div>
 
+        <div className="game-table-actions">
+          <button type="button" onClick={() => setShowChatWindow(true)} aria-label="Ouvrir le chat">💬 CHAT</button>
+          <button type="button" onClick={() => setShowScoreboardWindow(true)} aria-label="Ouvrir le classement">🏆 CLASSEMENT</button>
+        </div>
         <button
           className="game-refresh"
           onClick={loadGame}
@@ -1533,7 +1542,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       )}
 
       {/* CLASSEMENT EN DIRECT */}
-      <section className="game-scoreboard skull-scoreboard" aria-label="Classement de l'équipage">
+      {showScoreboardWindow && <div className="game-modal-backdrop" onClick={() => setShowScoreboardWindow(false)}><section className="game-scoreboard skull-scoreboard game-modal-window" onClick={(event) => event.stopPropagation()} aria-label="Classement de l'équipage">
         <div className="game-section-heading">
           <h2><Crown size={19} /> CLASSEMENT DE L'ÉQUIPAGE</h2>
           <span className="scoreboard-live"><i /> EN DIRECT</span>
@@ -1559,7 +1568,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             })}
           </div>
         )}
-      </section>
+      </section></div>}
 
       <section className="game-arena">
         <div className="arena-heading">
@@ -1568,28 +1577,16 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <div className="arena-table">
-          <div className="arena-played-cards" aria-live="polite" aria-label="Cartes jouées dans le pli">
-            {playedCards.length === 0 ? (
-              <div className="arena-empty-play">
-                <Swords size={25} />
-                <span>{round.status === "bidding" ? "EN ATTENTE DES ENCHÈRES" : "À TOI DE JOUER"}</span>
-              </div>
-            ) : (
-              playedCards.map((play) => {
-                const playedCard = play.card as GameCard;
-                const playedBy = players.find((player) => player.player_id === play.player_id);
-                return (
-                  <div className="arena-played-card" key={play.id}>
-                    <span className="arena-played-by">{playedBy?.username ?? "Pirate"}</span>
-                    <div className={`arena-mini-card arena-mini-card--${playedCard.type}`}>
-                      <strong>{playedCard.value ?? cardSymbol(playedCard.type)}</strong>
-                      <span>{playedCard.name}</span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <button type="button" className={`arena-played-cards arena-played-stack ${playedCards.length ? "has-played-cards" : ""}`} onClick={() => playedCards.length && setShowPlayedCardsWindow(true)} aria-label="Afficher les cartes jouées dans l'ordre">
+            {playedCards.length === 0 ? <div className="arena-empty-play"><Swords size={25} /><span>{round.status === "bidding" ? "EN ATTENTE DES ENCHÈRES" : "À TOI DE JOUER"}</span></div> : <>
+              <span className="played-stack-count">{playedCards.length} / {players.length} CARTES</span>
+              {playedCards.slice(-3).map((play, index) => <div className="arena-stack-card" key={play.id} style={{ transform: `translate(${index * 5}px, ${-index * 3}px) rotate(${(index - 1) * 5}deg)`, zIndex:index+1 }}>
+                <strong>{(play.card as GameCard).value ?? cardSymbol((play.card as GameCard).type)}</strong>
+                <small>{players.find(p => p.player_id === play.player_id)?.username ?? "Pirate"}</small>
+              </div>)}
+              <span className="played-stack-hint">TOUCHER POUR VOIR LE PLI</span>
+            </>}
+          </button>
           <div className="arena-decoration">
             <Skull size={62} />
             <strong>SKULL ARENA</strong>
@@ -2159,6 +2156,8 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
       </details>
 
+      {showPlayedCardsWindow && <div className="game-modal-backdrop" onClick={() => setShowPlayedCardsWindow(false)}><section className="game-modal-window played-cards-modal" onClick={(event) => event.stopPropagation()}><header><strong>ORDRE DES CARTES JOUÉES</strong><button type="button" onClick={() => setShowPlayedCardsWindow(false)} aria-label="Fermer"><X /></button></header><ol>{playedCards.map((play) => { const card=play.card as GameCard; return <li key={play.id}><span>{play.play_order}.</span><strong>{players.find(p=>p.player_id===play.player_id)?.username ?? "Pirate"}</strong><span>{card.name} · {card.value ?? cardTypeNames[card.type] ?? card.type}</span></li>; })}</ol></section></div>}
+      {showChatWindow && <div className="game-modal-backdrop" onClick={() => setShowChatWindow(false)}><section className="game-modal-window chat-modal" onClick={(event) => event.stopPropagation()}><header><strong>CHAT DE L'ÉQUIPAGE</strong><button type="button" onClick={() => setShowChatWindow(false)} aria-label="Fermer"><X /></button></header><div className="chat-modal-messages">{chatMessages.slice(-12).map(message => <p key={message.id}><b>{message.username}</b><span>{message.phrase}</span></p>)}</div><div className="quick-chat-options">{quickPhrases.map(item => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>{chatError && <p role="alert">{chatError}</p>}</section></div>}
       {/* ÉQUIPAGE */}
       <section className="game-crew">
         <div className="game-section-heading">
@@ -2169,7 +2168,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <div className="game-player-list">
-          {players.map((player) => {
+          {players.map((player, playerIndex) => {
+            const mySeatIndex = Math.max(0, players.findIndex((item) => item.player_id === userId));
+            const relativeSeat = (playerIndex - mySeatIndex + players.length) % Math.max(players.length, 1);
             const latestBubble = chatMessages[chatMessages.length - 1];
             const showBubble = latestBubble?.player_id === player.player_id && chatNow - new Date(latestBubble.created_at).getTime() < 2000;
             const hasPlayed = playedCards.some(
@@ -2179,13 +2180,12 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             return (
               <div
                 className={
-                  player.player_id === userId
-                    ? "game-player current"
-                    : "game-player"
+                  `game-player game-player-seat-${relativeSeat} ${player.player_id === userId ? "current" : ""}`
                 }
                 key={player.player_id}
               >
                 {showBubble && latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
+                {player.player_id !== userId && <div className="opponent-hand-fan" aria-label={`Main de ${player.username}`}><span>{Array.from({length: Math.max(0, round.round_number - (hasPlayed ? 1 : 0))}).map((_,i)=><i key={i} style={{transform:`translateX(${i*5}px) rotate(${(i-(Math.max(0,round.round_number-1))/2)*4}deg)`}} />)}</span></div>}
                 <div className="game-player-portrait-frame">
                   <div className="game-player-avatar">
                     {player.avatar_url ? <img src={player.avatar_url} alt={`Portrait de ${player.username}`} /> : player.isHost ? (
@@ -2263,6 +2263,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   onPointerUp={(event) => handleHandCardPointerUp(event, card)}
                   onPointerCancel={() => { dragStartRef.current = null; setDraggingCardId(null); }}
                   onClick={() => {
+                    if (suppressCardClickRef.current) {
+                      suppressCardClickRef.current = false;
+                      return;
+                    }
                     if (
                       round.status !== "playing" ||
                       !isMyTurn ||
