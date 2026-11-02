@@ -705,3 +705,18 @@ export function getCaptureBonus(
 
   return bonus;
 }
+
+/**
+ * Construit l'ordre des poses supplémentaires d'un pli.
+ * Les poses normales sont toujours jouées en premier. Dernière Salve
+ * conserve son ordre de déclenchement immédiat ; les cartes imposées
+ * par Mary Throne suivent ensuite, dans l'ordre fourni par le serveur.
+ * Les doublons de joueur sont volontaires : un même joueur peut devoir
+ * jouer une carte Dernière Salve et une carte Mary Throne.
+ */
+export function buildExtraPlayQueue(
+  lastVolleyPlayerIds: readonly string[],
+  maryForcedPlayerIds: readonly string[],
+): string[] {
+  return [...lastVolleyPlayerIds, ...maryForcedPlayerIds];
+}
