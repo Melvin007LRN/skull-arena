@@ -100,7 +100,7 @@ export default function App() {
 
   if (showLobby) {
     return (
-      <Suspense fallback={<main className="arena"><div className="loading-screen">Chargement de l’arène…</div></main>}>
+      <Suspense fallback={<main className="arena"><div style={{ minHeight: "100vh", display: "grid", placeItems: "center", color: "#d4af62", letterSpacing: "0.12em" }}>CHARGEMENT DE L’ARÈNE…</div></main>}>
         <Lobby onBack={() => setShowLobby(false)} />
       </Suspense>
     );
