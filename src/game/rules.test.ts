@@ -147,6 +147,28 @@ describe("Ordre des poses supplémentaires", () => {
 
 
 describe("Mary Throne — pose supplémentaire au pli suivant", () => {
+  const lastVolleyCard: GameCard = {
+    id: "last-volley-mary-test",
+    name: "Dernière Salve",
+    type: "last_volley",
+    isExpansionCard: true,
+  };
+  const normalSix: GameCard = {
+    id: "mary-normal-six",
+    name: "Vert 6",
+    type: "number",
+    suit: "green",
+    value: 6,
+    isExpansionCard: false,
+  };
+  const normalTwelve: GameCard = {
+    id: "mary-normal-twelve",
+    name: "Vert 12",
+    type: "number",
+    suit: "green",
+    value: 12,
+    isExpansionCard: false,
+  };
   const forcedCard: GameCard = {
     id: "mary-forced-test",
     name: "Carte imposée",
@@ -158,25 +180,25 @@ describe("Mary Throne — pose supplémentaire au pli suivant", () => {
 
   it("autorise la carte imposée après la carte normale de la cible", () => {
     expect(() => resolveTrick([
-      { playerId: "target", card: greenSix, order: 0 },
-      { playerId: "other", card: greenTwelve, order: 1 },
+      { playerId: "target", card: normalSix, order: 0 },
+      { playerId: "other", card: normalTwelve, order: 1 },
       { playerId: "target", card: forcedCard, order: 2, isMaryForcedPlay: true },
     ])).not.toThrow();
   });
 
   it("autorise Dernière Salve et Mary Throne sur le même joueur", () => {
     expect(() => resolveTrick([
-      { playerId: "target", card: lastVolley, order: 0 },
-      { playerId: "other", card: greenSix, order: 1 },
-      { playerId: "target", card: greenTwelve, order: 2 },
+      { playerId: "target", card: lastVolleyCard, order: 0 },
+      { playerId: "other", card: normalSix, order: 1 },
+      { playerId: "target", card: normalTwelve, order: 2 },
       { playerId: "target", card: forcedCard, order: 3, isMaryForcedPlay: true },
     ])).not.toThrow();
   });
 
   it("refuse une répétition sans effet supplémentaire déclaré", () => {
     expect(() => resolveTrick([
-      { playerId: "target", card: greenSix, order: 0 },
-      { playerId: "other", card: greenTwelve, order: 1 },
+      { playerId: "target", card: normalSix, order: 0 },
+      { playerId: "other", card: normalTwelve, order: 1 },
       { playerId: "target", card: forcedCard, order: 2 },
     ])).toThrow(/pose supplémentaire/);
   });
