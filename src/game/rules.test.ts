@@ -40,12 +40,12 @@ describe("Pouvoir Mary Throne", () => {
 
   it("ne déclenche pas Mary Throne lorsqu'un autre Pirate remporte le pli", () => {
     const result = resolveTrick([
-      { playerId: "mary-player", card: mary, order: 0 },
-      { playerId: "other-player", card: pirate, order: 1 },
+      { playerId: "other-player", card: pirate, order: 0 },
+      { playerId: "mary-player", card: mary, order: 1 },
     ]);
 
-    expect(result.winnerPlayerId).toBe("mary-player");
-    expect(result.maryThroneWinnerPlayerId).toBe("mary-player");
+    expect(result.winnerPlayerId).toBe("other-player");
+    expect(result.maryThroneWinnerPlayerId).toBeNull();
   });
 
   it("ne déclenche pas Mary Throne si elle perd contre le Skull King", () => {
