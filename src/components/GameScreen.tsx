@@ -226,11 +226,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const [rosieCanChoose, setRosieCanChoose] = useState(false);
   const [rosieTarget, setRosieTarget] = useState("");
   const [rosieSaving, setRosieSaving] = useState(false);
-  const [maryTrickId, setMaryTrickId] = useState<string | null>(null);
-  const [maryCanChoose, setMaryCanChoose] = useState(false);
-  const [maryTarget, setMaryTarget] = useState("");
-  const [marySaving, setMarySaving] = useState(false);
-  const [forcedCardId, setForcedCardId] = useState<string | null>(null);
   const [juanitaTrickId, setJuanitaTrickId] = useState<string | null>(null);
   const [juanitaCanPeek, setJuanitaCanPeek] = useState(false);
   const [juanitaPeekCards, setJuanitaPeekCards] = useState<GameCard[] | null>(null);
@@ -302,7 +297,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     const { data: handData, error: handError } = await supabase
       .from("player_hands")
-      .select("cards, pending_forced_card_id")
+      .select("cards")
       .eq("round_id", currentRound.id)
       .eq("player_id", currentUserId)
       .maybeSingle();
@@ -321,7 +316,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         : [];
 
       setHand(currentHand);
-      setForcedCardId(typeof handData.pending_forced_card_id === "string" ? handData.pending_forced_card_id : null);
     }
 
     const { data: roomPlayers, error: playersError } = await supabase
@@ -543,8 +537,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     | {
         pirate_power_triggers?: Array<{ player_id?: string; power?: string }>;
         bendt_discard_completed?: boolean;
-        mary_throne_winner_player_id?: string | null;
-        mary_throne_target_player_id?: string | null;
       }
     | null;
   const powerTriggers = resolvedMetadata?.pirate_power_triggers ?? [];
@@ -557,13 +549,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   );
   setRosieCanChoose(canChooseWithRosie);
   setRosieTrickId(canChooseWithRosie ? lastResolvedTrick?.id ?? null : null);
-  const canChooseWithMary = Boolean(
-    resolvedMetadata?.mary_throne_winner_player_id === currentUserId &&
-    !resolvedMetadata?.mary_throne_target_player_id &&
-    lastResolvedTrick?.id && lastResolvedTrick.trick_number < currentRound.round_number
-  );
-  setMaryCanChoose(canChooseWithMary);
-  setMaryTrickId(canChooseWithMary ? lastResolvedTrick?.id ?? null : null);
   const juanitaTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "juanita"
   );
@@ -891,25 +876,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     window.clearInterval(countdownInterval);
   };
 }, [nextTrickAt]);
-
-  const confirmMaryTarget = async () => {
-    if (!maryTrickId || !maryTarget || marySaving) return;
-    setMarySaving(true);
-    setPlayMessage("");
-    const { error: choiceError } = await supabase.rpc("choose_mary_throne_target", {
-      p_trick_id: maryTrickId,
-      p_target_player_id: maryTarget,
-    });
-    setMarySaving(false);
-    if (choiceError) {
-      setPlayMessage(choiceError.message);
-      return;
-    }
-    setMaryCanChoose(false);
-    setMaryTarget("");
-    setPlayMessage("Mary Throne a choisi une cible et lui impose une carte au prochain pli.");
-    await loadGame();
-  };
 
   const confirmRosieLeader = async () => {
     if (!rosieTrickId || !rosieTarget || rosieSaving) return;
@@ -2022,13 +1988,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </section>
       )}
 
-      {forcedCardId && (
-        <section className="walk-the-plank-choice" aria-live="polite">
-          <div className="game-section-heading"><h2>⚠️ CARTE IMPOSÉE PAR MARY THRONE</h2></div>
-          <p>Tu dois jouer cette carte au prochain pli : {hand.find((card) => card.id === forcedCardId)?.name ?? forcedCardId}.</p>
-        </section>
-      )}
-
       {rosieCanChoose && (
         <section className="walk-the-plank-choice" aria-live="polite">
           <div className="game-section-heading">
@@ -2055,28 +2014,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             disabled={!rosieTarget || rosieSaving}
           >
             {rosieSaving ? "VALIDATION..." : "CONFIRMER LE MENEUR"}
-          </button>
-        </section>
-      )}
-
-      {maryCanChoose && (
-        <section className="walk-the-plank-choice" aria-live="polite">
-          <div className="game-section-heading">
-            <h2>👑 MARY THRONE — CHOISIS TA CIBLE</h2>
-          </div>
-          <p>Choisis un adversaire. Une carte de sa main sera tirée au sort et devra être jouée au prochain pli.</p>
-          <div className="plank-target-list">
-            {players.filter((player) => player.player_id !== userId).map((player) => (
-              <button type="button" key={player.player_id}
-                className={maryTarget === player.player_id ? "plank-target selected" : "plank-target"}
-                onClick={() => setMaryTarget(player.player_id)} disabled={marySaving}>
-                {player.username}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="lobby-primary play-card-button"
-            onClick={confirmMaryTarget} disabled={!maryTarget || marySaving}>
-            {marySaving ? "TIRAGE..." : "CONFIRMER LA CIBLE"}
           </button>
         </section>
       )}
@@ -2352,7 +2289,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                     currentPlayerHasPlayed ||
                     playingCard ||
                     isWaitingForPlankChoice ||
-                    (forcedCardId !== null && card.id !== forcedCardId) ||
                     hand.length === 0
                   }
                   style={{
@@ -2501,7 +2437,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               <button
                 type="button"
                 className="lobby-primary play-card-button"
-                disabled={!isMyTurn || playingCard || (forcedCardId !== null && selectedCard.id !== forcedCardId)}
+                disabled={!isMyTurn || playingCard}
                 onClick={() => setShowPlayConfirmation(true)}
               >
                 <Play size={18} />
@@ -2517,7 +2453,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   type="button"
                   className="lobby-primary"
                   onClick={playSelectedCard}
-                  disabled={playingCard || !isMyTurn || (forcedCardId !== null && selectedCard.id !== forcedCardId)}
+                  disabled={playingCard || !isMyTurn}
                 >
                   <Check size={18} />
                   {playingCard ? "ENVOI..." : "CONFIRMER"}
