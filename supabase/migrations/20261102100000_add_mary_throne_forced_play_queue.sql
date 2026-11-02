@@ -1,6 +1,10 @@
--- Mary Throne (règle du livret français) :
+-- Mary Throne (variante SKULL ARENA choisie par le joueur) :
 -- le gagnant choisit un adversaire ; une carte aléatoire de sa main
--- est réservée secrètement pour être jouée à la manche suivante.
+-- est réservée secrètement pour être jouée en pose supplémentaire
+-- au pli immédiatement suivant, dans la même manche.
+-- IMPORTANT : cette migration prépare la réservation privée. Elle ne doit
+-- pas être appliquée tant que play_card/resolve_game_trick n'intègrent pas
+-- la file de poses Mary (migration serveur complémentaire nécessaire).
 CREATE TABLE IF NOT EXISTS public.mary_throne_forced_plays (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id uuid NOT NULL REFERENCES public.game_rooms(id) ON DELETE CASCADE,
@@ -8,7 +12,8 @@ CREATE TABLE IF NOT EXISTS public.mary_throne_forced_plays (
   source_trick_id uuid NOT NULL REFERENCES public.game_tricks(id) ON DELETE CASCADE,
   source_player_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   target_player_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  target_round_id uuid REFERENCES public.game_rounds(id) ON DELETE CASCADE,
+  target_round_id uuid NOT NULL REFERENCES public.game_rounds(id) ON DELETE CASCADE,
+  target_trick_number integer NOT NULL CHECK (target_trick_number > 0),
   card jsonb NOT NULL,
   status text NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending','ready','played','cancelled')),
@@ -66,14 +71,13 @@ BEGIN
     RAISE EXCEPTION 'Seul le gagnant de Mary Throne peut choisir un adversaire.';
   END IF;
 
-  IF v_round_number >= 10
-     OR v_trick_number >= v_round_number
+  IF v_trick_number >= v_round_number
      OR NOT COALESCE((v_extensions->>'expansion_2025')::boolean, false)
      OR NOT EXISTS (
        SELECT 1 FROM public.game_rounds
        WHERE id = v_round_id AND status = 'playing'
      ) THEN
-    RAISE EXCEPTION 'Mary Throne ne peut être utilisée que si son extension est active et qu''une manche suivante existe.';
+    RAISE EXCEPTION 'Mary Throne ne peut être utilisée que si son extension est active et qu''un pli suivant existe dans cette manche.';
   END IF;
 
   IF p_target_player_id IS NULL OR p_target_player_id = v_user_id
@@ -120,10 +124,12 @@ BEGIN
 
   INSERT INTO public.mary_throne_forced_plays(
     room_id, source_round_id, source_trick_id,
-    source_player_id, target_player_id, card
+    source_player_id, target_player_id,
+    target_round_id, target_trick_number, card, status
   ) VALUES (
     v_room_id, v_round_id, p_trick_id,
-    v_user_id, p_target_player_id, v_card
+    v_user_id, p_target_player_id,
+    v_round_id, v_trick_number + 1, v_card, 'ready'
   );
 
   RETURN jsonb_build_object(
@@ -136,33 +142,3 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.choose_mary_throne_target(uuid, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.choose_mary_throne_target(uuid, uuid) TO authenticated;
-
--- When the next round is created, bind the secret card to that round.
-CREATE OR REPLACE FUNCTION public.bind_mary_throne_forced_plays()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
-AS $function$
-BEGIN
-  UPDATE public.mary_throne_forced_plays
-  SET target_round_id = NEW.id,
-      status = 'ready'
-  WHERE room_id = NEW.room_id
-    AND source_round_id = (
-      SELECT previous.id
-      FROM public.game_rounds previous
-      WHERE previous.room_id = NEW.room_id
-        AND previous.round_number = NEW.round_number - 1
-      LIMIT 1
-    )
-    AND status = 'pending';
-  RETURN NEW;
-END;
-$function$;
-
-DROP TRIGGER IF EXISTS bind_mary_throne_forced_plays_on_round
-  ON public.game_rounds;
-CREATE TRIGGER bind_mary_throne_forced_plays_on_round
-AFTER INSERT ON public.game_rounds
-FOR EACH ROW EXECUTE FUNCTION public.bind_mary_throne_forced_plays();
