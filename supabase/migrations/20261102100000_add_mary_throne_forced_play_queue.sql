@@ -39,6 +39,8 @@ DECLARE
   v_room_id uuid;
   v_round_id uuid;
   v_round_number integer;
+  v_trick_number integer;
+  v_extensions jsonb;
   v_winner_id uuid;
   v_hand jsonb;
   v_card jsonb;
@@ -48,24 +50,29 @@ BEGIN
     RAISE EXCEPTION 'Connexion requise.';
   END IF;
 
-  SELECT gr.room_id, gr.id, gr.round_number, gt.winner_player_id
-    INTO v_room_id, v_round_id, v_round_number, v_winner_id
+  SELECT gr.room_id, gr.id, gr.round_number, gt.trick_number,
+         gr.extensions, gt.winner_player_id
+    INTO v_room_id, v_round_id, v_round_number, v_trick_number,
+         v_extensions, v_winner_id
   FROM public.game_tricks gt
   JOIN public.game_rounds gr ON gr.id = gt.round_id
   WHERE gt.id = p_trick_id
     AND gt.status = 'resolved'
     AND gt.resolution->>'mary_throne_winner_player_id' = v_user_id::text
-  FOR UPDATE OF gt;
+  FOR UPDATE OF gt, gr;
 
   IF v_round_id IS NULL OR v_winner_id IS DISTINCT FROM v_user_id THEN
     RAISE EXCEPTION 'Seul le gagnant de Mary Throne peut choisir un adversaire.';
   END IF;
 
-  IF v_round_number >= 10 OR NOT EXISTS (
-    SELECT 1 FROM public.game_rounds
-    WHERE id = v_round_id AND status = 'playing'
-  ) THEN
-    RAISE EXCEPTION 'Mary Throne ne peut plus être utilisée après le dernier pli de la partie.';
+  IF v_round_number >= 10
+     OR v_trick_number >= v_round_number
+     OR NOT COALESCE((v_extensions->>'expansion_2025')::boolean, false)
+     OR NOT EXISTS (
+       SELECT 1 FROM public.game_rounds
+       WHERE id = v_round_id AND status = 'playing'
+     ) THEN
+    RAISE EXCEPTION 'Mary Throne ne peut être utilisée que si son extension est active et qu''une manche suivante existe.';
   END IF;
 
   IF p_target_player_id IS NULL OR p_target_player_id = v_user_id
