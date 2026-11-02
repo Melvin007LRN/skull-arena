@@ -14,6 +14,8 @@ export interface PlayedCard {
   tigressMode?: TigressMode;
   chosenValue?: number;
   chosenSuit?: Suit;
+  /** Carte imposée par Mary Throne au pli suivant. */
+  isMaryForcedPlay?: boolean;
 }
 
 export interface PiratePowerTrigger {
@@ -313,25 +315,35 @@ export function resolveTrick(
   const repeatedPlayers = [...playsByPlayer.values()].filter(
     (playerPlays) => playerPlays.length > 1,
   );
-  if (repeatedPlayers.length > 0) {
-    const repeated = repeatedPlayers[0].sort(
-      (a, b) => a.order - b.order,
-    );
-    const lastVolleyCards = plays.filter(
-      (play) => play.card.type === "last_volley",
-    );
-    const lastPlay = plays[plays.length - 1];
+  const maryForcedPlays = plays.filter((play) => play.isMaryForcedPlay);
+  const lastVolleyCards = plays.filter(
+    (play) => play.card.type === "last_volley",
+  );
 
-    if (
-      repeatedPlayers.length !== 1 ||
-      repeated.length !== 2 ||
-      repeated[0].card.type !== "last_volley" ||
-      lastVolleyCards.length !== 1 ||
-      lastPlay.playerId !== repeated[0].playerId ||
-      lastPlay.order !== repeated[1].order
-    ) {
+  if (maryForcedPlays.length > 1) {
+    throw new Error("Une seule carte imposée par Mary Throne est autorisée par joueur et par pli.");
+  }
+
+  if (repeatedPlayers.length > 0) {
+    const invalidRepeat = repeatedPlayers.some((playerPlays) => {
+      const ordered = [...playerPlays].sort((a, b) => a.order - b.order);
+      const hasMaryExtra = ordered.filter((play) => play.isMaryForcedPlay).length === 1;
+      const hasLastVolley = ordered[0]?.card.type === "last_volley";
+      const validLastVolley = hasLastVolley &&
+        lastVolleyCards.length === 1 &&
+        ordered.length >= 2 &&
+        ordered[1].playerId === ordered[0].playerId;
+      const expectedCount = 1 + (hasLastVolley ? 1 : 0) + (hasMaryExtra ? 1 : 0);
+
+      return ordered.length !== expectedCount ||
+        (!hasMaryExtra && !hasLastVolley) ||
+        (hasLastVolley && !validLastVolley) ||
+        (hasMaryExtra && ordered[ordered.length - 1].isMaryForcedPlay !== true);
+    });
+
+    if (invalidRepeat) {
       throw new Error(
-        "Une carte supplémentaire n'est autorisée qu'après Dernière Salve.",
+        "Une pose supplémentaire doit être autorisée par Dernière Salve ou Mary Throne.",
       );
     }
   }
