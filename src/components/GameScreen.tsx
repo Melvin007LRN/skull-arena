@@ -1097,6 +1097,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     if (
       selectedCard.type === "joker" &&
+      !jokerBlackLead &&
       !["green", "purple", "yellow"].includes(chosenSuit)
     ) {
       setPlayMessage("Choisis une couleur valide pour le Joker.");
@@ -1117,7 +1118,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           ? chosenValue
           : null,
         p_chosen_suit:
-          selectedCard.type === "joker" ? chosenSuit : null,
+          selectedCard.type === "joker" && !jokerBlackLead ? chosenSuit : null,
       }
     );
 
@@ -1432,6 +1433,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       </main>
     );
   }
+
+  const jokerBlackLead =
+    playedCards.find((play) => play.card.type === "number" || play.card.type === "joker")
+      ?.card.suit === "black";
 
   return (
     <main className="skull-game">
@@ -2377,7 +2382,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               </div>
             ) : null}
 
-            {selectedCard.type === "joker" && (
+            {selectedCard.type === "joker" && (jokerBlackLead ? (
+              <p className="play-message">Le noir est déjà demandé : le Joker joue sans déclarer de couleur.</p>
+            ) : (
               <div className="tigress-choice">
                 <strong>CHOISIS LA COULEUR DU JOKER</strong>
                 <div>
@@ -2394,7 +2401,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   ))}
                 </div>
               </div>
-            )}
+            ))}
 
             {selectedCard.type === "tigress" && (
               <div className="tigress-choice">
