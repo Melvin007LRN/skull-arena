@@ -1568,7 +1568,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             })}
           </div>
         )}
-      </section></div>
+      </section></div>}
 
       <section className="game-arena">
         <div className="arena-heading">
