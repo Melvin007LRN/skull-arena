@@ -144,3 +144,40 @@ describe("Ordre des poses supplémentaires", () => {
     expect(buildExtraPlayQueue([], [])).toEqual([]);
   });
 });
+
+
+describe("Mary Throne — pose supplémentaire au pli suivant", () => {
+  const forcedCard: GameCard = {
+    id: "mary-forced-test",
+    name: "Carte imposée",
+    type: "number",
+    suit: "green",
+    value: 3,
+    isExpansionCard: false,
+  };
+
+  it("autorise la carte imposée après la carte normale de la cible", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: greenSix, order: 0 },
+      { playerId: "other", card: greenTwelve, order: 1 },
+      { playerId: "target", card: forcedCard, order: 2, isMaryForcedPlay: true },
+    ])).not.toThrow();
+  });
+
+  it("autorise Dernière Salve et Mary Throne sur le même joueur", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: lastVolley, order: 0 },
+      { playerId: "other", card: greenSix, order: 1 },
+      { playerId: "target", card: greenTwelve, order: 2 },
+      { playerId: "target", card: forcedCard, order: 3, isMaryForcedPlay: true },
+    ])).not.toThrow();
+  });
+
+  it("refuse une répétition sans effet supplémentaire déclaré", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: greenSix, order: 0 },
+      { playerId: "other", card: greenTwelve, order: 1 },
+      { playerId: "target", card: forcedCard, order: 2 },
+    ])).toThrow(/pose supplémentaire/);
+  });
+});
