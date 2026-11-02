@@ -203,6 +203,7 @@ export default function GameScreen({
   const [selectedCard, setSelectedCard] =
     useState<GameCard | null>(null);
   const dragStartRef = useRef<{ cardId: string; x: number; y: number } | null>(null);
+  const suppressCardClickRef = useRef(false);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [tigressMode, setTigressMode] =
     useState<"pirate" | "escape">("pirate");
@@ -1034,7 +1035,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   };
 
   const handleHandCardPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, card: GameCard) => {
-    if (event.pointerType === "mouse" || !isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
+    if (!isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
     dragStartRef.current = { cardId: card.id, x: event.clientX, y: event.clientY };
     setDraggingCardId(card.id);
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -1048,6 +1049,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     const deltaY = start.y - event.clientY;
     const deltaX = Math.abs(event.clientX - start.x);
     if (deltaY < 78 || deltaY < deltaX * 0.75) return;
+    suppressCardClickRef.current = true;
     setSelectedCard(card);
     setChosenValue(card.selectableValue?.[0] ?? null);
     setChosenSuit("green");
@@ -2169,7 +2171,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <div className="game-player-list">
-          {players.map((player) => {
+          {players.map((player, playerIndex) => {
+            const mySeatIndex = Math.max(0, players.findIndex((item) => item.player_id === userId));
+            const relativeSeat = (playerIndex - mySeatIndex + players.length) % Math.max(players.length, 1);
             const latestBubble = chatMessages[chatMessages.length - 1];
             const showBubble = latestBubble?.player_id === player.player_id && chatNow - new Date(latestBubble.created_at).getTime() < 2000;
             const hasPlayed = playedCards.some(
@@ -2179,9 +2183,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             return (
               <div
                 className={
-                  player.player_id === userId
-                    ? "game-player current"
-                    : "game-player"
+                  `game-player game-player-seat-${relativeSeat} ${player.player_id === userId ? "current" : ""}`
                 }
                 key={player.player_id}
               >
@@ -2263,6 +2265,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   onPointerUp={(event) => handleHandCardPointerUp(event, card)}
                   onPointerCancel={() => { dragStartRef.current = null; setDraggingCardId(null); }}
                   onClick={() => {
+                    if (suppressCardClickRef.current) {
+                      suppressCardClickRef.current = false;
+                      return;
+                    }
                     if (
                       round.status !== "playing" ||
                       !isMyTurn ||

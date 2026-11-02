@@ -2868,3 +2868,89 @@ body:has(.skull-game),
 .skull-game .game-crew .game-player:nth-child(6) { right: 5px; top: 5px; left: auto; bottom: auto; transform: none; }
 .skull-game .game-crew .game-player:nth-child(7) { left: 5px; bottom: 5px; top: auto; right: auto; transform: none; }
 .skull-game .game-crew .game-player:nth-child(8) { right: 5px; bottom: 5px; top: auto; left: auto; transform: none; }
+
+
+/* UNO-inspired table ergonomics: relative seats, tactile hand and clear turn feedback. */
+.skull-game .game-crew .game-player {
+  transition: left .28s ease, right .28s ease, top .28s ease, bottom .28s ease,
+    transform .28s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.skull-game .game-crew .game-player.current {
+  border-color: rgba(255,214,128,.9);
+  box-shadow: 0 0 0 2px rgba(255,204,103,.16), 0 0 24px rgba(232,177,78,.22);
+}
+.skull-game .game-crew .game-player-seat-0 {
+  left: 50%; right: auto; top: auto; bottom: 4px;
+  transform: translateX(-50%);
+}
+.skull-game .game-crew .game-player-seat-1 {
+  left: 4px; right: auto; top: auto; bottom: 18%; transform: none;
+}
+.skull-game .game-crew .game-player-seat-2 {
+  left: 4px; right: auto; top: 50%; bottom: auto; transform: translateY(-50%);
+}
+.skull-game .game-crew .game-player-seat-3 {
+  left: 4px; right: auto; top: 4px; bottom: auto; transform: none;
+}
+.skull-game .game-crew .game-player-seat-4 {
+  left: 50%; right: auto; top: 4px; bottom: auto; transform: translateX(-50%);
+}
+.skull-game .game-crew .game-player-seat-5 {
+  left: auto; right: 4px; top: 4px; bottom: auto; transform: none;
+}
+.skull-game .game-crew .game-player-seat-6 {
+  left: auto; right: 4px; top: 50%; bottom: auto; transform: translateY(-50%);
+}
+.skull-game .game-crew .game-player-seat-7 {
+  left: auto; right: 4px; top: auto; bottom: 18%; transform: none;
+}
+.skull-game .game-hand .game-card {
+  touch-action: pan-x;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 100%;
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+.skull-game .game-hand .game-card:focus-visible {
+  outline: 3px solid #f6d38c;
+  outline-offset: 3px;
+}
+.skull-game .game-hand .game-card-selected {
+  transform: translateY(-12px);
+  filter: brightness(1.12);
+  box-shadow: 0 12px 26px rgba(0,0,0,.4), 0 0 0 1px rgba(255,215,135,.65);
+}
+.skull-game .game-hand .game-card-dragging {
+  transform: translateY(-22px) scale(1.04);
+  filter: brightness(1.18);
+  box-shadow: 0 18px 35px rgba(0,0,0,.48), 0 0 22px rgba(255,211,129,.3);
+  z-index: 20;
+}
+.skull-game .arena-played-card {
+  animation: skullCardArrival .28s cubic-bezier(.2,.8,.2,1) both;
+}
+.skull-game .arena-mini-card {
+  box-shadow: 0 8px 18px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.1);
+}
+.skull-game .game-player.current .game-player-avatar {
+  box-shadow: 0 0 0 2px rgba(255,213,135,.5), 0 0 18px rgba(255,193,91,.28);
+}
+@keyframes skullCardArrival {
+  from { opacity: 0; transform: translateY(14px) scale(.88) rotate(-3deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  .skull-game .game-crew .game-player { width: clamp(108px, 16vw, 148px); }
+  .skull-game .game-crew .game-player-seat-1,
+  .skull-game .game-crew .game-player-seat-2,
+  .skull-game .game-crew .game-player-seat-3 { left: 2px; }
+  .skull-game .game-crew .game-player-seat-5,
+  .skull-game .game-crew .game-player-seat-6,
+  .skull-game .game-crew .game-player-seat-7 { right: 2px; left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skull-game .game-crew .game-player,
+  .skull-game .game-hand .game-card { transition: none; }
+  .skull-game .arena-played-card { animation: none; }
+}
