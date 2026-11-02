@@ -1034,7 +1034,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   };
 
   const handleHandCardPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, card: GameCard) => {
-    if (event.pointerType === "mouse" || !isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
+    if (!isMyTurn || round?.status !== "playing" || currentPlayerHasPlayed || playingCard || isWaitingForPlankChoice) return;
     dragStartRef.current = { cardId: card.id, x: event.clientX, y: event.clientY };
     setDraggingCardId(card.id);
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -2169,7 +2169,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         </div>
 
         <div className="game-player-list">
-          {players.map((player) => {
+          {players.map((player, playerIndex) => {
+            const mySeatIndex = Math.max(0, players.findIndex((item) => item.player_id === userId));
+            const relativeSeat = (playerIndex - mySeatIndex + players.length) % Math.max(players.length, 1);
             const latestBubble = chatMessages[chatMessages.length - 1];
             const showBubble = latestBubble?.player_id === player.player_id && chatNow - new Date(latestBubble.created_at).getTime() < 2000;
             const hasPlayed = playedCards.some(
@@ -2179,9 +2181,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
             return (
               <div
                 className={
-                  player.player_id === userId
-                    ? "game-player current"
-                    : "game-player"
+                  `game-player game-player-seat-${relativeSeat} ${player.player_id === userId ? "current" : ""}`
                 }
                 key={player.player_id}
               >
