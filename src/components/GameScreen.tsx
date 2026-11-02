@@ -203,6 +203,7 @@ export default function GameScreen({
   const [selectedCard, setSelectedCard] =
     useState<GameCard | null>(null);
   const dragStartRef = useRef<{ cardId: string; x: number; y: number } | null>(null);
+  const suppressCardClickRef = useRef(false);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [tigressMode, setTigressMode] =
     useState<"pirate" | "escape">("pirate");
@@ -1048,6 +1049,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     const deltaY = start.y - event.clientY;
     const deltaX = Math.abs(event.clientX - start.x);
     if (deltaY < 78 || deltaY < deltaX * 0.75) return;
+    suppressCardClickRef.current = true;
     setSelectedCard(card);
     setChosenValue(card.selectableValue?.[0] ?? null);
     setChosenSuit("green");
@@ -2263,6 +2265,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   onPointerUp={(event) => handleHandCardPointerUp(event, card)}
                   onPointerCancel={() => { dragStartRef.current = null; setDraggingCardId(null); }}
                   onClick={() => {
+                    if (suppressCardClickRef.current) {
+                      suppressCardClickRef.current = false;
+                      return;
+                    }
                     if (
                       round.status !== "playing" ||
                       !isMyTurn ||
