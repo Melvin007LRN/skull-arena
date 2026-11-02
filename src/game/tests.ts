@@ -923,6 +923,30 @@ export function runGameTests(): GameTestResult[] {
     assert(result.piratePowerTriggers.some((trigger) => trigger.playerId === "player-2" && trigger.power === "rosie"), "Second n'a pas récupéré le pouvoir de Rosie.");
   });
 
+  // TEST 41 : Dernière Salve autorise une seconde carte en fin de pli
+  test("Dernière Salve permet à son joueur de rejouer après les autres", () => {
+    const lastVolley = makeCard("last-volley", "last_volley");
+    const lower = makeCard("green-6", "number", {
+      suit: "green",
+      value: 6,
+    });
+    const higher = makeCard("green-12", "number", {
+      suit: "green",
+      value: 12,
+    });
+
+    const result = resolveTrick([
+      makePlay("player-1", lastVolley, 0),
+      makePlay("player-2", lower, 1),
+      makePlay("player-1", higher, 2),
+    ]);
+
+    assert(
+      result.winnerPlayerId === "player-1",
+      "La carte jouée après Dernière Salve n'a pas été prise en compte.",
+    );
+  });
+
   return results;
 }
 
