@@ -19,7 +19,11 @@ CREATE TABLE IF NOT EXISTS public.mary_throne_forced_plays (
     CHECK (status IN ('pending','ready','played','cancelled')),
   created_at timestamptz NOT NULL DEFAULT now(),
   played_at timestamptz,
-  CONSTRAINT mary_throne_not_self CHECK (source_player_id <> target_player_id)
+  CONSTRAINT mary_throne_not_self CHECK (source_player_id <> target_player_id),
+  CONSTRAINT mary_throne_one_target_play_per_trick
+    UNIQUE (target_round_id, target_player_id, target_trick_number),
+  CONSTRAINT mary_throne_one_use_per_source_trick
+    UNIQUE (source_trick_id)
 );
 
 CREATE INDEX IF NOT EXISTS mary_throne_forced_plays_target_idx
@@ -104,8 +108,8 @@ BEGIN
     RAISE EXCEPTION 'Ce joueur n’a plus de carte en main.';
   END IF;
 
-  SELECT item INTO v_card
-  FROM jsonb_array_elements(v_hand) AS item
+  SELECT card_item INTO v_card
+  FROM jsonb_array_elements(v_hand) AS hand_items(card_item)
   ORDER BY random()
   LIMIT 1;
 
@@ -116,9 +120,9 @@ BEGIN
 
   UPDATE public.player_hands
   SET cards = (
-    SELECT COALESCE(jsonb_agg(item), '[]'::jsonb)
-    FROM jsonb_array_elements(cards) AS item
-    WHERE item->>'id' <> v_card_id
+    SELECT COALESCE(jsonb_agg(hand_items.card_item), '[]'::jsonb)
+    FROM jsonb_array_elements(cards) AS hand_items(card_item)
+    WHERE hand_items.card_item->>'id' <> v_card_id
   ), updated_at = now()
   WHERE round_id = v_round_id AND player_id = p_target_player_id;
 
