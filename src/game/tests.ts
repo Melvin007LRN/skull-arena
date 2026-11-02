@@ -320,6 +320,42 @@ export function runGameTests(): GameTestResult[] {
     );
   });
 
+  // TEST 12 bis : les bonus 7/8 exigent une annonce exacte
+  test("Les bonus du 7 et du 8 ne sont pas accordés si l'annonce est ratée", () => {
+    const seven = buildDeck({ expansion_2025: true }).find(
+      (card) => card.id === "exp-2025-green-7",
+    )!;
+    const missedBid = calculateRoundScores(
+      [{
+        playerId: "player-1",
+        bid: 1,
+        tricksWon: 0,
+        capturedCards: [seven],
+        capturedTricks: [],
+      }],
+      { roundNumber: 1 },
+    );
+    const correctBid = calculateRoundScores(
+      [{
+        playerId: "player-1",
+        bid: 1,
+        tricksWon: 1,
+        capturedCards: [seven],
+        capturedTricks: [],
+      }],
+      { roundNumber: 1 },
+    );
+
+    assert(
+      missedBid[0].bonusPoints === 0,
+      "Le bonus du 7 a été accordé malgré une annonce ratée.",
+    );
+    assert(
+      correctBid[0].bonusPoints === -5,
+      "Le malus du 7 n'a pas été appliqué malgré une annonce exacte.",
+    );
+  });
+
   // TEST 13 : un joueur ne peut pas jouer deux fois
   test("Un joueur ne peut pas jouer deux cartes dans le même pli", () => {
     const card = BASE_DECK.find(
