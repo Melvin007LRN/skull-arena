@@ -226,6 +226,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   const [rosieCanChoose, setRosieCanChoose] = useState(false);
   const [rosieTarget, setRosieTarget] = useState("");
   const [rosieSaving, setRosieSaving] = useState(false);
+  const [maryTrickId, setMaryTrickId] = useState<string | null>(null);
+  const [maryCanChoose, setMaryCanChoose] = useState(false);
+  const [maryTarget, setMaryTarget] = useState("");
+  const [marySaving, setMarySaving] = useState(false);
   const [juanitaTrickId, setJuanitaTrickId] = useState<string | null>(null);
   const [juanitaCanPeek, setJuanitaCanPeek] = useState(false);
   const [juanitaPeekCards, setJuanitaPeekCards] = useState<GameCard[] | null>(null);
@@ -540,6 +544,15 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       }
     | null;
   const powerTriggers = resolvedMetadata?.pirate_power_triggers ?? [];
+  const maryWinnerId = (resolvedMetadata as { mary_throne_winner_player_id?: string } | null)?.mary_throne_winner_player_id;
+  const canUseMary = Boolean(
+    maryWinnerId === currentUserId &&
+    lastResolvedTrick?.id &&
+    lastResolvedTrick.trick_number < currentRound.round_number
+  );
+  setMaryCanChoose(canUseMary);
+  setMaryTrickId(canUseMary ? lastResolvedTrick?.id ?? null : null);
+  if (!canUseMary) setMaryTarget("");
   const rosieTrigger = powerTriggers.some(
     (trigger) => trigger.player_id === currentUserId && trigger.power === "rosie"
   );
@@ -877,6 +890,28 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
   };
 }, [nextTrickAt]);
 
+  const confirmMaryTarget = async () => {
+    if (!maryTrickId || !maryTarget || marySaving) return;
+    setMarySaving(true);
+    setPlayMessage("");
+    const { error: choiceError } = await supabase.rpc(
+      "choose_mary_throne_target",
+      {
+        p_trick_id: maryTrickId,
+        p_target_player_id: maryTarget,
+      }
+    );
+    setMarySaving(false);
+    if (choiceError) {
+      setPlayMessage(choiceError.message);
+      return;
+    }
+    setMaryCanChoose(false);
+    setMaryTarget("");
+    setPlayMessage("Mary Throne a choisi une carte au hasard. Elle devra être jouée en pose supplémentaire au prochain pli de cette manche.");
+    await loadGame();
+  };
+
   const confirmRosieLeader = async () => {
     if (!rosieTrickId || !rosieTarget || rosieSaving) return;
     setRosieSaving(true);
@@ -1097,6 +1132,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
     if (
       selectedCard.type === "joker" &&
+      !jokerBlackLead &&
       !["green", "purple", "yellow"].includes(chosenSuit)
     ) {
       setPlayMessage("Choisis une couleur valide pour le Joker.");
@@ -1117,7 +1153,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           ? chosenValue
           : null,
         p_chosen_suit:
-          selectedCard.type === "joker" ? chosenSuit : null,
+          selectedCard.type === "joker" && !jokerBlackLead ? chosenSuit : null,
       }
     );
 
@@ -1226,9 +1262,11 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     (play) => play.player_id === userId
   ) && !isExtraVolleyTurn;
 
+  const expectedPlayCount =
+    activePlayerCount + volleyPlayers.length;
   const allCardsPlayed =
     activePlayerCount > 0 &&
-    playedCards.length >= activePlayerCount + volleyPlayers.length;
+    playedCards.length >= expectedPlayCount;
 
   // ORDRE DE JEU : les joueurs exclus du dernier pli sont ignorés.
   const turnLeaderId =
@@ -1433,6 +1471,10 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
     );
   }
 
+  const jokerBlackLead =
+    playedCards.find((play) => play.card.type === "number" || play.card.type === "joker")
+      ?.card.suit === "black";
+
   return (
     <main className="skull-game">
       {(countdownValue !== null || showGo) && (
@@ -1576,7 +1618,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
         <div className="arena-table">
           <button type="button" className={`arena-played-cards arena-played-stack ${playedCards.length ? "has-played-cards" : ""}`} onClick={() => playedCards.length && setShowPlayedCardsWindow(true)} aria-label="Afficher les cartes jouées dans l'ordre">
             {playedCards.length === 0 ? <div className="arena-empty-play"><Swords size={25} /><span>{round.status === "bidding" ? "EN ATTENTE DES ENCHÈRES" : "À TOI DE JOUER"}</span></div> : <>
-              <span className="played-stack-count">{playedCards.length} / {players.length} CARTES</span>
+              <span className="played-stack-count">{playedCards.length} / {expectedPlayCount || players.length} CARTES</span>
               {playedCards.slice(-3).map((play, index) => <div className="arena-stack-card" key={play.id} style={{ transform: `translate(${index * 5}px, ${-index * 3}px) rotate(${(index - 1) * 5}deg)`, zIndex:index+1 }}>
                 <strong>{(play.card as GameCard).value ?? cardSymbol((play.card as GameCard).type)}</strong>
                 <small>{players.find(p => p.player_id === play.player_id)?.username ?? "Pirate"}</small>
@@ -1774,7 +1816,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               <Swords size={19} /> LE PLI EN COURS
             </h2>
             <span>
-              {playedCards.length}/{players.length} cartes
+              {playedCards.length}/{expectedPlayCount || players.length} cartes
             </span>
           </div>
 
@@ -2155,6 +2197,41 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
 
       {showPlayedCardsWindow && <div className="game-modal-backdrop" onClick={() => setShowPlayedCardsWindow(false)}><section className="game-modal-window played-cards-modal" onClick={(event) => event.stopPropagation()}><header><strong>ORDRE DES CARTES JOUÉES</strong><button type="button" onClick={() => setShowPlayedCardsWindow(false)} aria-label="Fermer"><X /></button></header><ol>{playedCards.map((play) => { const card=play.card as GameCard; return <li key={play.id}><span>{play.play_order}.</span><strong>{players.find(p=>p.player_id===play.player_id)?.username ?? "Pirate"}</strong><span>{card.name} · {card.value ?? cardTypeNames[card.type] ?? card.type}</span></li>; })}</ol></section></div>}
       {showChatWindow && <div className="game-modal-backdrop" onClick={() => setShowChatWindow(false)}><section className="game-modal-window chat-modal" onClick={(event) => event.stopPropagation()}><header><strong>CHAT DE L'ÉQUIPAGE</strong><button type="button" onClick={() => setShowChatWindow(false)} aria-label="Fermer"><X /></button></header><div className="chat-modal-messages">{chatMessages.slice(-12).map(message => <p key={message.id}><b>{message.username}</b><span>{message.phrase}</span></p>)}</div><div className="quick-chat-options">{quickPhrases.map(item => <button type="button" key={item.id} className="quick-chat-pill" onClick={() => void sendQuickChat(item.phrase)} disabled={sendingChat}>{item.phrase}</button>)}</div>{chatError && <p role="alert">{chatError}</p>}</section></div>}
+      {maryCanChoose && (
+        <section className="selected-card-panel" aria-live="polite">
+          <div className="selected-card-heading">
+            <div>
+              <span>POUVOIR DE PIRATE</span>
+              <strong>MARY THRONE</strong>
+              <small>Choisis un adversaire. Une carte aléatoire de sa main sera gardée secrète et devra être jouée en plus au prochain pli de cette manche.</small>
+            </div>
+          </div>
+          <div className="tigress-choice">
+            <strong>CHOISIR UN ADVERSAIRE</strong>
+            <div>
+              {players.filter((player) => player.player_id !== userId).map((player) => (
+                <button
+                  type="button"
+                  key={player.player_id}
+                  className={maryTarget === player.player_id ? "selected" : ""}
+                  onClick={() => setMaryTarget(player.player_id)}
+                >
+                  {player.username}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="lobby-primary play-card-button"
+            disabled={!maryTarget || marySaving}
+            onClick={() => void confirmMaryTarget()}
+          >
+            {marySaving ? "TIRAGE EN COURS..." : "CONFIRMER LE CHOIX"}
+          </button>
+        </section>
+      )}
+
       {/* ÉQUIPAGE */}
       <section className="game-crew">
         <div className="game-section-heading">
@@ -2377,7 +2454,9 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               </div>
             ) : null}
 
-            {selectedCard.type === "joker" && (
+            {selectedCard.type === "joker" && (jokerBlackLead ? (
+              <p className="play-message">Le noir est déjà demandé : le Joker joue sans déclarer de couleur.</p>
+            ) : (
               <div className="tigress-choice">
                 <strong>CHOISIS LA COULEUR DU JOKER</strong>
                 <div>
@@ -2394,7 +2473,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                   ))}
                 </div>
               </div>
-            )}
+            ))}
 
             {selectedCard.type === "tigress" && (
               <div className="tigress-choice">

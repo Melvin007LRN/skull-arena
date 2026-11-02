@@ -1,0 +1,212 @@
+import { describe, expect, it } from "vitest";
+import { buildExtraPlayQueue, resolveTrick } from "./rules";
+import type { GameCard } from "./cards";
+
+const mary: GameCard = {
+  id: "mary-throne",
+  name: "Mary Throne",
+  type: "pirate",
+  isExpansionCard: true,
+  extension: "expansion_2025",
+};
+
+const greenFourteen: GameCard = {
+  id: "green-14-test",
+  name: "Vert 14",
+  type: "number",
+  suit: "green",
+  value: 14,
+  isExpansionCard: false,
+};
+
+const pirate: GameCard = {
+  id: "pirate-test",
+  name: "Pirate",
+  type: "pirate",
+  isExpansionCard: false,
+};
+
+describe("Pouvoir Mary Throne", () => {
+  it("identifie Mary Throne comme gagnante lorsqu'elle remporte le pli", () => {
+    const result = resolveTrick([
+      { playerId: "mary-player", card: mary, order: 0 },
+      { playerId: "other-player", card: greenFourteen, order: 1 },
+    ]);
+
+    expect(result.winnerPlayerId).toBe("mary-player");
+    expect(result.maryThroneWinnerPlayerId).toBe("mary-player");
+    expect(result.piratePowerTriggers).toEqual([]);
+  });
+
+  it("ne déclenche pas Mary Throne lorsqu'un autre Pirate remporte le pli", () => {
+    const result = resolveTrick([
+      { playerId: "other-player", card: pirate, order: 0 },
+      { playerId: "mary-player", card: mary, order: 1 },
+    ]);
+
+    expect(result.winnerPlayerId).toBe("other-player");
+    expect(result.maryThroneWinnerPlayerId).toBeNull();
+  });
+
+  it("ne déclenche pas Mary Throne si elle perd contre le Skull King", () => {
+    const skullKing: GameCard = {
+      id: "skull-king-test",
+      name: "Skull King",
+      type: "skull_king",
+      isExpansionCard: false,
+    };
+    const result = resolveTrick([
+      { playerId: "mary-player", card: mary, order: 0 },
+      { playerId: "king-player", card: skullKing, order: 1 },
+    ]);
+
+    expect(result.winnerPlayerId).toBe("king-player");
+    expect(result.maryThroneWinnerPlayerId).toBeNull();
+  });
+});
+
+describe("Contrôles Dernière Salve", () => {
+  const lastVolley: GameCard = {
+    id: "last-volley-test",
+    name: "Dernière Salve",
+    type: "last_volley",
+    isExpansionCard: true,
+  };
+  const greenSix: GameCard = {
+    id: "green-6-test",
+    name: "Vert 6",
+    type: "number",
+    suit: "green",
+    value: 6,
+    isExpansionCard: false,
+  };
+  const greenTwelve: GameCard = {
+    id: "green-12-test",
+    name: "Vert 12",
+    type: "number",
+    suit: "green",
+    value: 12,
+    isExpansionCard: false,
+  };
+
+  it("refuse une seconde carte si Dernière Salve n'a pas été jouée en premier", () => {
+    expect(() => resolveTrick([
+      { playerId: "p1", card: greenSix, order: 0 },
+      { playerId: "p2", card: greenTwelve, order: 1 },
+      { playerId: "p1", card: lastVolley, order: 2 },
+    ])).toThrow(/Dernière Salve/);
+  });
+
+  it("refuse deux joueurs qui rejouent dans le même pli", () => {
+    const anotherLastVolley: GameCard = {
+      ...lastVolley,
+      id: "last-volley-test-2",
+    };
+    expect(() => resolveTrick([
+      { playerId: "p1", card: lastVolley, order: 0 },
+      { playerId: "p2", card: anotherLastVolley, order: 1 },
+      { playerId: "p1", card: greenSix, order: 2 },
+      { playerId: "p2", card: greenTwelve, order: 3 },
+    ])).toThrow(/Dernière Salve/);
+  });
+
+  it("refuse une troisième carte du même joueur", () => {
+    const extra: GameCard = {
+      id: "green-9-test",
+      name: "Vert 9",
+      type: "number",
+      suit: "green",
+      value: 9,
+      isExpansionCard: false,
+    };
+    expect(() => resolveTrick([
+      { playerId: "p1", card: lastVolley, order: 0 },
+      { playerId: "p2", card: greenSix, order: 1 },
+      { playerId: "p1", card: greenTwelve, order: 2 },
+      { playerId: "p1", card: extra, order: 3 },
+    ])).toThrow(/Dernière Salve/);
+  });
+});
+
+
+describe("Ordre des poses supplémentaires", () => {
+  it("place les poses Dernière Salve avant les cartes imposées par Mary", () => {
+    expect(buildExtraPlayQueue(["p2", "p1"], ["p3"])).toEqual([
+      "p2", "p1", "p3",
+    ]);
+  });
+
+  it("autorise un même joueur à avoir deux poses supplémentaires distinctes", () => {
+    expect(buildExtraPlayQueue(["p1"], ["p1"])).toEqual(["p1", "p1"]);
+  });
+
+  it("retourne une file vide sans effet spécial", () => {
+    expect(buildExtraPlayQueue([], [])).toEqual([]);
+  });
+});
+
+
+describe("Mary Throne — pose supplémentaire au pli suivant", () => {
+  const lastVolleyCard: GameCard = {
+    id: "last-volley-mary-test",
+    name: "Dernière Salve",
+    type: "last_volley",
+    isExpansionCard: true,
+  };
+  const normalSix: GameCard = {
+    id: "mary-normal-six",
+    name: "Vert 6",
+    type: "number",
+    suit: "green",
+    value: 6,
+    isExpansionCard: false,
+  };
+  const normalTwelve: GameCard = {
+    id: "mary-normal-twelve",
+    name: "Vert 12",
+    type: "number",
+    suit: "green",
+    value: 12,
+    isExpansionCard: false,
+  };
+  const forcedCard: GameCard = {
+    id: "mary-forced-test",
+    name: "Carte imposée",
+    type: "number",
+    suit: "green",
+    value: 3,
+    isExpansionCard: false,
+  };
+
+  it("autorise la carte imposée après la carte normale de la cible", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: normalSix, order: 0 },
+      { playerId: "other", card: normalTwelve, order: 1 },
+      { playerId: "target", card: forcedCard, order: 2, isMaryForcedPlay: true },
+    ])).not.toThrow();
+  });
+
+  it("autorise Dernière Salve et Mary Throne sur le même joueur", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: lastVolleyCard, order: 0 },
+      { playerId: "other", card: normalSix, order: 1 },
+      { playerId: "target", card: normalTwelve, order: 2 },
+      { playerId: "target", card: forcedCard, order: 3, isMaryForcedPlay: true },
+    ])).not.toThrow();
+  });
+
+  it("refuse une répétition sans effet supplémentaire déclaré", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: normalSix, order: 0 },
+      { playerId: "other", card: normalTwelve, order: 1 },
+      { playerId: "target", card: forcedCard, order: 2 },
+    ])).toThrow(/pose supplémentaire/);
+  });
+
+  it("refuse une carte marquée imposée si elle est la seule pose du joueur", () => {
+    expect(() => resolveTrick([
+      { playerId: "target", card: forcedCard, order: 0, isMaryForcedPlay: true },
+      { playerId: "other", card: normalTwelve, order: 1 },
+    ])).toThrow(/pose supplémentaire après la carte normale/);
+  });
+});

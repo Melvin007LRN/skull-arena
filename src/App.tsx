@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import {
   Crown,
   Swords,
@@ -18,7 +18,7 @@ import AuthPanel from "./components/AuthPanel";
 import GameProfile from "./components/GameProfile";
 import AdminPanel from "./components/AdminPanel";
 import Leaderboard from "./components/Leaderboard";
-import Lobby from "./components/Lobby";
+const Lobby = lazy(() => import("./components/Lobby"));
 import NewsPage from "./components/NewsPage";
 import { supabase } from "./lib/supabase";
 
@@ -100,9 +100,9 @@ export default function App() {
 
   if (showLobby) {
     return (
-      <Lobby
-        onBack={() => setShowLobby(false)}
-      />
+      <Suspense fallback={<main className="arena"><div style={{ minHeight: "100vh", display: "grid", placeItems: "center", color: "#d4af62", letterSpacing: "0.12em" }}>CHARGEMENT DE L’ARÈNE…</div></main>}>
+        <Lobby onBack={() => setShowLobby(false)} />
+      </Suspense>
     );
   }
 

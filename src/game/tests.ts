@@ -320,6 +320,42 @@ export function runGameTests(): GameTestResult[] {
     );
   });
 
+  // TEST 12 bis : les bonus 7/8 exigent une annonce exacte
+  test("Les bonus du 7 et du 8 ne sont pas accordés si l'annonce est ratée", () => {
+    const seven = buildDeck({ expansion_2025: true }).find(
+      (card) => card.id === "exp-2025-green-7",
+    )!;
+    const missedBid = calculateRoundScores(
+      [{
+        playerId: "player-1",
+        bid: 1,
+        tricksWon: 0,
+        capturedCards: [seven],
+        capturedTricks: [],
+      }],
+      { roundNumber: 1 },
+    );
+    const correctBid = calculateRoundScores(
+      [{
+        playerId: "player-1",
+        bid: 1,
+        tricksWon: 1,
+        capturedCards: [seven],
+        capturedTricks: [],
+      }],
+      { roundNumber: 1 },
+    );
+
+    assert(
+      missedBid[0].bonusPoints === 0,
+      "Le bonus du 7 a été accordé malgré une annonce ratée.",
+    );
+    assert(
+      correctBid[0].bonusPoints === -5,
+      "Le malus du 7 n'a pas été appliqué malgré une annonce exacte.",
+    );
+  });
+
   // TEST 13 : un joueur ne peut pas jouer deux fois
   test("Un joueur ne peut pas jouer deux cartes dans le même pli", () => {
     const card = BASE_DECK.find(
@@ -885,6 +921,30 @@ export function runGameTests(): GameTestResult[] {
     ]);
     assert(result.winnerPlayerId === "player-2", "Second n'a pas remporté le pli.");
     assert(result.piratePowerTriggers.some((trigger) => trigger.playerId === "player-2" && trigger.power === "rosie"), "Second n'a pas récupéré le pouvoir de Rosie.");
+  });
+
+  // TEST 41 : Dernière Salve autorise une seconde carte en fin de pli
+  test("Dernière Salve permet à son joueur de rejouer après les autres", () => {
+    const lastVolley = makeCard("last-volley", "last_volley");
+    const lower = makeCard("green-6", "number", {
+      suit: "green",
+      value: 6,
+    });
+    const higher = makeCard("green-12", "number", {
+      suit: "green",
+      value: 12,
+    });
+
+    const result = resolveTrick([
+      makePlay("player-1", lastVolley, 0),
+      makePlay("player-2", lower, 1),
+      makePlay("player-1", higher, 2),
+    ]);
+
+    assert(
+      result.winnerPlayerId === "player-1",
+      "La carte jouée après Dernière Salve n'a pas été prise en compte.",
+    );
   });
 
   return results;

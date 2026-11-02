@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import {
   Anchor,
   Users,
@@ -17,7 +17,7 @@ import {
   Check,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import GameScreen from "./GameScreen";
+const GameScreen = lazy(() => import("./GameScreen"));
 
 type Extensions = {
   loot: boolean;
@@ -393,10 +393,9 @@ export default function Lobby({ onBack }: LobbyProps) {
 
   if (showGame && selectedRoom) {
     return (
-      <GameScreen
-        roomId={selectedRoom.id}
-        onExit={() => setShowGame(false)}
-      />
+      <Suspense fallback={<main className="lobby-page"><div style={{ minHeight: "100vh", display: "grid", placeItems: "center", color: "#d4af62", letterSpacing: "0.12em" }}>PRÉPARATION DE LA PARTIE…</div></main>}>
+        <GameScreen roomId={selectedRoom.id} onExit={() => setShowGame(false)} />
+      </Suspense>
     );
   }
 

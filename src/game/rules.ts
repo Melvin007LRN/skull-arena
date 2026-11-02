@@ -14,6 +14,8 @@ export interface PlayedCard {
   tigressMode?: TigressMode;
   chosenValue?: number;
   chosenSuit?: Suit;
+  /** Carte imposée par Mary Throne au pli suivant. */
+  isMaryForcedPlay?: boolean;
 }
 
 export interface PiratePowerTrigger {
@@ -303,14 +305,60 @@ export function resolveTrick(
     (a, b) => a.order - b.order,
   );
 
-  const playerIds = plays.map(
-    (play) => play.playerId,
+  const playsByPlayer = new Map<string, PlayedCard[]>();
+  for (const play of plays) {
+    const playerPlays = playsByPlayer.get(play.playerId) ?? [];
+    playerPlays.push(play);
+    playsByPlayer.set(play.playerId, playerPlays);
+  }
+
+  const repeatedPlayers = [...playsByPlayer.values()].filter(
+    (playerPlays) => playerPlays.length > 1,
+  );
+  const maryForcedPlays = plays.filter((play) => play.isMaryForcedPlay);
+  const lastVolleyCards = plays.filter(
+    (play) => play.card.type === "last_volley",
   );
 
-  if (new Set(playerIds).size !== playerIds.length) {
-    throw new Error(
-      "Un joueur ne peut jouer qu'une carte par pli.",
-    );
+  if (maryForcedPlays.length > 1) {
+    throw new Error("Une seule carte imposée par Mary Throne est autorisée par pli.");
+  }
+
+  const maryForcedPlay = maryForcedPlays[0];
+  if (maryForcedPlay) {
+    const targetPlays = playsByPlayer.get(maryForcedPlay.playerId) ?? [];
+    if (
+      targetPlays.length < 2 ||
+      targetPlays[targetPlays.length - 1].order !== maryForcedPlay.order
+    ) {
+      throw new Error(
+        "La carte imposée par Mary Throne doit être une pose supplémentaire après la carte normale.",
+      );
+    }
+  }
+
+  if (repeatedPlayers.length > 0) {
+    const invalidRepeat = repeatedPlayers.some((playerPlays) => {
+      const ordered = [...playerPlays].sort((a, b) => a.order - b.order);
+      const hasMaryExtra = ordered.filter((play) => play.isMaryForcedPlay).length === 1;
+      const hasLastVolley = ordered[0]?.card.type === "last_volley";
+      const validLastVolley = hasLastVolley &&
+        lastVolleyCards.length === 1 &&
+        ordered.length >= 2 &&
+        ordered[1].playerId === ordered[0].playerId;
+      const expectedCount = 1 + (hasLastVolley ? 1 : 0) + (hasMaryExtra ? 1 : 0);
+
+      return ordered.length !== expectedCount ||
+        (!hasMaryExtra && !hasLastVolley) ||
+        (hasLastVolley && !validLastVolley) ||
+        (hasMaryExtra && ordered[ordered.length - 1].isMaryForcedPlay !== true);
+    });
+
+    if (invalidRepeat) {
+      throw new Error(
+        "Une pose supplémentaire doit être autorisée par Dernière Salve ou Mary Throne.",
+      );
+    }
   }
 
   for (const play of plays) {
@@ -619,9 +667,10 @@ export function resolveTrick(
 
 export function getExpansionNumberBonus(
   card: GameCard,
-  _bidWasCorrect: boolean,
+  bidWasCorrect: boolean,
 ): number {
-  // Les bonus de capture sont dus même si l'annonce est manquée.
+  // Les bonus de capture 7/8 sont accordés uniquement si l'annonce est exacte.
+  if (!bidWasCorrect) return 0;
   if (card.id.endsWith("-7")) return -5;
   if (card.id.endsWith("-8")) return 5;
 
@@ -680,4 +729,19 @@ export function getCaptureBonus(
   }
 
   return bonus;
+}
+
+/**
+ * Construit l'ordre des poses supplémentaires d'un pli.
+ * Les poses normales sont toujours jouées en premier. Dernière Salve
+ * conserve son ordre de déclenchement immédiat ; les cartes imposées
+ * par Mary Throne suivent ensuite, dans l'ordre fourni par le serveur.
+ * Les doublons de joueur sont volontaires : un même joueur peut devoir
+ * jouer une carte Dernière Salve et une carte Mary Throne.
+ */
+export function buildExtraPlayQueue(
+  lastVolleyPlayerIds: readonly string[],
+  maryForcedPlayerIds: readonly string[],
+): string[] {
+  return [...lastVolleyPlayerIds, ...maryForcedPlayerIds];
 }

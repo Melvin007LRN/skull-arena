@@ -89,6 +89,56 @@ describe("Détermination de la couleur demandée", () => {
     ])).toBeNull();
   });
 
+  it("autorise le Joker sans couleur choisie lorsque le noir est demandé", () => {
+    const blackFour: GameCard = {
+      id: "black-4-test",
+      name: "Noir 4",
+      type: "number",
+      suit: "black",
+      value: 4,
+      isExpansionCard: false,
+    };
+    const joker: GameCard = {
+      id: "joker-test",
+      name: "Joker",
+      type: "joker",
+      isExpansionCard: true,
+    };
+    const result = validateCardPlay({
+      playerId: "p2",
+      hand: [joker],
+      playedCards: [play("p1", blackFour, 0)],
+      card: joker,
+    });
+    expect(result.valid).toBe(true);
+    expect(result.leadSuit).toBe("black");
+  });
+
+  it("refuse une couleur déclarée par le Joker lorsque le noir est demandé", () => {
+    const blackFour: GameCard = {
+      id: "black-4-test",
+      name: "Noir 4",
+      type: "number",
+      suit: "black",
+      value: 4,
+      isExpansionCard: false,
+    };
+    const joker: GameCard = {
+      id: "joker-test",
+      name: "Joker",
+      type: "joker",
+      isExpansionCard: true,
+    };
+    const result = validateCardPlay({
+      playerId: "p2",
+      hand: [joker],
+      playedCards: [play("p1", blackFour, 0)],
+      card: joker,
+      chosenSuit: "green",
+    });
+    expect(result.valid).toBe(false);
+  });
+
   it("renvoie null si le pli ne contient aucune carte de couleur", () => {
     expect(determineLeadSuit([play("p1", pirate, 0), play("p2", escape, 1)])).toBeNull();
   });
