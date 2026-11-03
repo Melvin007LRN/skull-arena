@@ -3492,3 +3492,127 @@ body:has(.skull-game),
     grid-template-rows: 38px 28px minmax(0, 1fr) 116px !important;
   }
 }
+
+
+/* MOBILE PORTRAIT FIX — keep the pirate table and hand visible during bidding. */
+@media screen and (max-width: 600px) and (orientation: portrait) {
+  .skull-game {
+    position: fixed !important;
+    inset: 0 !important;
+    display: grid !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 38px 28px minmax(0, 1fr) 112px !important;
+    grid-template-areas: "top" "meta" "arena" "hand" !important;
+    gap: 3px !important;
+    padding: max(3px, env(safe-area-inset-top)) 5px max(3px, env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+  }
+  .skull-game > .game-topbar { grid-area: top !important; min-height: 0 !important; }
+  .skull-game > .game-round-info { grid-area: meta !important; min-height: 0 !important; }
+  .skull-game > .game-arena {
+    grid-area: arena !important;
+    position: relative !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+  .skull-game > .game-hand-section {
+    grid-area: hand !important;
+    position: relative !important;
+    min-height: 0 !important;
+    height: 112px !important;
+    max-height: 112px !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 2px !important;
+    z-index: 30 !important;
+  }
+  .skull-game > .game-scoreboard-rail,
+  .skull-game > .round-summary-panel,
+  .skull-game > .game-trick-panel { display: none !important; }
+  .skull-game > .game-crew {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 12 !important;
+    pointer-events: none !important;
+  }
+  .skull-game .game-crew .game-player { pointer-events: auto !important; }
+  .skull-game > .game-bidding-panel {
+    position: fixed !important;
+    left: 66px !important;
+    right: 8px !important;
+    bottom: calc(116px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(34dvh, 260px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    z-index: 80 !important;
+    padding: 9px !important;
+    border-radius: 13px !important;
+    background: rgba(12, 11, 10, .96) !important;
+    box-shadow: 0 10px 34px #000b !important;
+  }
+  .skull-game > .game-bidding-panel .game-section-heading { margin: 0 0 5px !important; }
+  .skull-game > .game-bidding-panel .bid-instructions { margin: 4px 0 !important; }
+  .skull-game > .game-bidding-panel .bid-instructions p,
+  .skull-game > .game-bidding-panel .bid-private-note,
+  .skull-game > .game-bidding-panel .bid-progress-list { display: none !important; }
+  .skull-game > .game-bidding-panel .bid-selector { gap: 7px !important; margin: 5px 0 !important; }
+  .skull-game > .game-bidding-panel .bid-selector > button,
+  .skull-game > .game-bidding-panel .bid-submit { min-height: 38px !important; }
+  .skull-game > .game-bidding-panel .bid-number strong { font-size: 24px !important; }
+  .skull-game .game-hand-section .game-section-heading,
+  .skull-game .game-hand-hint { display: none !important; }
+  .skull-game .game-hand {
+    display: flex !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    align-items: flex-end !important;
+    justify-content: flex-start !important;
+    gap: 3px !important;
+    padding: 7px 4px 2px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .skull-game .game-hand .game-card {
+    flex: 0 0 auto !important;
+    width: clamp(43px, 11vw, 55px) !important;
+    height: clamp(68px, 18vw, 84px) !important;
+    margin: 0 !important;
+    border-radius: 7px !important;
+    overflow: hidden !important;
+  }
+  .skull-game .game-hand .game-card-full-art {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    z-index: 1 !important;
+  }
+  .skull-game .game-hand .game-card.has-card-art > .game-card-top,
+  .skull-game .game-hand .game-card.has-card-art > .game-card-name { display: none !important; }
+  .skull-game .game-arena .arena-table {
+    position: absolute !important;
+    inset: 7% 4% 7% 15% !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .skull-game .game-arena .arena-played-cards { inset: 25% 25% !important; }
+  .skull-game .game-arena .arena-decoration { opacity: .14 !important; }
+  .skull-game .game-arena .arena-stack-card { width: 58px !important; height: 82px !important; }
+  .skull-game .game-arena .arena-stack-card img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+  .skull-game > .quick-chat-dock { z-index: 90 !important; bottom: calc(116px + env(safe-area-inset-bottom)) !important; }
+}
+@media screen and (max-width: 380px) and (orientation: portrait) {
+  .skull-game { grid-template-rows: 36px 26px minmax(0, 1fr) 104px !important; }
+  .skull-game > .game-hand-section { height: 104px !important; max-height: 104px !important; }
+  .skull-game > .game-bidding-panel { left: 58px !important; bottom: calc(108px + env(safe-area-inset-bottom)) !important; }
+}
