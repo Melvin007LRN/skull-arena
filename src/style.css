@@ -3811,3 +3811,69 @@ body:has(.skull-game),
   .skull-game > .game-crew { inset: 64px 0 84px !important; }
   .skull-game .game-hand .game-card { height: 72px !important; min-height: 58px !important; }
 }
+
+
+/* Integrated mobile interaction improvements from the UNO-style gameplay branch. */
+.skull-game .game-crew .game-player {
+  transition: left .28s ease, right .28s ease, top .28s ease, bottom .28s ease,
+    transform .28s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.skull-game .game-crew .game-player.current {
+  border-color: rgba(255,214,128,.9);
+  box-shadow: 0 0 0 2px rgba(255,204,103,.16), 0 0 24px rgba(232,177,78,.22);
+}
+.skull-game .game-crew .game-player-seat-0 { left:50%;right:auto;top:auto;bottom:4px;transform:translateX(-50%); }
+.skull-game .game-crew .game-player-seat-1 { left:4px;right:auto;top:auto;bottom:18%;transform:none; }
+.skull-game .game-crew .game-player-seat-2 { left:4px;right:auto;top:50%;bottom:auto;transform:translateY(-50%); }
+.skull-game .game-crew .game-player-seat-3 { left:4px;right:auto;top:4px;bottom:auto;transform:none; }
+.skull-game .game-crew .game-player-seat-4 { left:50%;right:auto;top:4px;bottom:auto;transform:translateX(-50%); }
+.skull-game .game-crew .game-player-seat-5 { left:auto;right:4px;top:4px;bottom:auto;transform:none; }
+.skull-game .game-crew .game-player-seat-6 { left:auto;right:4px;top:50%;bottom:auto;transform:translateY(-50%); }
+.skull-game .game-crew .game-player-seat-7 { left:auto;right:4px;top:auto;bottom:18%;transform:none; }
+.skull-game .game-hand .game-card {
+  touch-action:pan-x;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;
+  transform-origin:50% 100%;
+  transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;
+}
+.skull-game .game-hand .game-card:focus-visible { outline:3px solid #f6d38c;outline-offset:3px; }
+.skull-game .game-hand .game-card-selected { transform:translateY(-12px);filter:brightness(1.12); }
+.skull-game .game-hand .game-card-dragging { transform:translateY(-22px) scale(1.04);filter:brightness(1.18);z-index:20; }
+.skull-game .arena-played-card { animation:skullCardArrival .28s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes skullCardArrival {
+  from { opacity:0;transform:translateY(14px) scale(.88) rotate(-3deg); }
+  to { opacity:1;transform:translateY(0) scale(1) rotate(0); }
+}
+@media (max-width:900px) and (orientation:landscape) {
+  .skull-game .game-crew .game-player { width:clamp(108px,16vw,148px); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .skull-game .game-crew .game-player,.skull-game .game-hand .game-card { transition:none; }
+  .skull-game .arena-played-card { animation:none; }
+}
+
+/* Keep revealed bids compact instead of letting the panel dominate the table. */
+.skull-game > .game-bidding-panel.is-revealed {
+  position:fixed!important;z-index:70!important;top:82px!important;left:50%!important;
+  right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;
+  width:min(310px,34vw)!important;max-width:calc(100vw - 24px)!important;
+  max-height:28dvh!important;overflow:auto!important;padding:9px 12px!important;
+  border-radius:14px!important;background:linear-gradient(145deg,rgba(30,23,17,.96),rgba(10,12,16,.94))!important;
+  box-shadow:0 10px 30px #0009!important;
+}
+.skull-game > .game-bidding-panel.is-revealed .game-section-heading { margin:0 0 6px!important; }
+.skull-game > .game-bidding-panel.is-revealed .game-section-heading h2,
+.skull-game > .game-bidding-panel.is-revealed .game-section-heading span { font-size:11px!important; }
+.skull-game > .game-bidding-panel.is-revealed .bid-reveal-list {
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px 10px!important;
+}
+.skull-game > .game-bidding-panel.is-revealed .bid-reveal-player {
+  display:flex!important;justify-content:space-between!important;gap:6px!important;
+  font-size:11px!important;padding:3px 0!important;
+}
+@media (max-width:900px) and (orientation:landscape) {
+  .skull-game > .game-bidding-panel.is-revealed { top:72px!important;width:min(290px,34vw)!important;max-height:30dvh!important; }
+  .skull-game .game-hand .game-card { width:clamp(62px,8vw,82px)!important;height:clamp(92px,19vh,126px)!important; }
+}
+@media (max-width:680px) and (orientation:landscape) {
+  .skull-game > .game-bidding-panel.is-revealed { top:60px!important;width:min(260px,42vw)!important;max-height:28dvh!important;padding:7px 10px!important; }
+}
