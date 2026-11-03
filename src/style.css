@@ -3430,3 +3430,65 @@ body:has(.skull-game),
   .skull-game .game-hand .game-card { width: 40px !important; height: 62px !important; }
   .skull-game > .game-scoreboard-rail { width: 50px !important; }
 }
+
+
+/* PORTRAIT PRIORITY — disable the legacy rotate-device overlay and expose the game. */
+@media screen and (max-width: 600px) and (orientation: portrait) {
+  .skull-game::before,
+  .skull-game::after {
+    content: none !important;
+    display: none !important;
+    visibility: hidden !important;
+  }
+  .skull-game > * {
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+  .skull-game {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 40px 30px minmax(0, 1fr) 126px !important;
+    grid-template-areas: "top" "meta" "arena" "hand" !important;
+    align-items: stretch !important;
+  }
+  .skull-game > .game-topbar { grid-area: top !important; }
+  .skull-game > .game-round-info { grid-area: meta !important; }
+  .skull-game > .game-arena { grid-area: arena !important; }
+  .skull-game > .game-hand-section { grid-area: hand !important; }
+  .skull-game > .round-summary-panel,
+  .skull-game > .game-trick-panel,
+  .skull-game > .game-footer { display: none !important; }
+  .skull-game > .game-crew {
+    position: absolute !important;
+    inset: 0 !important;
+    grid-area: auto !important;
+  }
+  .skull-game > .game-scoreboard-rail {
+    position: absolute !important;
+    grid-area: auto !important;
+  }
+  .skull-game > .game-bidding-panel {
+    position: fixed !important;
+    grid-area: auto !important;
+  }
+  .skull-game > .walk-the-plank-choice {
+    position: fixed !important;
+    z-index: 2100 !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(420px, calc(100vw - 24px)) !important;
+    max-height: 82dvh !important;
+    overflow: auto !important;
+    background: linear-gradient(145deg, #1c2026, #090d13) !important;
+    border: 1px solid #b18a50 !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    box-shadow: 0 22px 80px #000c !important;
+  }
+}
+@media screen and (max-width: 380px) and (orientation: portrait) {
+  .skull-game {
+    grid-template-rows: 38px 28px minmax(0, 1fr) 116px !important;
+  }
+}
