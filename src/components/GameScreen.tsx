@@ -1619,10 +1619,20 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
           <button type="button" className={`arena-played-cards arena-played-stack ${playedCards.length ? "has-played-cards" : ""}`} onClick={() => playedCards.length && setShowPlayedCardsWindow(true)} aria-label="Afficher les cartes jouées dans l'ordre">
             {playedCards.length === 0 ? <div className="arena-empty-play"><Swords size={25} /><span>{round.status === "bidding" ? "EN ATTENTE DES ENCHÈRES" : "À TOI DE JOUER"}</span></div> : <>
               <span className="played-stack-count">{playedCards.length} / {players.length} CARTES</span>
-              {playedCards.slice(-3).map((play, index) => <div className="arena-stack-card" key={play.id} style={{ transform: `translate(${index * 5}px, ${-index * 3}px) rotate(${(index - 1) * 5}deg)`, zIndex:index+1 }}>
-                <strong>{(play.card as GameCard).value ?? cardSymbol((play.card as GameCard).type)}</strong>
-                <small>{players.find(p => p.player_id === play.player_id)?.username ?? "Pirate"}</small>
-              </div>)}
+              {playedCards.slice(-3).map((play, index) => {
+                const playedCard = play.card as GameCard;
+                const imagePath = getCardImagePath(playedCard);
+                return (
+                  <div className={`arena-stack-card ${imagePath ? "has-card-art" : ""}`} key={play.id} style={{ transform: `translate(${index * 5}px, ${-index * 3}px) rotate(${(index - 1) * 5}deg)`, zIndex:index+1 }}>
+                    {imagePath ? (
+                      <img src={imagePath} alt={playedCard.name} draggable={false} loading="lazy" />
+                    ) : (
+                      <strong>{playedCard.value ?? cardSymbol(playedCard.type)}</strong>
+                    )}
+                    <small>{players.find(p => p.player_id === play.player_id)?.username ?? "Pirate"}</small>
+                  </div>
+                );
+              })}
               <span className="played-stack-hint">TOUCHER POUR VOIR LE PLI</span>
             </>}
           </button>
