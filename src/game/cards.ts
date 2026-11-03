@@ -283,13 +283,6 @@ function create2025SpecialCards(): GameCard[] {
       isExpansionCard: true,
     },
     {
-      id: "mary-throne",
-      name: "Mary Throne",
-      type: "pirate",
-      extension: "expansion_2025",
-      isExpansionCard: true,
-    },
-    {
       id: "last-volley",
       name: "Dernière salve",
       type: "last_volley",
