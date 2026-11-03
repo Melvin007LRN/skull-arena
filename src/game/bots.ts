@@ -150,6 +150,10 @@ export function chooseBotCard(context: BotDecisionContext): BotCardChoice | null
     cardId: chosen.id,
     tigressMode: candidates[0].mode,
     chosenValue: chosen.selectableValue?.[0] ?? null,
-    chosenSuit: chosen.type === "joker" ? chooseJokerSuit(hand) : null,
+    chosenSuit: chosen.type === "joker"
+      ? leadSuit === "black"
+        ? null
+        : leadSuit ?? chooseJokerSuit(hand)
+      : null,
   };
 }
