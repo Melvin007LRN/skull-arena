@@ -19,6 +19,7 @@ import GameProfile from "./components/GameProfile";
 import AdminPanel from "./components/AdminPanel";
 import Leaderboard from "./components/Leaderboard";
 import Lobby from "./components/Lobby";
+import SoloGameScreen from "./components/SoloGameScreen";
 import NewsPage from "./components/NewsPage";
 import { supabase } from "./lib/supabase";
 
@@ -29,6 +30,7 @@ export default function App() {
   const [showNews, setShowNews] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
+  const [showSolo, setShowSolo] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
 
@@ -97,6 +99,10 @@ export default function App() {
 
     setShowLobby(true);
   };
+
+  if (showSolo) {
+    return <SoloGameScreen onBack={() => setShowSolo(false)} username={username} />;
+  }
 
   if (showLobby) {
     return (
@@ -238,6 +244,14 @@ export default function App() {
             <span className="mode-link">
               REJOINDRE <ChevronRight size={16} />
             </span>
+          </button>
+
+          <button className="mode-card" onClick={() => setShowSolo(true)}>
+            <div className="mode-icon"><Skull size={28} /></div>
+            <span className="mode-label">SOLO · CONTRE LES BOTS</span>
+            <strong>Défi en solitaire</strong>
+            <p>Joue localement contre des pirates contrôlés par ton appareil.</p>
+            <span className="mode-link">JOUER EN SOLO <ChevronRight size={16} /></span>
           </button>
 
           <button className="mode-card" onClick={() => setShowLeaderboard(true)}>
