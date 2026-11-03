@@ -1,6 +1,6 @@
 import { createShuffledDeck, type GameCard, type GameExtensions, DEFAULT_GAME_EXTENSIONS } from "./cards";
 import { chooseBotCard, estimateBotBid, type BotDifficulty } from "./bots";
-import { resolveTrick, type PlayedCard, type TrickResult } from "./rules";
+import { getCaptureBonus, resolveTrick, type PlayedCard, type TrickResult } from "./rules";
 
 export type SoloPhase = "bidding" | "playing" | "round-summary" | "finished";
 export interface SoloPlayer {
@@ -10,6 +10,7 @@ export interface SoloPlayer {
   hand: GameCard[];
   bid: number | null;
   tricksWon: number;
+  roundBonus: number;
   totalScore: number;
 }
 export interface SoloMatch {
@@ -42,6 +43,7 @@ export function createSoloMatch(settings: SoloSettings): SoloMatch {
     hand: [],
     bid: null,
     tricksWon: 0,
+    roundBonus: 0,
     totalScore: 0,
   }];
   for (let i = 0; i < botCount; i++) {
@@ -80,6 +82,7 @@ export function dealSoloRound(match: SoloMatch, extensions?: Partial<GameExtensi
     hand: [],
     bid: null,
     tricksWon: 0,
+    roundBonus: 0,
   }));
   let cursor = 0;
   for (let cardIndex = 0; cardIndex < match.round; cardIndex++) {
@@ -170,18 +173,21 @@ export function playSoloCard(
 
   const plankTarget = plays.find((play) => play.card.type === "pirate" || (play.card.type === "tigress" && play.tigressMode === "pirate"))?.playerId;
   const result = resolveTrick(plays, { walkThePlankTargetPlayerId: plankTarget });
-  const updatedPlayers = players.map((p) => p.id === result.winnerPlayerId
-    ? { ...p, tricksWon: p.tricksWon + 1 }
-    : p);
+  const trickBonus = result.bonusPoints + getCaptureBonus(result.winningCard, plays, result.removedPirates);
+  const updatedPlayers = players.map((p) => ({
+    ...p,
+    tricksWon: p.id === result.winnerPlayerId ? p.tricksWon + 1 : p.tricksWon,
+    roundBonus: p.roundBonus + (p.id === result.winnerPlayerId ? trickBonus : 0),
+  }));
   const nextTrickNumber = match.trickNumber + 1;
   const roundComplete = nextTrickNumber > match.round;
   if (roundComplete) {
     const scored = updatedPlayers.map((p) => {
       const exact = p.bid === p.tricksWon;
       const points = exact
-        ? (p.bid === 0 ? match.round * 10 : p.bid * 20)
-        : -Math.abs((p.bid ?? 0) - p.tricksWon) * 10;
-      return { ...p, totalScore: p.totalScore + points };
+        ? (p.bid === 0 ? match.round * 10 : (p.bid ?? 0) * 20)
+        : (p.bid === 0 ? -match.round * 10 : -Math.abs((p.bid ?? 0) - p.tricksWon) * 10);
+      return { ...p, totalScore: p.totalScore + points + p.roundBonus };
     });
     return {
       ...match,
