@@ -66,7 +66,7 @@ const EXTENSION_OPTIONS: {
   {
     key: "expansion_2025",
     name: "Extension 2025",
-    description: "Cartes numérotées supplémentaires, Joker 15 et Mary Throne.",
+    description: "Cartes numérotées supplémentaires et Joker 15.",
   },
   {
     key: "last_shot",
