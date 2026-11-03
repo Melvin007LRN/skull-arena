@@ -57,6 +57,8 @@ export function createSoloMatch(settings: SoloSettings): SoloMatch {
       hand: [],
       bid: null,
       tricksWon: 0,
+      roundBonus: 0,
+      capturedCards: [],
       totalScore: 0,
     });
   }
