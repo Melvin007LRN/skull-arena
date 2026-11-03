@@ -1602,7 +1602,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
       </section>
 
       {/* ENCHÈRES */}
-      <section className="game-bidding-panel">
+      <section className={`game-bidding-panel ${round.status === "bidding" ? "is-bidding" : "is-revealed"}`}>
         <div className="game-section-heading">
           <h2>
             <Lock size={19} /> LES ENCHÈRES

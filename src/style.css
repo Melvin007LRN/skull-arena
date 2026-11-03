@@ -3204,3 +3204,103 @@ body:has(.skull-game),
  .skull-game .game-crew .game-player { width:29px!important;height:29px!important; }
  .skull-game .game-hand .game-card { width:42px!important;height:62px!important; }
 }
+
+
+/* TABLE POLISH — compact persistent bid reveal + larger, fully visible hand */
+.skull-game > .game-bidding-panel.is-revealed {
+  position: fixed !important;
+  z-index: 24 !important;
+  top: 66px !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
+  width: min(330px, 34vw) !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: 28dvh !important;
+  overflow: auto !important;
+  padding: 10px 14px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(145deg, rgba(30,23,17,.96), rgba(10,12,16,.94)) !important;
+  box-shadow: 0 10px 30px #0009 !important;
+  pointer-events: auto !important;
+}
+.skull-game > .game-bidding-panel.is-revealed .game-section-heading {
+  margin: 0 0 7px !important;
+}
+.skull-game > .game-bidding-panel.is-revealed .game-section-heading h2,
+.skull-game > .game-bidding-panel.is-revealed .game-section-heading span {
+  font-size: 11px !important;
+}
+.skull-game > .game-bidding-panel.is-revealed .bid-reveal-heading {
+  gap: 7px !important;
+  margin-bottom: 5px !important;
+  font-size: 12px !important;
+}
+.skull-game > .game-bidding-panel.is-revealed .bid-reveal-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  gap: 4px 10px !important;
+}
+.skull-game > .game-bidding-panel.is-revealed .bid-reveal-player {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  font-size: 11px !important;
+  padding: 3px 0 !important;
+}
+.skull-game > .game-bidding-panel.is-revealed .bid-reveal-player strong {
+  white-space: nowrap !important;
+}
+.skull-game > .game-hand-section {
+  min-height: 0 !important;
+  max-height: 150px !important;
+  padding-bottom: 5px !important;
+}
+.skull-game .game-hand {
+  min-height: 0 !important;
+  height: 100% !important;
+  align-items: flex-end !important;
+  padding-bottom: 4px !important;
+}
+.skull-game .game-hand .game-card {
+  width: clamp(64px, 7.2vw, 94px) !important;
+  height: clamp(96px, 18vh, 138px) !important;
+  flex: 0 1 auto !important;
+  margin-left: clamp(-22px, -1.8vw, -10px) !important;
+}
+.skull-game .game-hand .game-card:first-child { margin-left: 0 !important; }
+@media (max-width: 900px) and (orientation: landscape) {
+  .skull-game {
+    grid-template-rows: 34px 26px minmax(0,1fr) 142px !important;
+  }
+  .skull-game > .game-hand-section {
+    max-height: 142px !important;
+  }
+  .skull-game .game-hand .game-card {
+    width: clamp(62px, 8vw, 82px) !important;
+    height: clamp(92px, 19vh, 126px) !important;
+  }
+  .skull-game > .game-bidding-panel.is-revealed {
+    top: 62px !important;
+    width: min(310px, 34vw) !important;
+    max-height: 30dvh !important;
+  }
+}
+@media (max-width: 680px) and (orientation: landscape) {
+  .skull-game {
+    grid-template-rows: 30px 23px minmax(0,1fr) 124px !important;
+  }
+  .skull-game > .game-hand-section { max-height: 124px !important; }
+  .skull-game .game-hand .game-card {
+    width: clamp(54px, 8.5vw, 70px) !important;
+    height: clamp(82px, 18vh, 108px) !important;
+    margin-left: -14px !important;
+  }
+  .skull-game > .game-bidding-panel.is-revealed {
+    top: 56px !important;
+    width: min(280px, 42vw) !important;
+    max-height: 28dvh !important;
+    padding: 7px 10px !important;
+  }
+}
