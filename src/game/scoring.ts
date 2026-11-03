@@ -97,15 +97,18 @@ export function calculateBidPoints(
  * du joueur est exacte.
  */
 export function calculateFourteenBonuses(
-  capturedCards: GameCard[],
+  capturedCards: Array<GameCard | PlayedCard>,
 ): number {
   let bonus = 0;
 
-  for (const card of capturedCards) {
-    if (
-      card.type !== "number" ||
-      card.value !== 14
-    ) {
+  for (const captured of capturedCards) {
+    const isPlayedCard = "card" in captured;
+    const card = isPlayedCard ? captured.card : captured;
+    const effectiveValue = isPlayedCard && captured.chosenValue !== undefined
+      ? captured.chosenValue
+      : card.value;
+
+    if (card.type !== "number" || effectiveValue !== 14) {
       continue;
     }
 
