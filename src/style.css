@@ -3616,3 +3616,198 @@ body:has(.skull-game),
   .skull-game > .game-hand-section { height: 104px !important; max-height: 104px !important; }
   .skull-game > .game-bidding-panel { left: 58px !important; bottom: calc(108px + env(safe-area-inset-bottom)) !important; }
 }
+
+
+/* LANDSCAPE GAME — full-screen pirate table inspired by the supplied reference.
+   The play surface, crew and illustrated hand stay visible together. */
+@media screen and (orientation: landscape) and (max-height: 700px) and (min-width: 600px) {
+  .skull-game {
+    position: fixed !important;
+    inset: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 42px 34px minmax(0, 1fr) clamp(86px, 19vh, 138px) !important;
+    grid-template-areas: "top" "meta" "arena" "hand" !important;
+    gap: 3px !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    padding: 4px 8px max(4px, env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+    background:
+      radial-gradient(ellipse at 50% 38%, rgba(177,116,47,.24), transparent 52%),
+      linear-gradient(180deg, #080909, #21160d 55%, #090909) !important;
+  }
+  .skull-game > .game-topbar {
+    grid-area: top !important;
+    min-height: 0 !important;
+    height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 2px 10px !important;
+    border: 1px solid rgba(221,181,105,.42) !important;
+    border-radius: 12px !important;
+    background: rgba(8,8,8,.86) !important;
+    z-index: 40 !important;
+  }
+  .skull-game > .game-round-info {
+    grid-area: meta !important;
+    min-height: 0 !important;
+    height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: clamp(12px, 4vw, 48px) !important;
+    margin: 0 !important;
+    padding: 2px 10px !important;
+    border: 0 !important;
+    background: transparent !important;
+    z-index: 35 !important;
+  }
+  .skull-game .game-round-info > div { min-width: 76px !important; padding: 2px 8px !important; text-align: center !important; }
+  .skull-game .game-round-info > div span { font-size: 8px !important; }
+  .skull-game .game-round-info > div strong { font-size: 12px !important; }
+  .skull-game > .game-arena {
+    grid-area: arena !important;
+    position: relative !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    z-index: 1 !important;
+  }
+  .skull-game .game-arena .arena-heading { display: none !important; }
+  .skull-game .game-arena .arena-table {
+    position: absolute !important;
+    inset: 2% 3% 2% !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    border-radius: 48% / 43% !important;
+    background:
+      radial-gradient(ellipse at 50% 48%, rgba(112,70,36,.38), transparent 62%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 2px, transparent 2px 7px),
+      linear-gradient(145deg, #49301d, #1b100a 55%, #352116) !important;
+    box-shadow: inset 0 0 0 5px rgba(0,0,0,.45), inset 0 0 0 7px rgba(218,173,91,.24), 0 12px 38px #000b !important;
+  }
+  .skull-game .game-arena .arena-table::after { opacity: .55 !important; }
+  .skull-game .game-arena .arena-played-cards {
+    inset: 16% 25% 18% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+  .skull-game .game-arena .arena-stack-card { width: clamp(48px, 6vw, 82px) !important; height: clamp(68px, 10vh, 108px) !important; }
+  .skull-game .game-arena .arena-stack-card img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+  .skull-game .game-arena .arena-decoration { opacity: .34 !important; }
+  .skull-game .game-arena .arena-status { bottom: 4px !important; font-size: 9px !important; }
+  .skull-game > .game-crew {
+    position: absolute !important;
+    inset: 78px 0 clamp(88px, 19vh, 140px) !important;
+    z-index: 15 !important;
+    pointer-events: none !important;
+  }
+  .skull-game .game-crew .game-player {
+    width: clamp(112px, 15vw, 180px) !important;
+    min-height: 44px !important;
+    pointer-events: auto !important;
+  }
+  .skull-game .game-crew .game-player-portrait-frame { width: 38px !important; height: 38px !important; flex-basis: 38px !important; }
+  .skull-game .game-crew .game-player-info > strong { font-size: 10px !important; }
+  .skull-game .game-crew .game-player-info > span { font-size: 8px !important; }
+  .skull-game .game-crew .game-player-round-stats { display: flex !important; gap: 4px !important; }
+  .skull-game .game-crew .game-player-round-stats > span { font-size: 7px !important; }
+  .skull-game > .game-hand-section {
+    grid-area: hand !important;
+    position: relative !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 2px 5px 0 !important;
+    overflow: hidden !important;
+    z-index: 30 !important;
+    border: 1px solid rgba(214,174,101,.32) !important;
+    border-radius: 14px !important;
+    background: linear-gradient(180deg, rgba(18,13,10,.92), rgba(5,5,5,.98)) !important;
+  }
+  .skull-game .game-hand-section .game-section-heading { display: none !important; }
+  .skull-game .game-hand-hint { display: none !important; }
+  .skull-game .game-hand {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    gap: clamp(2px, .55vw, 9px) !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 4px 4px 2px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .skull-game .game-hand .game-card {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    height: min(17vh, 122px) !important;
+    min-height: 66px !important;
+    max-width: clamp(43px, 6.6vw, 84px) !important;
+    aspect-ratio: .68 !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    overflow: hidden !important;
+    box-shadow: 0 5px 15px #000b, 0 0 0 1px rgba(237,193,112,.42) !important;
+  }
+  .skull-game .game-hand .game-card-full-art {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    z-index: 1 !important;
+  }
+  .skull-game .game-hand .game-card.has-card-art > .game-card-top,
+  .skull-game .game-hand .game-card.has-card-art > .game-card-name { display: none !important; }
+  .skull-game .game-hand .game-card-selected { transform: translateY(-12px) scale(1.06) !important; }
+  .skull-game > .game-scoreboard-rail { display: none !important; }
+  .skull-game > .round-summary-panel,
+  .skull-game > .game-trick-panel { display: none !important; }
+  .skull-game > .game-bidding-panel {
+    position: fixed !important;
+    right: 12px !important;
+    top: 82px !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: min(300px, 34vw) !important;
+    max-width: 300px !important;
+    max-height: min(48dvh, 270px) !important;
+    overflow-y: auto !important;
+    z-index: 70 !important;
+    padding: 10px !important;
+    background: rgba(8,8,8,.94) !important;
+    border: 1px solid rgba(224,183,106,.55) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 36px #000c !important;
+  }
+  .skull-game > .quick-chat-dock {
+    position: fixed !important;
+    right: 10px !important;
+    top: 82px !important;
+    bottom: auto !important;
+    width: min(190px, 25vw) !important;
+    z-index: 80 !important;
+  }
+  .skull-game > .game-modal-backdrop { z-index: 200 !important; }
+  .skull-game > .walk-the-plank-choice { z-index: 210 !important; }
+}
+@media screen and (orientation: landscape) and (max-height: 430px) and (min-width: 600px) {
+  .skull-game { grid-template-rows: 34px 28px minmax(0, 1fr) 82px !important; padding: 2px 5px !important; }
+  .skull-game > .game-topbar { height: 34px !important; }
+  .skull-game > .game-round-info { height: 28px !important; }
+  .skull-game > .game-crew { inset: 64px 0 84px !important; }
+  .skull-game .game-hand .game-card { height: 72px !important; min-height: 58px !important; }
+}
