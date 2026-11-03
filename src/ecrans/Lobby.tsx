@@ -1,0 +1,81 @@
+// Choisir sa partie : créer un salon (public ou privé), rejoindre un salon public, ou entrer un code.
+import { useState, type FormEvent } from 'react';
+import { appel, useSalonsPublics } from '../lib/jeu.ts';
+
+export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code'; retour: () => void; entrer: (salonId: string) => void }) {
+  const salons = useSalonsPublics();
+  const [code, setCode] = useState('');
+  const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  async function faire(fn: () => Promise<{ salon_id: string }>) {
+    setEnCours(true);
+    setErreur(null);
+    try {
+      const r = await fn();
+      entrer(r.salon_id);
+    } catch (e) {
+      setErreur((e as Error).message);
+    } finally {
+      setEnCours(false);
+    }
+  }
+
+  const creer = (estPublic: boolean) => faire(() => appel('creer_salon', { public: estPublic }));
+  const rejoindreCode = (ev: FormEvent) => {
+    ev.preventDefault();
+    faire(() => appel('rejoindre', { code }));
+  };
+  const rejoindre = (c: string) => faire(() => appel('rejoindre', { code: c }));
+
+  return (
+    <main className="ecran ecran-lobby">
+      <button type="button" className="retour" onClick={retour}>‹ Retour</button>
+      <h1 className="titre-pirate grand">{mode === 'code' ? 'Rejoindre un équipage' : 'Prendre la mer'}</h1>
+
+      {erreur && <p className="message erreur">{erreur}</p>}
+
+      {mode === 'code' && (
+        <section className="parchemin">
+          <form onSubmit={rejoindreCode} className="formulaire">
+            <label>
+              Code du salon
+              <input className="champ-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
+                placeholder="K7P2XM" autoCapitalize="characters" autoComplete="off" inputMode="text" required />
+            </label>
+            <button className="bouton-or" type="submit" disabled={enCours || code.length !== 6}>Monter à bord</button>
+          </form>
+        </section>
+      )}
+
+      {mode === 'jouer' && (
+        <>
+          <section className="parchemin choix-salon">
+            <p className="sous-titre">Crée ton salon et deviens capitaine</p>
+            <button type="button" className="bouton-or" onClick={() => creer(false)} disabled={enCours}>Salon privé entre amis</button>
+            <button type="button" className="bouton-sombre" onClick={() => creer(true)} disabled={enCours}>Salon public, ouvert à tous</button>
+          </section>
+
+          <section className="parchemin">
+            <h2 className="titre-pirate">Salons publics</h2>
+            {salons.length === 0 ? (
+              <p className="petit-texte centre">Aucun salon ouvert pour l'instant. Crée le tien, les pirates viendront !</p>
+            ) : (
+              <ul className="liste-salons">
+                {salons.map((s) => (
+                  <li key={s.id}>
+                    <span>
+                      <strong>Salon de {s.hotePseudo}</strong>
+                      <small>{s.nb} / 8 pirates</small>
+                    </span>
+                    <button type="button" className="bouton-or petit" onClick={() => rejoindre(s.code)} disabled={enCours}>Rejoindre</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
+    </main>
+  );
+}

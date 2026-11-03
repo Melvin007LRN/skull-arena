@@ -21,7 +21,9 @@ const ACCROCHES = [
   'Le Skull King n’attend que toi.',
 ];
 
-export function Accueil({ profil, ouvrirProfil }: { profil: Profil; ouvrirProfil: () => void }) {
+export function Accueil({ profil, ouvrirProfil, ouvrirLobby }: {
+  profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code') => void;
+}) {
   const [reduit, setReduit] = useState(false);
   const [bientot, setBientot] = useState<string | null>(null);
   const [accroche, setAccroche] = useState(0);
@@ -46,11 +48,11 @@ export function Accueil({ profil, ouvrirProfil }: { profil: Profil; ouvrirProfil
   const n = niveau(profil.xp);
   const entrees: Entree[] = [
     {
-      id: 'jouer', titre: 'Jouer', vedette: true, image: '/cartes/skull_king.webp', cadrage: '50% 22%',
+      id: 'jouer', titre: 'Jouer', vedette: true, image: '/cartes/skull_king.webp', cadrage: '50% 22%', action: () => ouvrirLobby('jouer'),
       phrase: 'Lève l’ancre et défie jusqu’à 7 pirates en ligne. Que le meilleur menteur gagne.',
     },
     {
-      id: 'code', titre: 'Rejoindre un équipage', image: '/cartes/pirate_rosie.webp', cadrage: '50% 18%',
+      id: 'code', titre: 'Rejoindre un équipage', image: '/cartes/pirate_rosie.webp', cadrage: '50% 18%', action: () => ouvrirLobby('code'),
       phrase: 'Un ami t’attend à bord ? Entre son code et monte sur le pont.',
     },
     {

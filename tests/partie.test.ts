@@ -244,3 +244,18 @@ test('fin de partie après la manche 10 et classement avec égalités', () => {
   assert.equal(e.phase, 'fin_partie');
   assert.deepEqual(classement(e).map((c) => c.place), [1, 1, 3]);
 });
+
+test('vues : la vue publique ne montre ni les mains ni les mises avant la révélation', async () => {
+  const { vuePublique, vuePrivee } = await import('../src/engine/index.ts');
+  let e = creerPartie(J3, 5);
+  e = appliquer(e, mise('A', 1));
+  const v = vuePublique(e);
+  assert.equal(v.mises, null);
+  assert.deepEqual(v.aMise, { A: true, B: false, C: false });
+  const texte = JSON.stringify(v);
+  for (const j of J3) for (const c of e.mains[j]) assert.ok(!texte.includes(`"${c}"`), 'aucune carte en main visible');
+  for (const c of e.nonDistribuees) assert.ok(!texte.includes(`"${c}"`), 'paquet invisible');
+  e = suite(e, mise('B', 0), mise('C', 1));
+  assert.deepEqual(vuePublique(e).mises, { A: 1, B: 0, C: 1 });
+  assert.deepEqual(vuePrivee(e, 'B').main, e.mains.B);
+});
