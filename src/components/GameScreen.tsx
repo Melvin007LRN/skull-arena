@@ -163,6 +163,48 @@ function cardSymbol(type: string) {
   }
 }
 
+/** Retourne l'illustration exacte associée à l'identifiant d'une carte. */
+function getCardImagePath(card: GameCard): string | null {
+  if (card.suit) {
+    if (card.selectableValue?.includes(0) && card.selectableValue.includes(14)) {
+      return `/cards/${card.suit}_0_14.png`;
+    }
+    if (typeof card.value === "number" && card.value >= 1 && card.value <= 14) {
+      return `/cards/${card.suit}_${card.value}.png`;
+    }
+  }
+
+  const specialImages: Record<string, string> = {
+    "pirate-1": "rosie_dlaney.png",
+    "pirate-2": "bendt_the_bandit.png",
+    "pirate-3": "rascal_of_roatan.png",
+    "pirate-4": "juanita_jade.png",
+    "pirate-5": "harry_the_giant.png",
+    "escape-1": "escape_1.png",
+    "escape-2": "escape_2.png",
+    "escape-3": "escape_3.png",
+    "escape-4": "escape_4.png",
+    "escape-5": "escape_5.png",
+    tigress: "tigress.png",
+    "skull-king": "skull_king.png",
+    "mermaid-1": "siren_1.png",
+    "mermaid-2": "siren_2.png",
+    "loot-1": "plunder_1.png",
+    "loot-2": "plunder_2.png",
+    kraken: "kraken.png",
+    "white-whale": "white_whale.png",
+    "joker-15": "joker_15.png",
+    "last-volley": "last_volley.png",
+    second: "first_mate.png",
+    "spotted-stingray": "spotted_ray.png",
+    "davys-locker": "davy_jones_locker.png",
+    "walk-the-plank": "walk_the_plank.png",
+  };
+
+  const filename = specialImages[card.id];
+  return filename ? `/cards/${filename}` : null;
+}
+
 export default function GameScreen({
   roomId,
   onExit,
@@ -2252,7 +2294,7 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               return (
                 <button
                   type="button"
-                  className={`game-card game-card--${card.type} ${card.isExpansionCard ? "game-card--expansion" : ""} ${isSelected ? "game-card-selected" : ""} ${draggingCardId === card.id ? "game-card-dragging" : ""}`}
+                  className={`game-card game-card--${card.type} ${getCardImagePath(card) ? "has-card-art" : ""} ${card.isExpansionCard ? "game-card--expansion" : ""} ${isSelected ? "game-card-selected" : ""} ${draggingCardId === card.id ? "game-card-dragging" : ""}`}
                   key={card.id}
                   onPointerDown={(event) => handleHandCardPointerDown(event, card)}
                   onPointerUp={(event) => handleHandCardPointerUp(event, card)}
@@ -2312,11 +2354,21 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
                     </strong>
                   </div>
 
-                  <div className="game-card-art">
-                    <span className="game-card-symbol">
-                      {cardSymbol(card.type)}
-                    </span>
-                  </div>
+                  {getCardImagePath(card) ? (
+                    <img
+                      className="game-card-full-art"
+                      src={getCardImagePath(card)!}
+                      alt={card.name}
+                      draggable={false}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="game-card-art">
+                      <span className="game-card-symbol">
+                        {cardSymbol(card.type)}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="game-card-name">
                     {card.name}
