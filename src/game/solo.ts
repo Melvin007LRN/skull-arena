@@ -107,7 +107,7 @@ export function dealSoloRound(match: SoloMatch, extensions?: Partial<GameExtensi
 export function submitSoloBid(match: SoloMatch, bid: number): SoloMatch {
   if (match.phase !== "bidding" || !Number.isInteger(bid) || bid < 0 || bid > match.round) return match;
   const players = match.players.map((p, i) => i === 0 ? { ...p, bid } : p);
-  return { ...match, players, phase: "playing", turnIndex: match.leaderIndex, message: "Les enchères sont révélées. À toi de jouer !" };
+  return playBotUntilHuman({ ...match, players, phase: "playing", turnIndex: match.leaderIndex, message: "Les enchères sont révélées. À toi de jouer !" });
 }
 
 function playBotUntilHuman(match: SoloMatch): SoloMatch {
