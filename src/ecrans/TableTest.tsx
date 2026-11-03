@@ -5,6 +5,9 @@ import { appel, usePartie, type MembreSalon } from '../lib/jeu.ts';
 import { carteParId, NOMS_PIRATES } from '../engine/cards.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 
+const REVELATION_MS = 2500;
+const GAGNANT_MS = 2000;
+
 export function TableTest({ partieId, membres, moi, retourAccueil }: {
   partieId: string; membres: MembreSalon[]; moi: string; retourAccueil: () => void;
 }) {
@@ -14,7 +17,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
   const [tigresse, setTigresse] = useState(false);
   const [defausse, setDefausse] = useState<string[]>([]);
   const [decompte, setDecompte] = useState(0);
-  const [pliAffiche, setPliAffiche] = useState(false);
+  const [etapePli, setEtapePli] = useState<'aucune' | 'revelation' | 'gagnant'>('aucune');
   const mancheVue = useRef(0);
   const pliVu = useRef(0);
 
@@ -36,15 +39,16 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
     return () => clearTimeout(t);
   }, [decompte]);
 
-  // Le pli terminé reste visible 2 secondes.
+  // Fin de pli : la dernière carte reste visible 2,5 s, puis la carte gagnante est mise en avant 2 s.
   useEffect(() => {
     if (!vue?.dernierPli) return;
     const n = vue.numeroPli + vue.manche * 100;
     if (n === pliVu.current) return;
     pliVu.current = n;
-    setPliAffiche(true);
-    const t = setTimeout(() => setPliAffiche(false), 2000);
-    return () => clearTimeout(t);
+    setEtapePli('revelation');
+    const t1 = setTimeout(() => setEtapePli('gagnant'), REVELATION_MS);
+    const t2 = setTimeout(() => setEtapePli('aucune'), REVELATION_MS + GAGNANT_MS);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [vue]);
 
   useEffect(() => { setDefausse([]); }, [vue?.pouvoir?.type, vue?.numeroPli]);
@@ -63,13 +67,14 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
     }
   }
 
+  const pliAffiche = etapePli !== 'aucune';
   const aMoi = vue.joueurActif === moi && !pliAffiche && decompte === 0;
   const pouvoirMoi = vue.phase === 'pouvoir' && vue.pouvoir?.joueur === moi ? vue.pouvoir : null;
   const pliMontre = vue.pliEnCours.length > 0 ? vue.pliEnCours : pliAffiche && vue.dernierPli ? vue.dernierPli.cartes : [];
-  const gagnantMontre = vue.pliEnCours.length === 0 && pliAffiche ? vue.dernierPli?.resultat : null;
+  const gagnantMontre = vue.pliEnCours.length === 0 && etapePli === 'gagnant' ? vue.dernierPli?.resultat : null;
 
   function toucherCarte(id: string) {
-    if (pouvoirMoi?.type === 'bendt') {
+    if (pouvoirMoi?.type === 'bendt' && !pliAffiche) {
       setDefausse((d) => (d.includes(id) ? d.filter((x) => x !== id) : d.length < pouvoirMoi.aDefausser ? [...d, id] : d));
       return;
     }
@@ -120,7 +125,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
               : 'La Baleine blanche disperse le pli !'}
           </p>
         )}
-        {vue.phase === 'jeu' && vue.joueurActif !== moi && pliMontre.length > 0 && !gagnantMontre && (
+        {!pliAffiche && vue.phase === 'jeu' && vue.joueurActif !== moi && pliMontre.length > 0 && (
           <p className="petit-texte">Au tour de {pseudo(vue.joueurActif ?? '')}…</p>
         )}
         {vue.juanitaRegarde && vue.juanitaRegarde !== moi && <p className="petit-texte">Juanita ({pseudo(vue.juanitaRegarde)}) consulte les cartes non distribuées…</p>}
@@ -147,10 +152,10 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
       )}
 
       {/* Pouvoirs */}
-      {vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
+      {!pliAffiche && vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
         <p className="centre petit-texte">{NOMS_PIRATES[vue.pouvoir.type]} ({pseudo(vue.pouvoir.joueur)}) choisit…</p>
       )}
-      {pouvoirMoi?.type === 'rosie' && (
+      {!pliAffiche && pouvoirMoi?.type === 'rosie' && (
         <section className="parchemin fenetre">
           <h2 className="titre-pirate">Rosie : choisis qui commence</h2>
           <div className="boutons-mise">
@@ -160,7 +165,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
           </div>
         </section>
       )}
-      {pouvoirMoi?.type === 'rascal' && (
+      {!pliAffiche && pouvoirMoi?.type === 'rascal' && (
         <section className="parchemin fenetre">
           <h2 className="titre-pirate">Rascal : ton pari</h2>
           <p className="petit-texte centre">Gagné si ta mise est exacte, perdu sinon.</p>
@@ -171,7 +176,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
           </div>
         </section>
       )}
-      {pouvoirMoi?.type === 'bendt' && (
+      {!pliAffiche && pouvoirMoi?.type === 'bendt' && (
         <section className="parchemin fenetre">
           <h2 className="titre-pirate">Bendt : défausse {pouvoirMoi.aDefausser} carte{pouvoirMoi.aDefausser > 1 ? 's' : ''}</h2>
           <p className="petit-texte centre">Touche les cartes de ta main à défausser ({defausse.length}/{pouvoirMoi.aDefausser}).</p>
@@ -179,7 +184,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
             onClick={() => coup({ type: 'bendt', defausse })}>Défausser</button>
         </section>
       )}
-      {vue.phase === 'harry' && vue.harryEnAttente.includes(moi) && (
+      {!pliAffiche && vue.phase === 'harry' && vue.harryEnAttente.includes(moi) && (
         <section className="parchemin fenetre">
           <h2 className="titre-pirate">Harry : modifie ta mise</h2>
           <div className="boutons-mise">
@@ -191,7 +196,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
           </div>
         </section>
       )}
-      {vue.phase === 'harry' && !vue.harryEnAttente.includes(moi) && <p className="centre petit-texte">Harry réfléchit…</p>}
+      {!pliAffiche && vue.phase === 'harry' && !vue.harryEnAttente.includes(moi) && <p className="centre petit-texte">Harry réfléchit…</p>}
 
       {/* Juanita : cartes non distribuées */}
       {main.revelationJuanita && (
@@ -216,7 +221,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
       )}
 
       {/* Fin de manche / de partie */}
-      {(vue.phase === 'fin_manche' || vue.phase === 'fin_partie') && (
+      {!pliAffiche && (vue.phase === 'fin_manche' || vue.phase === 'fin_partie') && (
         <div className="voile">
           <section className="parchemin fenetre">
             <h2 className="titre-pirate">{vue.phase === 'fin_partie' ? 'Fin de la partie' : `Fin de la manche ${vue.manche}`}</h2>
