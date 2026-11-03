@@ -8,8 +8,8 @@ import { Avatar } from '../composants/Avatar.tsx';
 const REVELATION_MS = 2500;
 const GAGNANT_MS = 2000;
 
-export function TableTest({ partieId, membres, moi, retourAccueil }: {
-  partieId: string; membres: MembreSalon[]; moi: string; retourAccueil: () => void;
+export function TableTest({ partieId, membres, moi, hote, retourAccueil }: {
+  partieId: string; membres: MembreSalon[]; moi: string; hote: string; retourAccueil: () => void;
 }) {
   const { vue, main } = usePartie(partieId, moi);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -17,6 +17,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
   const [tigresse, setTigresse] = useState(false);
   const [defausse, setDefausse] = useState<string[]>([]);
   const [decompte, setDecompte] = useState(0);
+  const [confirmQuitter, setConfirmQuitter] = useState(false);
   const [etapePli, setEtapePli] = useState<'aucune' | 'revelation' | 'gagnant'>('aucune');
   const mancheVue = useRef(0);
   const pliVu = useRef(0);
@@ -53,6 +54,26 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
 
   useEffect(() => { setDefausse([]); }, [vue?.pouvoir?.type, vue?.numeroPli]);
 
+  // Toutes les 20 s, on signale au serveur qu'on est là : il remplace les absents (2 min) et relance les robots.
+  const finie = vue?.phase === 'fin_partie' || vue?.annulee;
+  useEffect(() => {
+    if (finie) return;
+    const reveil = () => appel('reveiller', { partie_id: partieId }).catch(() => {});
+    reveil();
+    const t = setInterval(reveil, 20000);
+    return () => clearInterval(t);
+  }, [partieId, finie]);
+
+  // Si un robot jouait à ma place, je signale mon retour : je reprends la main à la manche suivante.
+  const suisRemplace = !!vue?.remplaces?.includes(moi) && !vue?.definitifs?.includes(moi);
+  useEffect(() => {
+    if (!suisRemplace) return;
+    const revenir = () => document.visibilityState === 'visible' && appel('revenir', { partie_id: partieId }).catch(() => {});
+    revenir();
+    document.addEventListener('visibilitychange', revenir);
+    return () => document.removeEventListener('visibilitychange', revenir);
+  }, [suisRemplace, partieId]);
+
   if (!vue || !main) return <main className="ecran ecran-centre"><p className="petit-texte">Chargement de la partie…</p></main>;
 
   async function coup(c: Record<string, unknown>) {
@@ -68,7 +89,8 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
   }
 
   const pliAffiche = etapePli !== 'aucune';
-  const aMoi = vue.joueurActif === moi && !pliAffiche && decompte === 0;
+  const piloteParRobot = (j: string) => vue.robots?.includes(j) || vue.remplaces?.includes(j);
+  const aMoi = vue.joueurActif === moi && !pliAffiche && decompte === 0 && !piloteParRobot(moi);
   const pouvoirMoi = vue.phase === 'pouvoir' && vue.pouvoir?.joueur === moi ? vue.pouvoir : null;
   const pliMontre = vue.pliEnCours.length > 0 ? vue.pliEnCours : pliAffiche && vue.dernierPli ? vue.dernierPli.cartes : [];
   const gagnantMontre = vue.pliEnCours.length === 0 && etapePli === 'gagnant' ? vue.dernierPli?.resultat : null;
@@ -88,9 +110,17 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
   return (
     <main className="ecran ecran-table">
       <header className="barre-jeu">
-        <span>Manche {vue.manche} / 10</span>
+        <span>Manche {vue.manche} / 10{vue.entrainement ? ' · entraînement' : ''}</span>
         <span>{vue.mises ? `Ma mise : ${vue.mises[moi] + (vue.harry[moi] ?? 0)}` : 'Mises secrètes'}</span>
+        {!finie && <button type="button" className="lien quitter" onClick={() => setConfirmQuitter(true)}>Quitter</button>}
       </header>
+
+      {suisRemplace && (
+        <p className="message info">🤖 Un robot a joué à ta place pendant ton absence. Tu reprends la main au début de la prochaine manche.</p>
+      )}
+      {vue.definitifs?.includes(moi) && !finie && (
+        <p className="message erreur">Un robot joue à ta place jusqu’à la fin de cette partie.</p>
+      )}
 
       <section className="joueurs-table">
         {vue.joueurs.map((j, i) => (
@@ -98,6 +128,11 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
             {i === vue.couronne && <span className="couronne">👑</span>}
             <Avatar photo={photo(j)} taille={46} />
             <span className="jt-nom">{pseudo(j)}</span>
+            {vue.remplaces?.includes(j) && <span className="jt-robot">🤖 joue pour lui</span>}
+            {hote === moi && j !== moi && !vue.robots?.includes(j) && !vue.definitifs?.includes(j) && !finie && (
+              <button type="button" className="exclure" aria-label={`Exclure ${pseudo(j)}`}
+                onClick={() => { if (confirm(`Exclure ${pseudo(j)} ? Un robot finira la partie à sa place.`)) appel('exclure', { salon_id: membres[0]?.salon_id, joueur_id: j }).catch((e) => setErreur((e as Error).message)); }}>✕</button>
+            )}
             <span className="jt-ruban">
               {vue.mises ? `${vue.plisGagnes[j]}/${vue.mises[j] + (vue.harry[j] ?? 0)}` : vue.aMise[j] ? '✓ a misé' : '…'}
             </span>
@@ -221,7 +256,7 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
       )}
 
       {/* Fin de manche / de partie */}
-      {!pliAffiche && (vue.phase === 'fin_manche' || vue.phase === 'fin_partie') && (
+      {!pliAffiche && !vue.annulee && (vue.phase === 'fin_manche' || vue.phase === 'fin_partie') && (
         <div className="voile">
           <section className="parchemin fenetre">
             <h2 className="titre-pirate">{vue.phase === 'fin_partie' ? 'Fin de la partie' : `Fin de la manche ${vue.manche}`}</h2>
@@ -241,8 +276,8 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
               </tbody>
             </table>
             {vue.phase === 'fin_manche' ? (
-              vue.continuer.includes(moi)
-                ? <p className="centre petit-texte">En attente des autres pirates ({vue.continuer.length}/{vue.joueurs.length})…</p>
+              vue.continuer.includes(moi) || piloteParRobot(moi)
+                ? <p className="centre petit-texte">En attente des autres pirates…</p>
                 : <button type="button" className="bouton-or" disabled={enCours} onClick={() => coup({ type: 'continuer' })}>Continuer</button>
             ) : (
               <>
@@ -250,6 +285,30 @@ export function TableTest({ partieId, membres, moi, retourAccueil }: {
                 <button type="button" className="bouton-or" onClick={retourAccueil}>Retour au port</button>
               </>
             )}
+          </section>
+        </div>
+      )}
+
+      {confirmQuitter && (
+        <div className="voile">
+          <section className="parchemin fenetre">
+            <h2 className="titre-pirate">Quitter la partie ?</h2>
+            <p className="centre">{vue.entrainement ? 'Ta partie d’entraînement sera abandonnée.' : 'Quitter = défaite. Un robot finira la partie à ta place. Tu es sûr ?'}</p>
+            <button type="button" className="bouton-danger" disabled={enCours}
+              onClick={async () => { try { await appel('abandonner', { partie_id: partieId }); } catch { /* déjà finie */ } retourAccueil(); }}>
+              Oui, je quitte
+            </button>
+            <button type="button" className="lien" onClick={() => setConfirmQuitter(false)}>Non, je reste</button>
+          </section>
+        </div>
+      )}
+
+      {vue.annulee && (
+        <div className="voile">
+          <section className="parchemin fenetre">
+            <h2 className="titre-pirate">Partie annulée</h2>
+            <p className="centre">Plus aucun pirate humain à bord : cette partie ne compte pas.</p>
+            <button type="button" className="bouton-or" onClick={retourAccueil}>Retour au port</button>
           </section>
         </div>
       )}

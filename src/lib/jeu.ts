@@ -9,6 +9,7 @@ export interface Salon {
   public: boolean;
   hote: string;
   statut: 'attente' | 'en_jeu' | 'terminee';
+  entrainement: boolean;
 }
 
 export interface MembreSalon {
@@ -21,7 +22,16 @@ export interface MembreSalon {
   place: number;
 }
 
-export type VueJeu = VuePublique & { continuer: string[]; debutManche: string; partieId: string };
+export type VueJeu = VuePublique & {
+  continuer: string[];
+  debutManche: string;
+  partieId: string;
+  robots: string[];
+  remplaces: string[];
+  definitifs: string[];
+  entrainement: boolean;
+  annulee: boolean;
+};
 
 /** Appelle l'arbitre. En cas de refus, lève une erreur avec le message en français. */
 export async function appel<T = unknown>(action: string, params: Record<string, unknown> = {}): Promise<T> {
@@ -49,7 +59,14 @@ export async function salonEnCours(moi: string): Promise<string | null> {
     .in('salons.statut', ['attente', 'en_jeu']);
   const liste = (data ?? []) as unknown as Array<{ salon_id: string; salons: { statut: string; maj_le: string } }>;
   liste.sort((a, b) => b.salons.maj_le.localeCompare(a.salons.maj_le));
-  return liste[0]?.salon_id ?? null;
+  for (const l of liste) {
+    // Une partie qu'on a quittée (robot jusqu'à la fin) ne doit pas nous ramener à table.
+    const { data: p } = await supabase.from('parties').select('vue').eq('salon_id', l.salon_id)
+      .order('cree_le', { ascending: false }).limit(1).maybeSingle();
+    const definitifs = ((p?.vue as { definitifs?: string[] } | undefined)?.definitifs) ?? [];
+    if (!definitifs.includes(moi)) return l.salon_id;
+  }
+  return null;
 }
 
 export function useSalonsPublics() {

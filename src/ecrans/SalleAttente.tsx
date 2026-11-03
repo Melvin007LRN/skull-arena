@@ -52,14 +52,22 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
           const m = membres[i];
           const angle = (i / 8) * 2 * Math.PI - Math.PI / 2;
           const style = { left: `${50 + 41 * Math.cos(angle)}%`, top: `${50 + 41 * Math.sin(angle)}%` };
-          if (!m) return <div key={i} className="siege vide" style={style}><span>+</span></div>;
+          if (!m) {
+            return suisHote ? (
+              <button key={i} type="button" className="siege vide" style={style} disabled={enCours}
+                onClick={() => faire(() => appel('ajouter_robot', { salon_id: salon.id }))} aria-label="Ajouter un robot">
+                <span>+🤖</span>
+              </button>
+            ) : <div key={i} className="siege vide" style={style}><span>+</span></div>;
+          }
           return (
             <div key={m.joueur_id} className={`siege ${m.pret || m.joueur_id === salon.hote ? 'pret' : ''}`} style={style}>
               <Avatar photo={m.photo_url} taille={58} alt={m.pseudo} />
               <span className="siege-nom">{m.joueur_id === salon.hote && '👑 '}{m.pseudo}</span>
               {suisHote && m.joueur_id !== moi && (
-                <button type="button" className="exclure" onClick={() => faire(() => appel('exclure', { salon_id: salon.id, joueur_id: m.joueur_id }))}
-                  aria-label={`Exclure ${m.pseudo}`}>✕</button>
+                <button type="button" className="exclure"
+                  onClick={() => faire(() => appel(m.est_robot ? 'retirer_robot' : 'exclure', { salon_id: salon.id, joueur_id: m.joueur_id }))}
+                  aria-label={m.est_robot ? `Retirer ${m.pseudo}` : `Exclure ${m.pseudo}`}>✕</button>
               )}
             </div>
           );
@@ -71,6 +79,11 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
       </section>
 
       {erreur && <p className="message erreur">{erreur}</p>}
+      {suisHote && membres.length < 8 && (
+        <button type="button" className="bouton-sombre" disabled={enCours} onClick={() => faire(() => appel('ajouter_robot', { salon_id: salon.id }))}>
+          + Ajouter un robot pirate
+        </button>
+      )}
 
       {suisHote ? (
         <button type="button" className="bouton-or bouton-jouer" disabled={enCours || !tousPrets}

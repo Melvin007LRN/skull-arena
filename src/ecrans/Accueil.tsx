@@ -22,7 +22,7 @@ const ACCROCHES = [
 ];
 
 export function Accueil({ profil, ouvrirProfil, ouvrirLobby }: {
-  profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code') => void;
+  profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void;
 }) {
   const [reduit, setReduit] = useState(false);
   const [bientot, setBientot] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby }: {
       phrase: 'Un ami t’attend à bord ? Entre son code et monte sur le pont.',
     },
     {
-      id: 'entrainement', titre: 'Entraînement', image: '/cartes/noir_7.webp', cadrage: '50% 30%',
+      id: 'entrainement', titre: 'Entraînement', image: '/cartes/noir_7.webp', cadrage: '50% 30%', action: () => ouvrirLobby('entrainement'),
       phrase: 'Affûte ton sabre contre l’équipage fantôme, sans rien risquer.',
     },
     {

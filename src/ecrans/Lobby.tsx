@@ -2,9 +2,10 @@
 import { useState, type FormEvent } from 'react';
 import { appel, useSalonsPublics } from '../lib/jeu.ts';
 
-export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code'; retour: () => void; entrer: (salonId: string) => void }) {
+export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entrainement'; retour: () => void; entrer: (salonId: string) => void }) {
   const salons = useSalonsPublics();
   const [code, setCode] = useState('');
+  const [nbRobots, setNbRobots] = useState(3);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -31,9 +32,25 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code'; retour
   return (
     <main className="ecran ecran-lobby">
       <button type="button" className="retour" onClick={retour}>‹ Retour</button>
-      <h1 className="titre-pirate grand">{mode === 'code' ? 'Rejoindre un équipage' : 'Prendre la mer'}</h1>
+      <h1 className="titre-pirate grand">{mode === 'code' ? 'Rejoindre un équipage' : mode === 'entrainement' ? 'Entraînement' : 'Prendre la mer'}</h1>
 
       {erreur && <p className="message erreur">{erreur}</p>}
+
+      {mode === 'entrainement' && (
+        <section className="parchemin choix-salon">
+          <p className="petit-texte centre">Affronte l’équipage fantôme pour t’entraîner. Ces parties ne comptent ni pour le classement, ni pour les badges.</p>
+          <p className="sous-titre">Nombre de robots adverses</p>
+          <div className="boutons-mise">
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+              <button key={n} type="button" className={n === nbRobots ? 'bouton-or petit' : 'bouton-sombre petit-rond'} onClick={() => setNbRobots(n)}>{n}</button>
+            ))}
+          </div>
+          <button type="button" className="bouton-or bouton-jouer" disabled={enCours}
+            onClick={() => faire(() => appel('entrainement', { robots: nbRobots }))}>
+            {enCours ? 'Préparation…' : 'Lever l’ancre !'}
+          </button>
+        </section>
+      )}
 
       {mode === 'code' && (
         <section className="parchemin">

@@ -13,7 +13,7 @@ import { appel, salonEnCours } from './lib/jeu.ts';
 type Ecran =
   | { nom: 'accueil' }
   | { nom: 'profil' }
-  | { nom: 'lobby'; mode: 'jouer' | 'code' }
+  | { nom: 'lobby'; mode: 'jouer' | 'code' | 'entrainement' }
   | { nom: 'salon'; id: string };
 
 const ACCUEIL: Ecran = { nom: 'accueil' };

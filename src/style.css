@@ -480,3 +480,12 @@ input:focus { outline: 2px solid var(--or); outline-offset: 1px; }
 .scores tr.moi td { color: var(--or-clair); }
 .positif { color: #8fe39a; }
 .negatif { color: #ff8a80; }
+
+/* ---------- Robots ---------- */
+.petit-rond { width: auto !important; min-width: 52px; min-height: 44px !important; }
+.siege.vide { cursor: default; background: none; }
+button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-color: #e3b04b88; width: 52px; height: 52px; }
+.jt-robot { font-size: 10px; color: #9fd3ff; }
+.joueur-table .exclure { position: absolute; top: 2px; right: 2px; }
+.barre-jeu { align-items: center; gap: 8px; }
+.barre-jeu .quitter { margin: 0; padding: 4px 6px; font-size: 13px; }
