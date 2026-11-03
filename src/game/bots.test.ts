@@ -42,6 +42,40 @@ describe("IA des bots", () => {
     expect(["pirate", "escape"]).toContain(choice?.tigressMode);
   });
 
+  it("ne déclare aucune couleur pour le Joker quand le noir est demandé", () => {
+    const hand = [card("joker", "joker")];
+    const choice = chooseBotCard({
+      hand,
+      playedCards: [{
+        playerId: "player-1",
+        card: card("black-14", "number", { suit: "black", value: 14 }),
+        order: 0,
+      }],
+      playerId: "bot-1",
+      playersRemaining: 2,
+      tricksRemaining: 1,
+      difficulty: "normal",
+    });
+    expect(choice?.chosenSuit).toBeNull();
+  });
+
+  it("suit la couleur demandée avec le Joker", () => {
+    const hand = [card("joker", "joker")];
+    const choice = chooseBotCard({
+      hand,
+      playedCards: [{
+        playerId: "player-1",
+        card: card("green-5", "number", { suit: "green", value: 5 }),
+        order: 0,
+      }],
+      playerId: "bot-1",
+      playersRemaining: 2,
+      tricksRemaining: 1,
+      difficulty: "normal",
+    });
+    expect(choice?.chosenSuit).toBe("green");
+  });
+
   it("choisit une couleur non noire pour le Joker", () => {
     const hand = [card("joker", "joker")];
     const choice = chooseBotCard({
