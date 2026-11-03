@@ -41,16 +41,17 @@ export function TableTest({ partieId, membres, moi, hote, retourAccueil }: {
   }, [decompte]);
 
   // Fin de pli : la dernière carte reste visible 2,5 s, puis la carte gagnante est mise en avant 2 s.
+  // Les minuteries ne dépendent que du numéro du pli : une mise à jour de la partie pendant la pause
+  // (un robot qui rejoue, par exemple) ne doit surtout pas les annuler, sinon la main resterait bloquée.
+  const clePli = vue?.dernierPli ? vue.numeroPli + vue.manche * 100 : 0;
   useEffect(() => {
-    if (!vue?.dernierPli) return;
-    const n = vue.numeroPli + vue.manche * 100;
-    if (n === pliVu.current) return;
-    pliVu.current = n;
+    if (!clePli || clePli === pliVu.current) return;
+    pliVu.current = clePli;
     setEtapePli('revelation');
     const t1 = setTimeout(() => setEtapePli('gagnant'), REVELATION_MS);
     const t2 = setTimeout(() => setEtapePli('aucune'), REVELATION_MS + GAGNANT_MS);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [vue]);
+    return () => { clearTimeout(t1); clearTimeout(t2); setEtapePli('aucune'); };
+  }, [clePli]);
 
   useEffect(() => { setDefausse([]); }, [vue?.pouvoir?.type, vue?.numeroPli]);
 
@@ -92,8 +93,8 @@ export function TableTest({ partieId, membres, moi, hote, retourAccueil }: {
   const piloteParRobot = (j: string) => vue.robots?.includes(j) || vue.remplaces?.includes(j);
   const aMoi = vue.joueurActif === moi && !pliAffiche && decompte === 0 && !piloteParRobot(moi);
   const pouvoirMoi = vue.phase === 'pouvoir' && vue.pouvoir?.joueur === moi ? vue.pouvoir : null;
-  const pliMontre = vue.pliEnCours.length > 0 ? vue.pliEnCours : pliAffiche && vue.dernierPli ? vue.dernierPli.cartes : [];
-  const gagnantMontre = vue.pliEnCours.length === 0 && etapePli === 'gagnant' ? vue.dernierPli?.resultat : null;
+  const pliMontre = pliAffiche && vue.dernierPli ? vue.dernierPli.cartes : vue.pliEnCours;
+  const gagnantMontre = pliAffiche && etapePli === 'gagnant' ? vue.dernierPli?.resultat : null;
 
   function toucherCarte(id: string) {
     if (pouvoirMoi?.type === 'bendt' && !pliAffiche) {
