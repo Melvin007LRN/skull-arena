@@ -2230,7 +2230,6 @@ const [pauseCountdown, setPauseCountdown] = useState(0);
               <div
                 className={`game-player game-player-seat-${relativeSeat} ${player.player_id === userId ? "current" : ""}`}
                 key={player.player_id}
-                style={{ left: `${50 + 43 * Math.cos((2 * Math.PI * relativeSeat / Math.max(players.length, 1)) - Math.PI / 2)}%`, top: `${50 + 42 * Math.sin((2 * Math.PI * relativeSeat / Math.max(players.length, 1)) - Math.PI / 2)}%`, transform: "translate(-50%, -50%)" }}
               >
                 {showBubble && latestBubble && <div className="player-chat-bubble" key={latestBubble.id}>{latestBubble.phrase}</div>}
                 <div className="game-player-portrait-frame">
