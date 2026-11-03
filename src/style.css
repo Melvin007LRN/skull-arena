@@ -3258,3 +3258,175 @@ body:has(.skull-game),
   white-space: nowrap;
   text-shadow: 0 1px 2px #000;
 }
+
+
+/* MOBILE FIRST — portrait phone layout */
+@media (max-width: 600px) and (orientation: portrait) {
+  .skull-game {
+    width: 100%;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: 100dvh;
+    overflow: hidden !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 40px 30px minmax(0, 1fr) 126px !important;
+    grid-template-areas: "top" "meta" "arena" "hand" !important;
+    gap: 4px !important;
+    padding: max(3px, env(safe-area-inset-top)) 5px max(5px, env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box;
+  }
+
+  .skull-game > .game-topbar {
+    min-width: 0;
+    height: 40px;
+    padding: 0 38px !important;
+  }
+  .skull-game .game-brand { font-size: 15px !important; letter-spacing: 1.5px !important; }
+  .skull-game .game-chat-trigger {
+    left: 2px !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .skull-game > .game-round-info {
+    min-width: 0;
+    height: 30px;
+    padding: 1px 3px !important;
+    gap: 3px !important;
+    overflow: hidden;
+  }
+  .skull-game > .game-round-info > div {
+    min-width: 0;
+    padding: 2px 5px !important;
+    font-size: 8px !important;
+  }
+  .skull-game > .game-round-info span { font-size: 7px !important; }
+  .skull-game > .game-round-info strong { font-size: 9px !important; }
+
+  .skull-game > .game-arena {
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: visible !important;
+  }
+  .skull-game .game-arena .arena-table {
+    inset: 3% 5% 4% 17% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    border-radius: 48% / 43% !important;
+  }
+  .skull-game .game-arena .arena-decoration { opacity: .10 !important; }
+  .skull-game .game-arena .arena-decoration svg { width: 30px !important; height: 30px !important; }
+  .skull-game .game-arena .arena-decoration strong { font-size: 10px !important; }
+  .skull-game .game-arena .arena-decoration span { font-size: 6px !important; }
+  .skull-game .game-arena .arena-status { bottom: 4px !important; font-size: 7px !important; }
+
+  .skull-game > .game-scoreboard-rail {
+    left: 2px !important;
+    top: 50% !important;
+    width: 56px !important;
+    max-height: 48% !important;
+    padding: 5px 3px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    border-left-width: 2px !important;
+    background: linear-gradient(90deg, #080d14ed, #080d1499) !important;
+  }
+  .skull-game .game-scoreboard-rail .game-section-heading { margin-bottom: 3px !important; }
+  .skull-game .game-scoreboard-rail .game-section-heading h2 {
+    display: block !important;
+    font-size: 7px !important;
+    line-height: 1.15 !important;
+  }
+  .skull-game .game-scoreboard-rail .game-section-heading h2 svg { display: none !important; }
+  .skull-game .game-scoreboard-rail .scoreboard-list { gap: 2px !important; }
+  .skull-game .game-scoreboard-rail .scoreboard-row {
+    grid-template-columns: 10px minmax(0,1fr) auto !important;
+    gap: 2px !important;
+    padding: 3px 0 !important;
+  }
+  .skull-game .game-scoreboard-rail .scoreboard-rank { font-size: 8px !important; }
+  .skull-game .game-scoreboard-rail .scoreboard-player strong { font-size: 7px !important; }
+  .skull-game .game-scoreboard-rail .scoreboard-points { font-size: 7px !important; }
+  .skull-game .game-scoreboard-rail .scoreboard-points small { display: none !important; }
+
+  .skull-game > .game-crew { inset: 0 !important; }
+  .skull-game .game-crew .game-player {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  .skull-game .game-crew .game-player-seat-0 { bottom: 2px !important; }
+  .skull-game .game-crew .game-player-seat-1 { left: 2px !important; }
+  .skull-game .game-crew .game-player-seat-2 { left: 22% !important; top: 2px !important; }
+  .skull-game .game-crew .game-player-seat-3 { top: 2px !important; }
+  .skull-game .game-crew .game-player-seat-4 { right: 22% !important; top: 2px !important; }
+  .skull-game .game-crew .game-player-seat-5 { right: 2px !important; }
+  .skull-game .game-crew .game-player-seat-6 { right: 18% !important; bottom: 2px !important; }
+  .skull-game .game-crew .game-player-seat-7 { left: 18% !important; bottom: 2px !important; }
+
+  .skull-game .game-arena .arena-played-cards {
+    inset: 25% 22% !important;
+    z-index: 15 !important;
+  }
+  .skull-game .arena-stack-card {
+    width: clamp(52px, 14vw, 68px) !important;
+    height: clamp(74px, 19vw, 94px) !important;
+    margin: -38px 0 0 -26px !important;
+    border-radius: 7px !important;
+  }
+  .skull-game .arena-stack-card.has-card-art img { object-fit: contain !important; }
+  .skull-game .played-stack-count,
+  .skull-game .played-stack-hint { font-size: 7px !important; }
+
+  .skull-game > .game-hand-section {
+    grid-area: hand !important;
+    height: 126px !important;
+    max-height: 126px !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 2px max(2px, env(safe-area-inset-bottom)) !important;
+    overflow: visible !important;
+  }
+  .skull-game .game-hand-section .game-section-heading { display: none !important; }
+  .skull-game .game-hand {
+    height: 100% !important;
+    min-height: 0 !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 10px 5px 2px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .skull-game .game-hand .game-card {
+    flex: 0 0 auto !important;
+    width: clamp(42px, 11.5vw, 54px) !important;
+    height: clamp(66px, 18vw, 82px) !important;
+    margin-left: clamp(-13px, -2.5vw, -8px) !important;
+    border-radius: 7px !important;
+    touch-action: pan-x !important;
+  }
+  .skull-game .game-hand .game-card:first-child { margin-left: 0 !important; }
+  .skull-game .game-hand .game-card:nth-child(n) { transform: none !important; }
+  .skull-game .game-hand .game-card-selected,
+  .skull-game .game-hand .game-card-dragging {
+    transform: translateY(-14px) scale(1.06) !important;
+    z-index: 40 !important;
+  }
+  .skull-game .game-hand .game-card:active { filter: brightness(1.12); }
+  .skull-game > .game-bidding-panel {
+    width: min(360px, calc(100vw - 24px)) !important;
+    max-height: 78dvh !important;
+  }
+  .skull-game .game-modal-window {
+    width: calc(100vw - 24px) !important;
+    max-height: 84dvh !important;
+  }
+}
+
+@media (max-width: 380px) and (orientation: portrait) {
+  .skull-game { grid-template-rows: 38px 28px minmax(0,1fr) 116px !important; }
+  .skull-game > .game-hand-section { height: 116px !important; max-height: 116px !important; }
+  .skull-game .game-hand .game-card { width: 40px !important; height: 62px !important; }
+  .skull-game > .game-scoreboard-rail { width: 50px !important; }
+}
