@@ -136,7 +136,7 @@ export function runGameTests(): GameTestResult[] {
   });
 
   // TEST 4 : paquet complet
-  test("Le paquet complet contient 93 cartes", () => {
+  test("Le paquet actif contient 92 cartes (Mary Throne reste en pause)", () => {
     const deck = buildDeck({
       loot: true,
       kraken: true,
@@ -150,8 +150,8 @@ export function runGameTests(): GameTestResult[] {
     });
 
     assert(
-      deck.length === 93,
-      `Le paquet contient ${deck.length} cartes au lieu de 93.`,
+      deck.length === 92,
+      `Le paquet actif contient ${deck.length} cartes au lieu de 92.`,
     );
 
     assert(
