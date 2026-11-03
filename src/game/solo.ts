@@ -168,7 +168,8 @@ export function playSoloCard(
     return advanceBots && !players[nextTurn].isHuman ? playBotUntilHuman(updated) : updated;
   }
 
-  const result = resolveTrick(plays);
+  const plankTarget = plays.find((play) => play.card.type === "pirate" || (play.card.type === "tigress" && play.tigressMode === "pirate"))?.playerId;
+  const result = resolveTrick(plays, { walkThePlankTargetPlayerId: plankTarget });
   const updatedPlayers = players.map((p) => p.id === result.winnerPlayerId
     ? { ...p, tricksWon: p.tricksWon + 1 }
     : p);
