@@ -12,7 +12,7 @@ export interface SoloPlayer {
   bid: number | null;
   tricksWon: number;
   roundBonus: number;
-  capturedCards: GameCard[];
+  capturedPlays: PlayedCard[];
   totalScore: number;
 }
 export interface SoloMatch {
@@ -46,7 +46,7 @@ export function createSoloMatch(settings: SoloSettings): SoloMatch {
     bid: null,
     tricksWon: 0,
     roundBonus: 0,
-    capturedCards: [],
+    capturedPlays: [],
     totalScore: 0,
   }];
   for (let i = 0; i < botCount; i++) {
@@ -58,7 +58,7 @@ export function createSoloMatch(settings: SoloSettings): SoloMatch {
       bid: null,
       tricksWon: 0,
       roundBonus: 0,
-      capturedCards: [],
+      capturedPlays: [],
       totalScore: 0,
     });
   }
@@ -88,7 +88,7 @@ export function dealSoloRound(match: SoloMatch, extensions?: Partial<GameExtensi
     bid: null,
     tricksWon: 0,
     roundBonus: 0,
-    capturedCards: [],
+    capturedPlays: [],
   }));
   let cursor = 0;
   for (let cardIndex = 0; cardIndex < match.round; cardIndex++) {
@@ -179,11 +179,12 @@ export function playSoloCard(
 
   const plankTarget = plays.find((play) => play.card.type === "pirate" || (play.card.type === "tigress" && play.tigressMode === "pirate"))?.playerId;
   const result = resolveTrick(plays, { walkThePlankTargetPlayerId: plankTarget });
-  const capturedCards = result.winnerPlayerId
+  const capturedPlays = result.winnerPlayerId
     ? plays
         .filter((play) => !result.removedPirates.some((removed) => removed.playerId === play.playerId && removed.order === play.order && removed.card.id === play.card.id))
-        .map((play) => play.card)
+        .map((play) => play)
     : [];
+  const capturedCards = capturedPlays.map((play) => play.card);
   const trickBonus = result.bonusPoints
     + getCaptureBonus(result.winningCard, plays, result.removedPirates)
     + calculateExpansionBonuses(capturedCards);
@@ -191,7 +192,7 @@ export function playSoloCard(
     ...p,
     tricksWon: p.id === result.winnerPlayerId ? p.tricksWon + 1 : p.tricksWon,
     roundBonus: p.roundBonus + (p.id === result.winnerPlayerId ? trickBonus : 0),
-    capturedCards: p.id === result.winnerPlayerId ? [...p.capturedCards, ...capturedCards] : p.capturedCards,
+    capturedPlays: p.id === result.winnerPlayerId ? [...p.capturedPlays, ...capturedPlays] : p.capturedPlays,
   }));
   const nextTrickNumber = match.trickNumber + 1;
   const roundComplete = nextTrickNumber > match.round;
@@ -201,7 +202,7 @@ export function playSoloCard(
       const points = exact
         ? (p.bid === 0 ? match.round * 10 : (p.bid ?? 0) * 20)
         : (p.bid === 0 ? -match.round * 10 : -Math.abs((p.bid ?? 0) - p.tricksWon) * 10);
-      return { ...p, totalScore: p.totalScore + points + p.roundBonus + (exact ? calculateFourteenBonuses(p.capturedCards) : 0) };
+      return { ...p, totalScore: p.totalScore + points + p.roundBonus + (exact ? calculateFourteenBonuses(p.capturedPlays) : 0) };
     });
     return {
       ...match,
