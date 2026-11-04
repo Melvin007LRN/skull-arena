@@ -6,6 +6,7 @@ import { chargerClassement, chargerClassementSaison, chargerDefisDuJour, DEFIS, 
 import { Louidors } from './Boutique.tsx';
 import { Avatar } from '../composants/Avatar.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
+import { ActiverNotifications } from '../composants/ActiverNotifications.tsx';
 import { useAmis, useEnLigne } from '../lib/amis.ts';
 import { totalNonLus, useNonLus, useSocial } from '../lib/social.ts';
 
@@ -107,6 +108,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       </Apparition>
 
       <InstallerAppli compact />
+      <ActiverNotifications compact />
 
       <Apparition>
         <button type="button" className="affiche affiche-vedette neon" onClick={jouer.action}>

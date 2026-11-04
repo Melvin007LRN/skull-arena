@@ -1,6 +1,7 @@
 // Amis : demandes, liste en temps réel, présence en ligne et invitations dans un salon.
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabase.ts';
+import { notifier } from './notifications.ts';
 
 // ---------- Présence : qui a l'appli ouverte en ce moment ----------
 let enLigne = new Set<string>();
@@ -70,10 +71,20 @@ async function rpc<T = unknown>(nom: string, params: Record<string, unknown>): P
   return data as T;
 }
 
-export const demanderAmi = (pseudo: string) => rpc<'demande' | 'deja' | 'acceptee' | 'deja_demande'>('demander_ami', { pseudo_ami: pseudo });
+export async function demanderAmi(pseudo: string) {
+  const r = await rpc<'demande' | 'deja' | 'acceptee' | 'deja_demande'>('demander_ami', { pseudo_ami: pseudo });
+  if (r === 'demande') {
+    const { data } = await supabase.from('profils').select('id').ilike('pseudo', pseudo.trim().replace(/[\\%_]/g, '\\$&')).maybeSingle();
+    if (data) notifier('ami', (data as { id: string }).id);
+  }
+  return r;
+}
 export const repondreAmi = (autre: string, accepter: boolean) => rpc('repondre_ami', { autre, accepter });
 export const retirerAmi = (autre: string) => rpc('retirer_ami', { autre });
-export const inviterAmi = (ami: string, salon: string) => rpc('inviter_ami', { ami, salon });
+export async function inviterAmi(ami: string, salon: string) {
+  await rpc('inviter_ami', { ami, salon });
+  notifier('invitation', ami);
+}
 
 // ---------- Invitations reçues ----------
 export interface Invitation { id: number; de: string; pseudo: string; code: string; salon_id: string }

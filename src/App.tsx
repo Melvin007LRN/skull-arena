@@ -17,6 +17,7 @@ import { EcranAmis } from './ecrans/Amis.tsx';
 import { EcranBoutique } from './ecrans/Boutique.tsx';
 import { demarrerPresence, useInvitations } from './lib/amis.ts';
 import { ContexteSocial, demarrerNonLus } from './lib/social.ts';
+import { rattacherAbonnement } from './lib/notifications.ts';
 import { Conversation, FicheJoueur } from './composants/FicheJoueur.tsx';
 import { appel, salonEnCours } from './lib/jeu.ts';
 
@@ -42,6 +43,8 @@ export function App() {
   const [recuperation, setRecuperation] = useState(false);
   const [ecran, setEcran] = useState<Ecran>(ACCUEIL);
   const [repriseFaite, setRepriseFaite] = useState(false);
+  const [fiche, setFiche] = useState<string | null>(null);
+  const [discussion, setDiscussion] = useState<string | null>(null);
   // Pages légales consultables même sans être connecté.
   const [legalHorsConnexion, setLegalHorsConnexion] = useState<PageLegale | null>(null);
 
@@ -79,7 +82,14 @@ export function App() {
   useEffect(() => {
     if (!profil || repriseFaite) return;
     setRepriseFaite(true);
-    const code = new URLSearchParams(window.location.search).get('salon');
+    const params = new URLSearchParams(window.location.search);
+    const ami = params.get('messages');
+    if (ami || params.get('amis')) {
+      window.history.replaceState(null, '', window.location.pathname);
+      if (ami) setDiscussion(ami); else setEcran({ nom: 'amis' });
+      return;
+    }
+    const code = params.get('salon');
     if (code) {
       window.history.replaceState(null, '', window.location.pathname);
       appel<{ salon_id: string }>('rejoindre', { code })
@@ -92,13 +102,29 @@ export function App() {
 
   const versAccueil = useCallback(() => setEcran(ACCUEIL), []);
 
+  // Toucher une notification alors que l'appli est déjà ouverte : on suit son lien.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const surMessage = (e: MessageEvent) => {
+      if (e.data?.type !== 'notification') return;
+      const u = new URL(e.data.url, window.location.origin).searchParams;
+      if (u.get('messages')) setDiscussion(u.get('messages'));
+      else if (u.get('amis')) setEcran({ nom: 'amis' });
+      else if (u.get('salon')) {
+        appel<{ salon_id: string }>('rejoindre', { code: u.get('salon') })
+          .then((r) => setEcran({ nom: 'salon', id: r.salon_id })).catch((err) => alert((err as Error).message));
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', surMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', surMessage);
+  }, []);
+
   // Présence en ligne (pour les amis) dès qu'on est connecté.
   const moiId = profil && !profil.banni ? profil.id : null;
   useEffect(() => (moiId ? demarrerPresence(moiId) : undefined), [moiId]);
   useEffect(() => (moiId ? demarrerNonLus(moiId) : undefined), [moiId]);
+  useEffect(() => { if (moiId) rattacherAbonnement(); }, [moiId]);
   // Fiche d'un joueur et conversation privée, ouvrables depuis n'importe quel écran.
-  const [fiche, setFiche] = useState<string | null>(null);
-  const [discussion, setDiscussion] = useState<string | null>(null);
   const social = useMemo(() => ({ ouvrirProfil: (j: string) => { setDiscussion(null); setFiche(j); }, ouvrirMessages: (a: string) => { setFiche(null); setDiscussion(a); } }), []);
   // En revenant d'une partie, on recharge le profil (XP, statistiques, badges).
   const sortirDuSalon = useCallback(() => { setEcran(ACCUEIL); recharger(); }, [recharger]);

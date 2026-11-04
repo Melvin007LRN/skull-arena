@@ -1,6 +1,6 @@
 // Service worker de Skull Arena : rend l'appli installable et accélère le chargement.
 // Les images et les fichiers du site sont gardés en cache ; le serveur de jeu (Supabase) n'est jamais mis en cache.
-const VERSION = 'skull-arena-v1';
+const VERSION = 'skull-arena-v2';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['/', '/manifest.webmanifest', '/decor/logo.webp'])).then(() => self.skipWaiting()));
@@ -29,4 +29,30 @@ self.addEventListener('fetch', (e) => {
       return r;
     })));
   }
+});
+
+// ---------- Notifications sur le téléphone ----------
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { titre: 'SKULL ARENA', corps: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.titre || 'SKULL ARENA', {
+    body: d.corps || '', icon: d.icone || '/icones/icone-192.png', badge: '/icones/icone-192.png',
+    tag: d.tag, renotify: true, data: { url: d.url || '/' }, vibrate: [120, 60, 120],
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || '/', self.location.origin).href;
+  e.waitUntil((async () => {
+    const fenetres = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const f of fenetres) {
+      if (new URL(f.url).origin === self.location.origin) {
+        await f.focus();
+        f.postMessage({ type: 'notification', url });
+        return;
+      }
+    }
+    await self.clients.openWindow(url);
+  })());
 });

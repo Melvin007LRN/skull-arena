@@ -5,12 +5,15 @@ import { musique, vibrations, vibrer } from '../lib/sons.ts';
 import type { Profil } from '../lib/profil.ts';
 import type { PageLegale } from './Legal.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
+import { useNotifications } from '../lib/notifications.ts';
+import { ActiverNotifications } from '../composants/ActiverNotifications.tsx';
 
 export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvrirLegal }: {
   profil: Profil; retour: () => void; ouvrirProfil: () => void; ouvrirAdmin: () => void; ouvrirLegal: (p: PageLegale) => void;
 }) {
   const [musiqueOn, setMusiqueOn] = useState(() => musique.active());
   const [vibrationsOn, setVibrationsOn] = useState(() => vibrations.actives());
+  const notif = useNotifications();
   const [mdp, setMdp] = useState('');
   const [mdp2, setMdp2] = useState('');
   const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null);
@@ -54,6 +57,10 @@ export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvri
         <h2 className="titre-pirate">Son et sensations</h2>
         <Interrupteur libelle="Musique d’ambiance" aide="Un chant de marins pendant les parties" actif={musiqueOn} basculer={basculerMusique} />
         <Interrupteur libelle="Vibrations" aide="Quand c’est ton tour et à la victoire (Android)" actif={vibrationsOn} basculer={basculerVibrations} />
+        {notif.etat === 'actives' || notif.etat === 'inactives'
+          ? <Interrupteur libelle="Notifications" aide="Invitations, messages et demandes d’ami, même appli fermée" actif={notif.etat === 'actives'}
+              basculer={() => { (notif.etat === 'actives' ? notif.desactiver() : notif.activer()).catch(() => {}); }} />
+          : <ActiverNotifications />}
         <p className="petit-texte">Les bruitages suivent le mode silencieux de ton téléphone.</p>
       </section>
 

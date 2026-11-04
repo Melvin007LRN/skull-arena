@@ -1,6 +1,7 @@
 // Social : messages privés, chat de salon, blocages et signalements.
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from './supabase.ts';
+import { notifier } from './notifications.ts';
 
 async function rpc<T = unknown>(nom: string, params: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.rpc(nom, params);
@@ -61,7 +62,7 @@ export function useConversation(moi: string, ami: string) {
       .subscribe();
     return () => { supabase.removeChannel(canal); };
   }, [moi, ami, charger]);
-  const envoyer = (texte: string) => rpc('envoyer_message', { a: ami, texte });
+  const envoyer = async (texte: string) => { await rpc('envoyer_message', { a: ami, texte }); notifier('message', ami); };
   return { messages, envoyer };
 }
 
