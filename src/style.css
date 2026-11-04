@@ -823,3 +823,9 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .amis-accueil.neon, .defis-jour.neon { border-radius: 16px; }
 .lien-reglages.neon { border-radius: 999px; }
 .carte-joueur.neon { border-radius: 16px; }
+
+/* Logo de l'accueil : fixe derrière le contenu, sans redimensionnement au défilement (plus de saccade) */
+.ecran-accueil .entete-logo { position: sticky; top: 0; z-index: 0; background: none !important; padding-bottom: 0 !important; transition: none; pointer-events: none; }
+.ecran-accueil .entete-logo img { width: min(340px, 88%) !important; transition: none; transform: translateZ(0); }
+.ecran-accueil > :not(.ambiance):not(.entete-logo):not(.puce-boutique) { position: relative; z-index: 1; }
+.puce-boutique { position: fixed !important; z-index: 20 !important; right: max(12px, env(safe-area-inset-right)) !important; top: max(12px, env(safe-area-inset-top)) !important; }

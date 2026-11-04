@@ -48,14 +48,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
     }).catch(() => {});
     chargerDefisDuJour().then(setDefis).catch(() => {});
   }, []);
-  const [reduit, setReduit] = useState(false);
   const [accroche, setAccroche] = useState(0);
 
-  useEffect(() => {
-    const surDefilement = () => setReduit(window.scrollY > 80);
-    window.addEventListener('scroll', surDefilement, { passive: true });
-    return () => window.removeEventListener('scroll', surDefilement);
-  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setAccroche((a) => (a + 1) % ACCROCHES.length), 4200);
@@ -87,14 +81,15 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         <Braises />
       </div>
 
-      <header className={`entete-logo ${reduit ? 'reduit' : ''}`}>
+      {/* Le logo reste en place et passe derrière le contenu quand on fait défiler (aucun calcul au défilement) */}
+      <header className="entete-logo">
         <img src="/decor/logo.webp" alt="Skull Arena" />
-        <button type="button" className="puce-boutique" onClick={ouvrirBoutique} aria-label="La boutique du port">
-          <span className="piece-or" aria-hidden="true" />
-          <strong>{profil.louidors ?? 0}</strong>
-          <small>Boutique</small>
-        </button>
       </header>
+      <button type="button" className="puce-boutique" onClick={ouvrirBoutique} aria-label="La boutique du port">
+        <span className="piece-or" aria-hidden="true" />
+        <strong>{profil.louidors ?? 0}</strong>
+        <small>Boutique</small>
+      </button>
 
       <p className="accroche" key={accroche}>{ACCROCHES[accroche]}</p>
 
