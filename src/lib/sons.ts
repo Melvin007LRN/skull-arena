@@ -59,6 +59,12 @@ export const son = {
     for (const [f, t, d] of m) { note(f, t, d, 0.11, 'triangle'); note(f / 2, t, d, 0.05, 'square'); }
     note(1047, 1.55, 0.9, 0.05, 'sine');
   },
+  /** Coup de tonnerre (manche 10, tempête) */
+  tonnerre: () => { bruit(1.4, 0.22); note(55, 0, 1.2, 0.12, 'sawtooth'); },
+  /** Grand coup (Régicide, chasse au pirate…) */
+  exploit: () => { note(262, 0, 0.12, 0.1, 'square'); note(392, 0.1, 0.12, 0.1, 'square'); note(523, 0.2, 0.5, 0.12, 'triangle'); bruit(0.3, 0.08); },
+  /** Objet qui atterrit sur un joueur */
+  impact: () => { bruit(0.18, 0.2); note(180, 0, 0.15, 0.08, 'square'); },
   /** Petit tintement de pièce */
   piece: () => { note(1568, 0, 0.08, 0.05, 'triangle'); note(2093, 0.05, 0.12, 0.04, 'triangle'); },
 };
@@ -74,15 +80,17 @@ const MELODIE: [string, number][] = [
   ['C5', 1], ['A4', 1], ['G4', 1], ['E4', 1], ['D4', 2], ['D4', 2],
 ];
 const BASSE = ['D3', 'A3', 'D3', 'A3', 'C3', 'G3', 'C3', 'G3', 'D3', 'A3', 'D3', 'A3', 'C3', 'G3', 'D3', 'D3'];
-const TEMPS = 0.36;
 let boucle = 0;
 let maitre: GainNode | null = null;
+let tempete = false; // manche 10 : plus rapide, plus grave, plus tendu
 
 function jouerBoucle() {
   if (!ctx || !maitre) return;
+  const TEMPS = tempete ? 0.27 : 0.36;
+  const ton = tempete ? 0.84 : 1;
   let t = 0.05;
-  for (const [n, d] of MELODIE) { note(N[n], t, d * TEMPS * 0.9, 0.5, 'triangle', maitre); t += d * TEMPS; }
-  BASSE.forEach((n, i) => note(N[n], 0.05 + i * 2 * TEMPS, 1.6 * TEMPS, 0.35, 'sine', maitre!));
+  for (const [n, d] of MELODIE) { note(N[n] * ton, t, d * TEMPS * 0.9, 0.5, tempete ? 'sawtooth' : 'triangle', maitre); t += d * TEMPS; }
+  BASSE.forEach((n, i) => note(N[n] * ton * (tempete ? 0.5 : 1), 0.05 + i * 2 * TEMPS, 1.6 * TEMPS, tempete ? 0.5 : 0.35, 'sine', maitre!));
   boucle = window.setTimeout(jouerBoucle, (t + 2 * TEMPS) * 1000);
 }
 
@@ -106,6 +114,7 @@ export const musique = {
     }
     maitre = null;
   },
+  tempete(v: boolean) { tempete = v; },
   basculer(): boolean {
     const v = !musique.active();
     try { localStorage.setItem(CLE_MUSIQUE, v ? '1' : '0'); } catch { /* stockage indisponible */ }
@@ -124,3 +133,10 @@ export function vibrer(ms = 60) {
   if (!vibrations.actives()) return;
   try { navigator.vibrate?.(ms); } catch { /* non disponible (iPhone) */ }
 }
+
+// Aide à la mise (indice « ta main vaut environ N plis »), activée par défaut.
+const CLE_AIDE = 'skull-aide-mise';
+export const aideMise = {
+  active(): boolean { try { return localStorage.getItem(CLE_AIDE) !== '0'; } catch { return true; } },
+  regler(v: boolean) { try { localStorage.setItem(CLE_AIDE, v ? '1' : '0'); } catch { /* stockage indisponible */ } },
+};

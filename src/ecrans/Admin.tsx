@@ -83,7 +83,7 @@ function Joueurs({ moi, action }: { moi: string; action: Action }) {
           return (
             <li key={p.id} className={p.banni ? 'banni' : ''}>
               <button type="button" className="admin-ligne" onClick={() => { setOuvert(ouvert === p.id ? null : p.id); setNouveauPseudo(p.pseudo); }}>
-                <Avatar photo={p.photo_url} taille={44} />
+                <Avatar photo={p.photo_url} taille={44} cadre={p.cadre} />
                 <span className="cl-nom">
                   <strong>{p.pseudo}{p.est_admin ? ' ⚓' : ''}{p.banni ? ' · banni' : ''}</strong>
                   <small>Niv. {n} · {grade(n)} · {p.parties_jouees} parties · {p.victoires} victoires</small>

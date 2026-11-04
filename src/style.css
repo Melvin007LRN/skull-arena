@@ -624,3 +624,83 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .toast-boutons .bouton-or { width: auto; padding: 0 16px; }
 .toast-boutons .lien { margin: 0; padding: 6px; }
 @keyframes descendre { from { opacity: 0; transform: translate(-50%, -30px); } }
+
+/* ---------- Cadres d'avatar ---------- */
+.avatar::after { content: ''; position: absolute; inset: 9%; border-radius: 50%; pointer-events: none; }
+.avatar.cadre-bronze .avatar-cadre { filter: sepia(1) hue-rotate(-18deg) saturate(1.4) brightness(0.78); }
+.avatar.cadre-argent .avatar-cadre { filter: grayscale(1) brightness(1.3) contrast(1.1); }
+.avatar.cadre-capitaine .avatar-cadre { filter: saturate(1.4) brightness(1.15); }
+.avatar.cadre-capitaine::after { box-shadow: 0 0 10px 2px #fff3c4aa; }
+.avatar.cadre-amiral .avatar-cadre { filter: hue-rotate(185deg) saturate(1.5) brightness(1.1); }
+.avatar.cadre-amiral::after { box-shadow: 0 0 12px 3px #ffd979aa, inset 0 0 8px #ffd97966; }
+.avatar.cadre-legende .avatar-cadre { filter: saturate(1.6) brightness(1.2); animation: lueur-or 2.2s ease-in-out infinite; }
+.avatar.cadre-legende::after { animation: halo-or 2.2s ease-in-out infinite; }
+.avatar.cadre-centurion .avatar-cadre { filter: hue-rotate(-30deg) saturate(1.8) brightness(0.95); }
+.avatar.cadre-centurion::after { box-shadow: 0 0 10px 2px #ff7a3d88; }
+.avatar.cadre-devin .avatar-cadre { filter: hue-rotate(230deg) saturate(1.6) brightness(1.05); }
+.avatar.cadre-devin::after { box-shadow: 0 0 14px 3px #b57bff99; animation: pulse-glow 2.6s ease-in-out infinite; }
+.avatar.cadre-regicide .avatar-cadre { filter: hue-rotate(-45deg) saturate(2) brightness(0.85); }
+.avatar.cadre-regicide::before { content: '👑'; position: absolute; z-index: 2; left: 50%; top: -14%; transform: translateX(-50%); font-size: 30%; }
+.avatar.cadre-fantome .avatar-cadre { filter: grayscale(1) brightness(1.6); opacity: 0.85; }
+.avatar.cadre-fantome .avatar-photo { opacity: 0.8; }
+.avatar.cadre-fantome::after { box-shadow: 0 0 16px 4px #d9f2ffaa; animation: pulse-glow 3s ease-in-out infinite; }
+.avatar.cadre-legende_mers .avatar-cadre { filter: hue-rotate(140deg) saturate(1.7) brightness(1.1); }
+.avatar.cadre-legende_mers::after { box-shadow: 0 0 12px 3px #47e0c288; }
+.avatar.cadre-rubis .avatar-cadre { filter: hue-rotate(-48deg) saturate(2.2) brightness(0.9); }
+.avatar.cadre-emeraude .avatar-cadre { filter: hue-rotate(75deg) saturate(1.8) brightness(0.95); }
+.avatar.cadre-saphir .avatar-cadre { filter: hue-rotate(175deg) saturate(2) brightness(0.95); }
+.avatar.cadre-corail .avatar-cadre { filter: hue-rotate(-25deg) saturate(1.5) brightness(1.15); }
+.avatar.cadre-obsidienne .avatar-cadre { filter: grayscale(1) brightness(0.5) contrast(1.6); }
+.avatar.cadre-obsidienne::after { box-shadow: 0 0 10px 2px #9b5cff77, inset 0 0 6px #9b5cff55; }
+.avatar.cadre-flamme .avatar-cadre { filter: hue-rotate(-30deg) saturate(2.2) brightness(1.1); }
+.avatar.cadre-flamme::after { animation: flamme 1.1s ease-in-out infinite alternate; }
+.avatar.cadre-abysses .avatar-cadre { filter: hue-rotate(160deg) saturate(1.6) brightness(0.85); }
+.avatar.cadre-abysses::after { animation: abysses 3s ease-in-out infinite; }
+.avatar.cadre-tresor .avatar-cadre { animation: tresor 4s linear infinite; }
+.avatar.cadre-tresor::after { box-shadow: 0 0 14px 3px #ffffff66; animation: pulse-glow 2s ease-in-out infinite; }
+@keyframes lueur-or { 50% { filter: saturate(1.9) brightness(1.45); } }
+@keyframes halo-or { 0%, 100% { box-shadow: 0 0 8px 2px #ffd97988; } 50% { box-shadow: 0 0 20px 6px #ffd979dd; } }
+@keyframes pulse-glow { 50% { opacity: 0.45; } }
+@keyframes flamme { from { box-shadow: 0 -2px 10px 2px #ff6a00aa, 0 0 4px #ffd000; } to { box-shadow: 0 -6px 18px 5px #ff3b00cc, 0 0 8px #ffd000; } }
+@keyframes abysses { 0%, 100% { box-shadow: 0 0 8px 2px #1fd1c066; } 50% { box-shadow: 0 0 18px 6px #1f7bd1aa; } }
+@keyframes tresor { from { filter: hue-rotate(0deg) saturate(1.8); } to { filter: hue-rotate(360deg) saturate(1.8); } }
+
+/* ---------- Louidors et boutique ---------- */
+.louidors { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: var(--or-clair); }
+.louidors small { font-weight: 400; color: #f3e6c8b3; }
+.louidors.grand { font-family: var(--titre); font-size: 30px; font-weight: 400; }
+.louidors.grand small { font-size: 16px; }
+.piece-or { display: inline-block; width: 1em; height: 1em; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 35% 30%, #fff6c9, #ffd979 30%, #c98d22 70%, #7a5216); box-shadow: inset 0 0 0 1.5px #a8741f, 0 0 6px #ffd97966; }
+.ecran-boutique { gap: 12px; }
+.solde { display: flex; justify-content: center; }
+.grille-objets { list-style: none; margin: 10px 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grille-objets li { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px; border-radius: 12px; background: #0a0704; border: 1px solid #e3b04b33; text-align: center; }
+.grille-objets strong { font-size: 13px; }
+.grille-objets small { font-size: 11px; color: #f3e6c8b3; }
+.objet-icone { font-size: 34px; line-height: 1.1; }
+.objet-achats { display: flex; gap: 4px; width: 100%; }
+.objet-achats button { flex: 1; min-height: 38px !important; padding: 0 4px !important; font-size: 12px !important; }
+.grille-cadres { list-style: none; margin: 10px 0 16px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grille-cadres li { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 12px; background: #0a0704; border: 1px solid #e3b04b33; text-align: center; }
+.grille-cadres li.equipe { border-color: #ffd979; box-shadow: 0 0 12px #e3b04b55; }
+.grille-cadres li.verrouille .avatar { filter: grayscale(1) brightness(0.55); }
+.grille-cadres strong { font-size: 13px; }
+.grille-cadres small { font-size: 11px; color: #f3e6c8b3; }
+.grille-cadres button { width: 100% !important; min-height: 38px !important; font-size: 12px !important; }
+.coffre { list-style: none; margin: 8px 0 14px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.coffre li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #0a0704; border: 1px solid #e3b04b22; }
+.coffre li .objet-icone { font-size: 24px; }
+.coffre li strong { margin-left: auto; color: var(--or-clair); }
+.cadre-actuel { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+/* ---------- Défis du jour ---------- */
+.defis-jour { padding: 14px; border-radius: 16px; background: linear-gradient(180deg, #1e1308ee, #0b0805ee); border: 1px solid #e3b04b77; }
+.defis-titre { margin: 0 0 8px; font-family: var(--titre); font-size: 24px; color: var(--or-clair); text-align: center; }
+.defis-jour ul { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.defis-jour li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #0a0704; border: 1px solid #e3b04b22; }
+.defis-jour li.reussi { border-color: #6fcf86aa; opacity: 0.75; }
+.defi-icone { font-size: 22px; width: 28px; text-align: center; }
+.defi-texte { flex: 1; font-size: 14px; }
+.defi-gain { font-size: 11px; color: var(--or-clair); white-space: nowrap; }
+.defis-jour > small { display: block; text-align: center; font-size: 11px; color: #f3e6c899; }

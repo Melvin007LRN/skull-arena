@@ -107,7 +107,7 @@ function LigneAmi({ ami, enLigne, children }: { ami: Ami; enLigne: boolean; chil
   return (
     <li>
       <span className="ami-avatar">
-        <Avatar photo={ami.photo_url} taille={46} />
+        <Avatar photo={ami.photo_url} taille={46} cadre={ami.cadre} />
         <span className={`pastille-co ${enLigne ? 'en-ligne' : 'hors-ligne'}`} />
       </span>
       <span className="cl-nom">

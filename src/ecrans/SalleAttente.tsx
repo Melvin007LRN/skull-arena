@@ -71,7 +71,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
                   {amisDispo.map((a) => (
                     <li key={a.id}>
                       <span className="ami-avatar">
-                        <Avatar photo={a.photo_url} taille={40} />
+                        <Avatar photo={a.photo_url} taille={40} cadre={a.cadre} />
                         <span className={`pastille-co ${enLigne.has(a.id) ? 'en-ligne' : 'hors-ligne'}`} />
                       </span>
                       <span className="cl-nom"><strong>{a.pseudo}</strong><small>{enLigne.has(a.id) ? 'En ligne' : 'Hors ligne'}</small></span>
@@ -102,7 +102,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
           }
           return (
             <div key={m.joueur_id} className={`siege ${m.pret || m.joueur_id === salon.hote ? 'pret' : ''}`} style={style}>
-              <Avatar photo={m.photo_url} taille={58} alt={m.pseudo} />
+              <Avatar photo={m.photo_url} taille={58} alt={m.pseudo} cadre={m.cadre} />
               <span className="siege-nom">{m.joueur_id === salon.hote && '👑 '}{m.pseudo}</span>
               {suisHote && m.joueur_id !== moi && (
                 <button type="button" className="exclure"

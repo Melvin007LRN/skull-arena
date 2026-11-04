@@ -17,6 +17,7 @@ export interface MembreSalon {
   joueur_id: string;
   pseudo: string;
   photo_url: string | null;
+  cadre?: string | null;
   est_robot: boolean;
   pret: boolean;
   place: number;
@@ -32,6 +33,7 @@ export type VueJeu = VuePublique & {
   entrainement: boolean;
   annulee: boolean;
   rapide?: boolean;
+  stats?: Record<string, { sk: number; pir: number; q14n: number; q14: number; kraken: number }>;
 };
 
 /** Appelle l'arbitre. En cas de refus, lève une erreur avec le message en français. */

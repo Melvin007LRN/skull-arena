@@ -17,6 +17,8 @@ export interface Profil {
   regicides: number;
   fantomes: number;
   badges: string[];
+  louidors: number;
+  cadre: string | null;
 }
 
 export const PSEUDO_REGEX = /^[A-Za-z0-9_\-À-ÿ]{3,16}$/;
@@ -87,12 +89,12 @@ export async function chargerHistorique(joueur: string, limite = 10): Promise<Li
   return (data ?? []) as LigneHistorique[];
 }
 
-export type LigneClassement = Pick<Profil, 'id' | 'pseudo' | 'photo_url' | 'xp' | 'parties_jouees' | 'victoires' | 'points_total' | 'meilleur_score' | 'mises_reussies' | 'mises_total'> & { pm: number };
+export type LigneClassement = Pick<Profil, 'id' | 'pseudo' | 'photo_url' | 'cadre' | 'xp' | 'parties_jouees' | 'victoires' | 'points_total' | 'meilleur_score' | 'mises_reussies' | 'mises_total'> & { pm: number };
 
 /** Classement permanent : joueurs ayant au moins 5 parties, triés par points moyens (PM), puis victoires. */
 export async function chargerClassement(): Promise<LigneClassement[]> {
   const { data, error } = await supabase.from('profils')
-    .select('id, pseudo, photo_url, xp, parties_jouees, victoires, points_total, meilleur_score, mises_reussies, mises_total')
+    .select('id, pseudo, photo_url, cadre, xp, parties_jouees, victoires, points_total, meilleur_score, mises_reussies, mises_total')
     .eq('banni', false).gte('parties_jouees', PARTIES_AVANT_CLASSEMENT).limit(1000);
   if (error) throw error;
   return ((data ?? []) as Omit<LigneClassement, 'pm'>[])
@@ -157,4 +159,36 @@ export async function supprimerMonCompte(userId: string): Promise<void> {
   const { error } = await supabase.rpc('supprimer_mon_compte');
   if (error) throw error;
   await supabase.auth.signOut();
+}
+
+export interface LigneSaison { id: string; pseudo: string; photo_url: string | null; cadre: string | null; xp: number; parties: number; victoires: number; pm: number }
+
+/** Classement de la saison (mois en cours) : au moins 3 parties ce mois-ci. */
+export async function chargerClassementSaison(): Promise<LigneSaison[]> {
+  const { data, error } = await supabase.rpc('classement_saison');
+  if (error) throw error;
+  return (data ?? []) as LigneSaison[];
+}
+
+export const nomSaison = () => new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'Europe/Paris' });
+
+// ---------- Défis du jour ----------
+export const DEFIS: Record<string, { icone: string; texte: string }> = {
+  mise_zero: { icone: '🫥', texte: 'Réussis une mise de 0' },
+  mise_haute: { icone: '🎯', texte: 'Réussis une mise de 4 plis ou plus' },
+  six_mises: { icone: '🔮', texte: 'Réussis au moins 6 mises dans une partie' },
+  victoire: { icone: '👑', texte: 'Gagne une partie' },
+  podium: { icone: '🥉', texte: 'Termine sur le podium (3 joueurs ou plus)' },
+  quatorze_noir: { icone: '🏴‍☠️', texte: 'Capture le 14 noir' },
+  regicide: { icone: '🧜', texte: 'Capture le Skull King avec une Sirène' },
+  chasseur: { icone: '💀', texte: 'Capture un Pirate avec le Skull King' },
+  bonus_50: { icone: '💰', texte: 'Marque 50 points de bonus dans une partie' },
+  deux_cents: { icone: '🔥', texte: 'Termine une partie avec 200 points ou plus' },
+};
+
+export async function chargerDefisDuJour(): Promise<Array<{ id: string; reussi: boolean }>> {
+  const [{ data: ids }, { data: jour }] = await Promise.all([supabase.rpc('defis_du_jour'), supabase.rpc('jour_paris')]);
+  const { data: faits } = await supabase.from('defis_reussis').select('defi').eq('jour', jour as string);
+  const reussis = new Set(((faits ?? []) as Array<{ defi: string }>).map((f) => f.defi));
+  return ((ids ?? []) as string[]).map((id) => ({ id, reussi: reussis.has(id) }));
 }

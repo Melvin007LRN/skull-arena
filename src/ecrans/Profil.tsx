@@ -64,7 +64,7 @@ export function EcranProfil({ profil, retour, recharger }: { profil: Profil; ret
 
       <section className="parchemin profil-entete">
         <button type="button" className="photo-modifiable" onClick={() => fichier.current?.click()} disabled={enCours}>
-          <Avatar photo={profil.photo_url} taille={128} alt={profil.pseudo} />
+          <Avatar photo={profil.photo_url} taille={128} alt={profil.pseudo} cadre={profil.cadre} />
           <span className="photo-crayon">Changer la photo</span>
         </button>
         <input ref={fichier} type="file" accept="image/*" hidden
@@ -101,6 +101,7 @@ export function EcranProfil({ profil, retour, recharger }: { profil: Profil; ret
           <Stat libelle="PM" valeur={pm ?? '—'} aide="Points moyens par partie" />
           <Stat libelle="Meilleur score" valeur={profil.meilleur_score ?? '—'} />
           <Stat libelle="Mises réussies" valeur={precision === null ? '—' : `${precision} %`} />
+          <Stat libelle="Louidors" valeur={profil.louidors ?? 0} />
         </div>
         {avantClassement > 0 && (
           <p className="petit-texte centre">

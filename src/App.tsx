@@ -14,6 +14,7 @@ import { EcranReglages } from './ecrans/Reglages.tsx';
 import { EcranAdmin } from './ecrans/Admin.tsx';
 import { EcranLegal, type PageLegale } from './ecrans/Legal.tsx';
 import { EcranAmis } from './ecrans/Amis.tsx';
+import { EcranBoutique } from './ecrans/Boutique.tsx';
 import { demarrerPresence, useInvitations } from './lib/amis.ts';
 import { appel, salonEnCours } from './lib/jeu.ts';
 
@@ -25,6 +26,7 @@ type Ecran =
   | { nom: 'reglages' }
   | { nom: 'admin' }
   | { nom: 'amis' }
+  | { nom: 'boutique' }
   | { nom: 'legal'; page: PageLegale; retour: Ecran }
   | { nom: 'lobby'; mode: 'jouer' | 'code' | 'entrainement' }
   | { nom: 'salon'; id: string };
@@ -117,6 +119,7 @@ export function App() {
   if (ecran.nom === 'salon') return <EcranSalon key={ecran.id} salonId={ecran.id} moi={profil.id} sortir={sortirDuSalon} />;
   if (ecran.nom === 'classement') return <EcranClassement profil={profil} retour={versAccueil} />;
   if (ecran.nom === 'regles') return <EcranRegles retour={versAccueil} />;
+  if (ecran.nom === 'boutique') return <EcranBoutique profil={profil} retour={versAccueil} recharger={recharger} />;
   if (ecran.nom === 'amis') return <EcranAmis moi={profil.id} retour={versAccueil} />;
   if (ecran.nom === 'admin') return <EcranAdmin profil={profil} retour={() => setEcran({ nom: 'reglages' })} />;
   if (ecran.nom === 'legal') {
@@ -133,7 +136,8 @@ export function App() {
     <Accueil profil={profil} ouvrirProfil={() => setEcran({ nom: 'profil' })}
       ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} ouvrirClassement={() => setEcran({ nom: 'classement' })}
       ouvrirRegles={() => setEcran({ nom: 'regles' })} ouvrirReglages={() => setEcran({ nom: 'reglages' })}
-      ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: ACCUEIL })} ouvrirAmis={() => setEcran({ nom: 'amis' })} />
+      ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: ACCUEIL })} ouvrirAmis={() => setEcran({ nom: 'amis' })}
+      ouvrirBoutique={() => setEcran({ nom: 'boutique' })} />
   );
   }
 }

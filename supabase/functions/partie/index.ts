@@ -3,7 +3,7 @@
 // Les robots jouent ici aussi, avec des pauses pour que les joueurs suivent la partie.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
-  creerPartie, appliquer, actionRobot, joueurActif, ErreurRegle, vuePublique, vuePrivee, carteParId,
+  creerPartie, appliquer, actionRobot, joueurActif, ErreurRegle, vuePublique, vuePrivee, carteParId, role,
   type Action, type EtatPartie,
 } from './engine/index.ts';
 
@@ -89,10 +89,10 @@ async function traiter(moi: string, c: any): Promise<unknown> {
 // ---------- Profils et salons ----------
 
 async function profil(moi: string) {
-  const p = verifier(await db.from('profils').select('pseudo, photo_url, banni').eq('id', moi).maybeSingle());
+  const p = verifier(await db.from('profils').select('pseudo, photo_url, banni, cadre').eq('id', moi).maybeSingle());
   if (!p) throw new Refus('Profil introuvable.');
   if (p.banni) throw new Refus('Ton compte a été banni.');
-  return p as { pseudo: string; photo_url: string | null };
+  return p as { pseudo: string; photo_url: string | null; cadre: string | null };
 }
 
 interface SalonLigne { id: string; code: string; public: boolean; hote: string; statut: string; entrainement: boolean }
@@ -142,7 +142,7 @@ async function nouveauSalon(moi: string, estPublic: boolean, entrainementSolo: b
     if (res.error?.code === '23505') continue;
     const s = verifier(res);
     verifier(await db.from('salon_joueurs').insert({
-      salon_id: s.id, joueur_id: moi, pseudo: p.pseudo, photo_url: p.photo_url, place: 0, pret: true,
+      salon_id: s.id, joueur_id: moi, pseudo: p.pseudo, photo_url: p.photo_url, cadre: p.cadre, place: 0, pret: true,
     }));
     return { salon_id: s.id as string, code: s.code as string };
   }
@@ -186,7 +186,7 @@ async function rejoindre(moi: string, codeBrut: string) {
   const p = await profil(moi);
   await quitterAutresSalonsEnAttente(moi, s.id);
   const place = liste.reduce((m, j) => Math.max(m, j.place), -1) + 1;
-  verifier(await db.from('salon_joueurs').insert({ salon_id: s.id, joueur_id: moi, pseudo: p.pseudo, photo_url: p.photo_url, place }));
+  verifier(await db.from('salon_joueurs').insert({ salon_id: s.id, joueur_id: moi, pseudo: p.pseudo, photo_url: p.photo_url, cadre: p.cadre, place }));
   verifier(await db.from('salons').update({ maj_le: new Date().toISOString() }).eq('id', s.id));
   return { salon_id: s.id, code: s.code };
 }
@@ -294,7 +294,11 @@ interface Extra {
   rapide: boolean; // entraînement : robots rapides
   aideRobot: string[]; // humains qu'un robot a aidés au moins une fois (pas de badge « Devin » ni « Légende »)
   regicides: Record<string, number>; // Skull King capturés avec une Sirène, joués soi-même
+  stats: Record<string, StatsJoueur>; // exploits de la partie (résumé de fin, défis du jour)
 }
+
+interface StatsJoueur { sk: number; pir: number; q14n: number; q14: number; kraken: number }
+const statsVides = (): StatsJoueur => ({ sk: 0, pir: 0, q14n: 0, q14: 0, kraken: 0 });
 
 function ajouter(liste: string[], x: string) {
   if (!liste.includes(x)) liste.push(x);
@@ -304,7 +308,7 @@ function normaliser(extra: Partial<Extra>): Extra {
   return {
     continuer: [], debutManche: new Date().toISOString(), robots: [], remplaces: [], definitifs: [], retours: [],
     abandons: [], exclus: [], humainsAuDepart: 0, entrainement: false, annulee: false, finPliA: 0, rapide: false,
-    aideRobot: [], regicides: {}, ...extra,
+    aideRobot: [], regicides: {}, stats: {}, ...extra,
   };
 }
 
@@ -315,7 +319,7 @@ function vueComplete(etat: EtatPartie, extra: Extra, partieId: string) {
     ...vuePublique(etat), partieId,
     continuer: extra.continuer, debutManche: extra.debutManche,
     robots: extra.robots, remplaces: extra.remplaces, definitifs: extra.definitifs,
-    entrainement: extra.entrainement, annulee: extra.annulee, rapide: extra.rapide,
+    entrainement: extra.entrainement, annulee: extra.annulee, rapide: extra.rapide, stats: extra.stats,
   };
 }
 
@@ -344,6 +348,24 @@ function apresCoup(avant: EtatPartie, suite: EtatPartie, extra: Extra) {
   if (suite.numeroPli + suite.manche * 100 === avant.numeroPli + avant.manche * 100 || !suite.dernierPli) return;
   extra.finPliA = Date.now();
   const { cartes, resultat } = suite.dernierPli;
+  const st = (j: string) => (extra.stats[j] ??= statsVides());
+  if (resultat.effet === 'kraken') {
+    const k = cartes.find((c) => carteParId(c.carteId).type === 'kraken');
+    if (k) st(k.joueur).kraken += 1;
+  }
+  if (resultat.gagnant && resultat.effet !== 'kraken') {
+    for (const c of cartes) {
+      const carte = carteParId(c.carteId);
+      if (carte.type === 'numero' && carte.valeur === 14) {
+        if (carte.couleur === 'noir') st(resultat.gagnant).q14n += 1; else st(resultat.gagnant).q14 += 1;
+      }
+    }
+  }
+  if (resultat.effet === 'normal' && resultat.gagnant && resultat.indexGagnant !== null) {
+    const g = carteParId(cartes[resultat.indexGagnant].carteId);
+    if (g.type === 'sirene' && cartes.some((c) => carteParId(c.carteId).type === 'skull_king')) st(resultat.gagnant).sk += 1;
+    if (g.type === 'skull_king') st(resultat.gagnant).pir += cartes.filter((c) => role(c) === 'pirate').length;
+  }
   if (resultat.effet !== 'normal' || !resultat.gagnant || resultat.indexGagnant === null) return;
   const gagnante = carteParId(cartes[resultat.indexGagnant].carteId);
   const skullDedans = cartes.some((c) => carteParId(c.carteId).type === 'skull_king');
@@ -353,6 +375,7 @@ function apresCoup(avant: EtatPartie, suite: EtatPartie, extra: Extra) {
 }
 
 const XP_PAR_RANG = [100, 70, 50, 30];
+const OR_PAR_RANG = [50, 35, 25, 15]; // Louidors : la moitié de l'XP
 
 /** Résultats de fin de partie pour chaque humain (XP, statistiques, badges). */
 function resultats(etat: EtatPartie, extra: Extra) {
@@ -366,14 +389,30 @@ function resultats(etat: EtatPartie, extra: Extra) {
     const rang = rangDe(j);
     const victoire = rang === 1 && !partis.has(j);
     const xp = victoire ? 100 : rang === pire ? 10 : XP_PAR_RANG[rang - 1] ?? 10;
-    const lignes = etat.historique.map((m) => m.find((x) => x.joueur === j)).filter(Boolean) as Array<{ mise: number; reussie: boolean }>;
+    const louidors = victoire ? 50 : rang === pire ? 10 : OR_PAR_RANG[rang - 1] ?? 10;
+    const lignes = etat.historique.map((m) => m.find((x) => x.joueur === j)).filter(Boolean) as Array<{ mise: number; reussie: boolean; bonus: number; alliances: number }>;
     const reussies = lignes.filter((l) => l.reussie).length;
     const seul = !extra.aideRobot.includes(j);
     const badges: string[] = [];
     if (seul && lignes.length === 10 && reussies === 10) badges.push('devin');
     if (seul && scoreDe(j) >= 500) badges.push('legende');
     const m10 = etat.historique[9]?.find((x) => x.joueur === j);
+    const st = extra.stats[j] ?? statsVides();
+    const bonusTotal = lignes.reduce((t, l) => t + l.bonus + l.alliances, 0);
+    const defis = !seul || partis.has(j) ? [] : [
+      lignes.some((l) => l.mise === 0 && l.reussie) && 'mise_zero',
+      lignes.some((l) => l.mise >= 4 && l.reussie) && 'mise_haute',
+      reussies >= 6 && 'six_mises',
+      victoire && 'victoire',
+      nb >= 3 && rang <= 3 && 'podium',
+      st.q14n > 0 && 'quatorze_noir',
+      st.sk > 0 && 'regicide',
+      st.pir > 0 && 'chasseur',
+      bonusTotal >= 50 && 'bonus_50',
+      scoreDe(j) >= 200 && 'deux_cents',
+    ].filter(Boolean);
     return {
+      louidors, defis,
       joueur: j, rang, nb, score: scoreDe(j), xp, victoire, abandon: partis.has(j),
       mises_reussies: reussies, mises_total: lignes.length,
       regicides: extra.regicides[j] ?? 0, fantomes: seul && m10 && m10.mise === 0 && m10.reussie ? 1 : 0,

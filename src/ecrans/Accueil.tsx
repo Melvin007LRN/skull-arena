@@ -2,7 +2,8 @@
 // avec une phrase d'accroche. Les sections apparaissent en douceur au défilement.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
-import { chargerClassement, grade, niveau, type LigneClassement } from '../lib/profil.ts';
+import { chargerClassement, chargerClassementSaison, chargerDefisDuJour, DEFIS, grade, niveau, nomSaison } from '../lib/profil.ts';
+import { Louidors } from './Boutique.tsx';
 import { Avatar } from '../composants/Avatar.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
 
@@ -22,12 +23,21 @@ const ACCROCHES = [
   'Le Skull King n’attend que toi.',
 ];
 
-export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirLegal, ouvrirAmis }: {
+export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirLegal, ouvrirAmis, ouvrirBoutique }: {
   profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
-  ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void;
+  ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirBoutique: () => void; ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void;
 }) {
-  const [numeroUn, setNumeroUn] = useState<LigneClassement | null>(null);
-  useEffect(() => { chargerClassement().then((l) => setNumeroUn(l[0] ?? null)).catch(() => {}); }, []);
+  // Avis de recherche : le numéro 1 de la saison (sinon celui du classement permanent).
+  const [numeroUn, setNumeroUn] = useState<{ id: string; pseudo: string; photo_url: string | null; cadre: string | null; pm: number; victoires: number; saison: boolean } | null>(null);
+  const [defis, setDefis] = useState<Array<{ id: string; reussi: boolean }>>([]);
+  useEffect(() => {
+    chargerClassementSaison().then(async (s) => {
+      if (s[0]) return setNumeroUn({ ...s[0], saison: true });
+      const l = await chargerClassement();
+      setNumeroUn(l[0] ? { ...l[0], saison: false } : null);
+    }).catch(() => {});
+    chargerDefisDuJour().then(setDefis).catch(() => {});
+  }, []);
   const [reduit, setReduit] = useState(false);
   const [bientot, setBientot] = useState<string | null>(null);
   const [accroche, setAccroche] = useState(0);
@@ -72,6 +82,10 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       phrase: 'Ajoute tes amis, vois qui est à bord et invite-les dans ton salon d’un seul geste.',
     },
     {
+      id: 'boutique', titre: 'La boutique du port', image: '/cartes/butin_1.webp', cadrage: '50% 30%', action: ouvrirBoutique,
+      phrase: 'Dépense tes Louidors : tomates, mouchoirs, boulets… et des cadres pour briller à table.',
+    },
+    {
       id: 'profil', titre: 'Mon pirate', image: '/cartes/pirate_harry.webp', cadrage: '50% 20%', action: ouvrirProfil,
       phrase: 'Ton visage, ton nom, tes trophées : forge ta légende.',
     },
@@ -97,17 +111,36 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
 
       <Apparition>
         <button type="button" className="carte-joueur" onClick={ouvrirProfil}>
-          <Avatar photo={profil.photo_url} taille={68} />
+          <Avatar photo={profil.photo_url} taille={68} cadre={profil.cadre} />
           <span className="carte-joueur-texte">
             <small>Bienvenue à bord,</small>
             <strong>{profil.pseudo}</strong>
             <span>Niveau {n} · {grade(n)}</span>
+            <Louidors montant={profil.louidors ?? 0} />
           </span>
           <span className="fleche">›</span>
         </button>
       </Apparition>
 
       <InstallerAppli compact />
+
+      {defis.length > 0 && (
+        <Apparition>
+          <section className="defis-jour">
+            <p className="defis-titre">⚓ Défis du jour</p>
+            <ul>
+              {defis.map((d) => (
+                <li key={d.id} className={d.reussi ? 'reussi' : ''}>
+                  <span className="defi-icone">{d.reussi ? '✅' : DEFIS[d.id]?.icone}</span>
+                  <span className="defi-texte">{DEFIS[d.id]?.texte ?? d.id}</span>
+                  <span className="defi-gain">{d.reussi ? 'Réussi' : '+20 XP · +15'}</span>
+                </li>
+              ))}
+            </ul>
+            <small>En partie en ligne uniquement · nouveaux défis chaque jour à minuit</small>
+          </section>
+        </Apparition>
+      )}
 
       {entrees.map((e, i) => (
         <Apparition key={e.id} delai={i === 0 ? 0 : 60}>
@@ -128,11 +161,11 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         <section className="avis-recherche">
           <p className="avis-titre">AVIS DE RECHERCHE</p>
           <p className="avis-sous-titre">Mort ou vif</p>
-          <div className="avis-portrait"><Avatar photo={numeroUn?.photo_url ?? null} taille={130} /></div>
+          <div className="avis-portrait"><Avatar photo={numeroUn?.photo_url ?? null} taille={130} cadre={numeroUn?.cadre} /></div>
           <p className="avis-nom">{numeroUn ? numeroUn.pseudo : 'Le pirate à abattre'}</p>
           <p className="avis-detail">
             {numeroUn
-              ? <>Numéro 1 du classement · {numeroUn.pm} PM · {numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
+              ? <>Numéro 1 {numeroUn.saison ? `de la saison de ${nomSaison()}` : 'du classement'} · {numeroUn.pm} PM · {numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
               : 'Le numéro 1 du classement sera affiché ici. Détrône-le et prends sa place.'}
           </p>
         </section>

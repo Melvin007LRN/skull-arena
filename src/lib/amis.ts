@@ -33,7 +33,7 @@ export function useEnLigne(): Set<string> {
 }
 
 // ---------- Liste d'amis ----------
-export interface Ami { id: string; pseudo: string; photo_url: string | null; xp: number; statut: 'attente' | 'acceptee'; recue: boolean }
+export interface Ami { id: string; pseudo: string; photo_url: string | null; cadre: string | null; xp: number; statut: 'attente' | 'acceptee'; recue: boolean }
 
 export function useAmis(moi: string) {
   const [amis, setAmis] = useState<Ami[] | null>(null);
@@ -43,8 +43,8 @@ export function useAmis(moi: string) {
     const liens = (data ?? []) as Array<{ demandeur: string; destinataire: string; statut: 'attente' | 'acceptee' }>;
     const autres = liens.map((l) => (l.demandeur === moi ? l.destinataire : l.demandeur));
     if (autres.length === 0) return setAmis([]);
-    const { data: profils } = await supabase.from('profils').select('id, pseudo, photo_url, xp').in('id', autres);
-    const parId = new Map(((profils ?? []) as Array<Pick<Ami, 'id' | 'pseudo' | 'photo_url' | 'xp'>>).map((p) => [p.id, p]));
+    const { data: profils } = await supabase.from('profils').select('id, pseudo, photo_url, cadre, xp').in('id', autres);
+    const parId = new Map(((profils ?? []) as Array<Pick<Ami, 'id' | 'pseudo' | 'photo_url' | 'cadre' | 'xp'>>).map((p) => [p.id, p]));
     setAmis(liens.flatMap((l) => {
       const autre = l.demandeur === moi ? l.destinataire : l.demandeur;
       const p = parId.get(autre);

@@ -1,11 +1,13 @@
 // Branche l'écran de jeu sur le serveur : état en temps réel, coups, réveil des robots, phrases rapides.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '../lib/supabase.ts';
+import { supabase, messageErreur } from '../lib/supabase.ts';
 import { appel, usePartie, type MembreSalon } from '../lib/jeu.ts';
 import { TableJeu } from './TableJeu.tsx';
 import { creerPaquet } from '../engine/cards.ts';
 import { niveau } from '../lib/profil.ts';
 import { usePhrases } from '../lib/phrases.ts';
+import { chargerInventaire, utiliserObjet } from '../lib/boutique.ts';
+import { son } from '../lib/sons.ts';
 import './jeu.css';
 
 const ANTI_SPAM_MS = 3000;
@@ -35,7 +37,12 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   const canalChat = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const dernierEnvoi = useRef(0);
   const [presents, setPresents] = useState<string[] | undefined>(undefined);
-  const [gain, setGain] = useState<{ xp: number; niveauAvant: number; niveauApres: number } | null>(null);
+  const [lancers, setLancers] = useState<Array<{ id: number; de: string; a: string; objet: string }>>([]);
+  const [reactions, setReactions] = useState<Array<{ cle: number; de: string; emoji: string }>>([]);
+  const [inventaire, setInventaire] = useState<Record<string, number>>({});
+  const dernierEmoji = useRef(0);
+  const [gain, setGain] = useState<{ xp: number; louidors: number; niveauAvant: number; niveauApres: number } | null>(null);
+  const [bilan, setBilan] = useState<Array<{ adversaire: string; mes_victoires: number; ses_victoires: number; parties: number }>>([]);
 
   // Les joueurs qui quittent la table après la partie gardent leur nom à l'écran.
   const connus = useRef(new Map<string, MembreSalon>());
@@ -67,6 +74,32 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     }
   }, [partieId]);
 
+  // Objets lancés : enregistrés (et payés) par le serveur, reçus en temps réel par toute la table.
+  useEffect(() => {
+    chargerInventaire().then(setInventaire).catch(() => {});
+    const canal = supabase.channel(`lancers-${partieId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lancers', filter: `partie_id=eq.${partieId}` }, ({ new: l }) => {
+        const ligne = l as { id: number; de: string; a: string; objet: string };
+        setLancers((x) => [...x.slice(-5), ligne]);
+        setTimeout(() => son.impact(), 850);
+        setTimeout(() => setLancers((x) => x.filter((y) => y.id !== ligne.id)), 3200);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(canal); };
+  }, [partieId]);
+
+  const lancerObjet = useCallback(async (objet: string, cible: string) => {
+    try {
+      const reste = await utiliserObjet(objet, partieId, cible);
+      setInventaire((i) => ({ ...i, [objet]: reste }));
+      return true;
+    } catch (e) {
+      setErreur(messageErreur(e));
+      setTimeout(() => setErreur(null), 3000);
+      return false;
+    }
+  }, [partieId]);
+
   // Fin de partie : XP gagnée (enregistrée par le serveur), avec passage de niveau éventuel.
   const comptee = vue?.phase === 'fin_partie' && !vue.annulee && !vue.entrainement;
   useEffect(() => {
@@ -74,11 +107,18 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     let essais = 0, fini = false;
     const chercher = async () => {
       const [{ data: h }, { data: p }] = await Promise.all([
-        supabase.from('historique_parties').select('xp_gagne').eq('partie_id', partieId).eq('joueur_id', moi).maybeSingle(),
+        supabase.from('historique_parties').select('xp_gagne, louidors_gagnes').eq('partie_id', partieId).eq('joueur_id', moi).maybeSingle(),
         supabase.from('profils').select('xp').eq('id', moi).maybeSingle(),
       ]);
       if (fini) return;
-      if (h && p) setGain({ xp: h.xp_gagne, niveauAvant: niveau(p.xp - h.xp_gagne), niveauApres: niveau(p.xp) });
+      if (h && p) {
+        setGain({ xp: h.xp_gagne, louidors: h.louidors_gagnes ?? 0, niveauAvant: niveau(p.xp - h.xp_gagne), niveauApres: niveau(p.xp) });
+        const autresHumains = (vue?.joueurs ?? []).filter((j) => j !== moi && !vue?.robots?.includes(j));
+        if (autresHumains.length) {
+          const { data } = await supabase.rpc('bilan_face_a_face', { autres: autresHumains });
+          setBilan((data ?? []) as typeof bilan);
+        }
+      }
       else if (++essais < 6) setTimeout(chercher, 1500);
     };
     const t = setTimeout(chercher, 1200);
@@ -116,6 +156,13 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     // Présence : qui a la table ouverte en ce moment (pastille verte / grise).
     canal.on('presence', { event: 'sync' }, () => setPresents(Object.keys(canal.presenceState())));
     let minuterie = 0;
+    canal.on('broadcast', { event: 'reaction' }, ({ payload }) => {
+      const { de, emoji } = payload as { de: string; emoji: string };
+      if (typeof emoji !== 'string' || emoji.length > 8) return;
+      const cle = Date.now() + Math.random();
+      setReactions((x) => [...x.slice(-8), { cle, de, emoji }]);
+      setTimeout(() => setReactions((x) => x.filter((y) => y.cle !== cle)), 2200);
+    });
     canal.on('broadcast', { event: 'phrase' }, ({ payload }) => {
       const { de, texte } = payload as { de: string; texte: string };
       if (!phrasesRef.current.includes(texte)) return;
@@ -126,6 +173,12 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     canalChat.current = canal;
     return () => { clearTimeout(minuterie); supabase.removeChannel(canal); };
   }, [partieId, moi]);
+
+  const envoyerReaction = useCallback((emoji: string) => {
+    if (Date.now() - dernierEmoji.current < 1500) return;
+    dernierEmoji.current = Date.now();
+    canalChat.current?.send({ type: 'broadcast', event: 'reaction', payload: { de: moi, emoji } });
+  }, [moi]);
 
   const envoyerPhrase = useCallback((texte: string) => {
     if (Date.now() - dernierEnvoi.current < ANTI_SPAM_MS) return;
@@ -161,7 +214,8 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
 
   return (
     <TableJeu
-      vue={vue} main={main} membres={tousMembres} moi={moi} hote={hote} gain={gain} rejouer={rejouer}
+      vue={vue} main={main} membres={tousMembres} moi={moi} hote={hote} gain={gain} bilan={bilan} rejouer={rejouer}
+      lancers={lancers} reactions={reactions} inventaire={inventaire} lancerObjet={lancerObjet} envoyerReaction={envoyerReaction}
       enCours={enCours} erreur={erreur} bulle={bulle} phrases={phrases} presents={presents}
       envoyer={envoyer} envoyerPhrase={envoyerPhrase}
       quitter={async () => { try { await appel('abandonner', { partie_id: partieId }); } catch { /* déjà finie */ } sortir(); }}
