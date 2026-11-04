@@ -56,6 +56,9 @@ export function TableJeu(p: PropsTable) {
   const [effet, setEffet] = useState<null | 'skull' | 'kraken' | 'baleine'>(null);
   const [distribution, setDistribution] = useState(0);
   const [carteEnVol, setCarteEnVol] = useState<string | null>(null);
+  const [voirDernierPli, setVoirDernierPli] = useState(false);
+  const [muets, setMuets] = useState<string[]>([]);
+  const [juanitaFermee, setJuanitaFermee] = useState<string | null>(null);
   const mancheVue = useRef(0);
   const pliVu = useRef(0);
   const appui = useRef<{ id: string; x: number; y: number; t: number; minuterie: number } | null>(null);
@@ -102,7 +105,7 @@ export function TableJeu(p: PropsTable) {
 
   const etape = p.etapeForcee ?? etapePli;
   const pliAffiche = etape !== 'aucune';
-  const aMoi = vue.joueurActif === moi && !pliAffiche && decompte === 0 && !piloteParRobot(moi);
+  const aMoi = vue.joueurActif === moi && !pliAffiche && decompte === 0 && !piloteParRobot(moi) && !carteEnVol;
 
   // Son + vibration quand c'est mon tour
   useEffect(() => {
@@ -119,6 +122,13 @@ export function TableJeu(p: PropsTable) {
   useEffect(() => { if (nbPoses > 0 && dernierPoseur !== moi) son.carte(); }, [nbPoses, dernierPoseur, moi]);
 
   useEffect(() => { setDefausse([]); }, [vue.pouvoir?.type, vue.numeroPli]);
+
+  const cleJuanita = main.revelationJuanita ? `${vue.manche}-${vue.numeroPli}` : null;
+  useEffect(() => {
+    if (!cleJuanita) return;
+    const t = setTimeout(() => setJuanitaFermee(cleJuanita), 15000);
+    return () => clearTimeout(t);
+  }, [cleJuanita]);
   useEffect(() => { if (!aMoi) setSelection(null); }, [aMoi]);
 
   // ---------- Places autour de la table ----------
@@ -236,6 +246,19 @@ export function TableJeu(p: PropsTable) {
   const classement = [...vue.joueurs].sort((a, b) => vue.scores[b] - vue.scores[a]);
   const miseDe = (j: string) => (vue.mises ? vue.mises[j] + (vue.harry[j] ?? 0) : null);
 
+  // Petits badges sur l'avatar : alliance de Butin (avec qui) et pari de Rascal.
+  function Badges({ j }: { j: string }) {
+    const allies = vue.alliances.filter(([a, b]) => a === j || b === j).map(([a, b]) => (a === j ? b : a));
+    const pari = vue.rascal?.[j] ?? 0;
+    if (allies.length === 0 && !pari) return null;
+    return (
+      <span className="adv-badges">
+        {allies.length > 0 && <span title={`Alliance avec ${allies.map(pseudo).join(', ')}`}>🤝 {allies.map(pseudo).join(', ')}</span>}
+        {pari > 0 && <span title="Pari de Rascal">🎲 {pari}</span>}
+      </span>
+    );
+  }
+
   // ---------- Rendu ----------
   return (
     <div className="jeu" onPointerDown={debloquerSon}>
@@ -265,11 +288,12 @@ export function TableJeu(p: PropsTable) {
 
       {/* Table */}
       <section className="jeu-arene">
-        <div className={`jeu-table ${effet ? `effet-${effet}` : ''}`}>
+        <div className={`jeu-table ${effet ? `effet-${effet}` : ''}`}
+          onClick={(e) => { if (e.target === e.currentTarget && !pliAffiche && vue.dernierPli) setVoirDernierPli(true); }}>
           <div className="jeu-table-boussole" />
           {pliMontre.map((c, i) => (
             <figure key={`${vue.manche}-${c.carteId}`} className={`carte-pli ${resultat && resultat.indexGagnant === i ? 'gagnante' : ''} ${resultat && resultat.indexGagnant !== i ? 'perdante' : ''}`}
-              style={styleCartePli(c.joueur, i)} onClick={() => setZoom(c.carteId)}>
+              style={styleCartePli(c.joueur, i)} onClick={() => (!pliAffiche && vue.dernierPli && vue.pliEnCours.length === 0 ? setVoirDernierPli(true) : setZoom(c.carteId))}>
               <img src={`/cartes/${c.carteId}.webp`} alt="" draggable={false} />
               {c.tigresse && <span className="etiquette-tigresse">{c.tigresse === 'pirate' ? 'Pirate' : 'Fuite'}</span>}
             </figure>
@@ -282,7 +306,10 @@ export function TableJeu(p: PropsTable) {
             </p>
           )}
           {!pliAffiche && vue.phase === 'jeu' && pliMontre.length === 0 && (
-            <p className="indice-table">{aMoi ? 'À toi d’ouvrir le pli !' : `${pseudo(vue.joueurActif ?? '')} ouvre le pli…`}</p>
+            <p className="indice-table">
+              {aMoi ? 'À toi d’ouvrir le pli !' : `${pseudo(vue.joueurActif ?? '')} ouvre le pli…`}
+              {vue.dernierPli && <small>Touche la table pour revoir le dernier pli</small>}
+            </p>
           )}
           {vue.juanitaRegarde && vue.juanitaRegarde !== moi && (
             <p className="indice-table bas">🔮 {pseudo(vue.juanitaRegarde)} consulte les cartes non distribuées…</p>
@@ -305,6 +332,7 @@ export function TableJeu(p: PropsTable) {
                 {vue.joueurs.indexOf(j) === vue.couronne && <span className="adv-couronne">👑</span>}
                 <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} />
                 {vue.mises && <span className="adv-ruban">{vue.plisGagnes[j]}/{miseDe(j)}</span>}
+                <Badges j={j} />
                 {!vue.mises && vue.phase === 'mise' && <span className={`adv-ruban ${vue.aMise[j] ? 'ok' : 'attente'}`}>{vue.aMise[j] ? '✓' : '…'}</span>}
               </div>
               <div className="adv-nom">
@@ -321,7 +349,7 @@ export function TableJeu(p: PropsTable) {
         })}
 
         {/* Bulle de phrase rapide, au centre */}
-        {p.bulle && (
+        {p.bulle && !muets.includes(p.bulle.de) && (
           <div className="bulle-phrase" key={p.bulle.cle}>
             <strong>{pseudo(p.bulle.de)}</strong>
             <span>« {p.bulle.texte} »</span>
@@ -333,6 +361,7 @@ export function TableJeu(p: PropsTable) {
       <div className={`moi-coin ${aMoi ? 'actif' : ''}`}>
         <Avatar photo={photo(moi)} taille={56} />
         <span className="adv-ruban">{vue.mises ? `${vue.plisGagnes[moi]}/${miseDe(moi)}` : vue.aMise[moi] ? '✓' : '…'}</span>
+        <Badges j={moi} />
         {vue.joueurs.indexOf(moi) === vue.couronne && <span className="adv-couronne">👑</span>}
       </div>
 
@@ -381,6 +410,17 @@ export function TableJeu(p: PropsTable) {
           {p.phrases.map((t) => (
             <button key={t} type="button" onClick={() => { p.envoyerPhrase(t); setChatOuvert(false); }}>{t}</button>
           ))}
+          {autres.some((j) => !vue.robots?.includes(j)) && (
+            <div className="couper">
+              <small>Couper les phrases de :</small>
+              {autres.filter((j) => !vue.robots?.includes(j)).map((j) => (
+                <button key={j} type="button" className={muets.includes(j) ? 'coupe' : ''}
+                  onClick={() => setMuets((m) => (m.includes(j) ? m.filter((x) => x !== j) : [...m, j]))}>
+                  {muets.includes(j) ? '🔇' : '🔈'} {pseudo(j)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -446,9 +486,10 @@ export function TableJeu(p: PropsTable) {
       )}
       {!pliAffiche && vue.phase === 'harry' && !vue.harryEnAttente.includes(moi) && <p className="aide-geste discret">Harry le Géant réfléchit…</p>}
 
-      {main.revelationJuanita && (
-        <Fenetre titre="Juanita Jade" sousTitre="Les cartes non distribuées, pour tes yeux seulement">
+      {main.revelationJuanita && !pliAffiche && juanitaFermee !== cleJuanita && (
+        <Fenetre titre="Juanita Jade" sousTitre="Les cartes non distribuées, pour tes yeux seulement (15 secondes)">
           <div className="mini-cartes">{main.revelationJuanita.map((c) => <img key={c} src={`/cartes/${c}.webp`} alt={c} />)}</div>
+          <button type="button" className="bouton-or" onClick={() => setJuanitaFermee(cleJuanita)}>J’ai vu</button>
         </Fenetre>
       )}
 
@@ -531,6 +572,28 @@ export function TableJeu(p: PropsTable) {
           <button type="button" className="bouton-danger" onClick={p.quitter}>Oui, je quitte</button>
           <button type="button" className="lien" onClick={() => setConfirmQuitter(false)}>Non, je reste</button>
         </Fenetre>
+      )}
+
+      {voirDernierPli && vue.dernierPli && (
+        <div className="voile" onClick={() => setVoirDernierPli(false)}>
+          <section className="parchemin fenetre fenetre-large" onClick={(e) => e.stopPropagation()}>
+            <h2 className="titre-pirate">Dernier pli</h2>
+            <div className="dernier-pli">
+              {vue.dernierPli.cartes.map((c, i) => (
+                <figure key={c.carteId} className={vue.dernierPli!.resultat.indexGagnant === i ? 'gagnante' : ''}>
+                  <img src={`/cartes/${c.carteId}.webp`} alt={c.carteId} />
+                  <figcaption>{pseudo(c.joueur)}{c.tigresse ? ` (${c.tigresse})` : ''}</figcaption>
+                </figure>
+              ))}
+            </div>
+            <p className="centre">
+              {vue.dernierPli.resultat.effet === 'kraken' ? 'Le Kraken a englouti ce pli.'
+                : vue.dernierPli.resultat.gagnant ? `${pseudo(vue.dernierPli.resultat.gagnant)} a remporté ce pli.`
+                : 'La Baleine blanche a dispersé ce pli.'}
+            </p>
+            <button type="button" className="bouton-sombre" onClick={() => setVoirDernierPli(false)}>Fermer</button>
+          </section>
+        </div>
       )}
 
       {/* Agrandissement d'une carte (appui long) */}

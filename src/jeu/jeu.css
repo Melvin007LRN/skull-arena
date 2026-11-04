@@ -288,3 +288,18 @@
   .adv-dos { display: none; }
   .moi-coin .avatar { width: 46px !important; height: 46px !important; }
 }
+
+/* ---------- Audit : badges, dernier pli, couper un joueur ---------- */
+.adv-badges { position: absolute; z-index: 3; left: 50%; top: -6px; transform: translate(-50%, -100%); display: flex; gap: 4px; white-space: nowrap; }
+.adv-badges span { padding: 1px 6px; border-radius: 6px; background: #120c07e6; border: 1px solid var(--or-fonce); font-size: 10px; color: var(--or-clair); }
+.moi-coin .adv-badges { left: 0; transform: translateY(-100%); }
+.indice-table small { display: block; margin-top: 4px; font-size: 11px; color: #f3e6c899; text-align: center; }
+.jeu-table { cursor: pointer; }
+.dernier-pli { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.dernier-pli figure { margin: 0; width: 76px; text-align: center; }
+.dernier-pli img { width: 100%; border-radius: 6px; box-shadow: 0 4px 10px #000c; }
+.dernier-pli figure.gagnante img { box-shadow: 0 0 0 2px #fff3c4, 0 0 18px #ffd979; }
+.dernier-pli figcaption { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.couper { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #e3b04b33; }
+.couper small { font-size: 10px; color: #f3e6c8aa; text-align: center; }
+.couper button.coupe { opacity: 0.6; }
