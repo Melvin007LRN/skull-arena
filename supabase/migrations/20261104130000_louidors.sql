@@ -254,3 +254,23 @@ begin
     where id = (r->>'joueur')::uuid;
   end loop;
 end $$;
+
+-- L'admin a accès à tous les cadres à gagner.
+create or replace function public.cadres_gagnes(p public.profils) returns text[]
+  language sql stable as $$
+  select case when p.est_admin then
+    array['or','bronze','argent','capitaine','amiral','legende','centurion','devin','regicide','fantome','legende_mers']
+  else array_remove(array[
+    'or',
+    case when public.niveau_de(p.xp) >= 10 then 'bronze' end,
+    case when public.niveau_de(p.xp) >= 25 then 'argent' end,
+    case when public.niveau_de(p.xp) >= 50 then 'capitaine' end,
+    case when public.niveau_de(p.xp) >= 100 then 'amiral' end,
+    case when public.niveau_de(p.xp) >= 200 then 'legende' end,
+    case when p.victoires >= 100 then 'centurion' end,
+    case when 'devin' = any(p.badges) then 'devin' end,
+    case when p.regicides >= 25 then 'regicide' end,
+    case when p.fantomes >= 10 then 'fantome' end,
+    case when 'legende' = any(p.badges) then 'legende_mers' end
+  ], null) end
+$$;

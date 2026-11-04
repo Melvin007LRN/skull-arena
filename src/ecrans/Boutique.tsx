@@ -101,7 +101,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
           <h2 className="titre-pirate">Cadres à gagner</h2>
           <ul className="grille-cadres">
             {CADRES_GAGNES.map((c) => {
-              const ok = c.obtenu(profil);
+              const ok = profil.est_admin || c.obtenu(profil); // l'admin a accès à tous les cadres
               return (
                 <li key={c.id} className={`${actuel === c.id ? 'equipe' : ''} ${ok ? '' : 'verrouille'}`}>
                   <Avatar photo={profil.photo_url} taille={84} cadre={c.id} />
