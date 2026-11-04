@@ -944,3 +944,21 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .ligne-compte small { font-size: 11px; color: #f3e6c8b3; }
 .ligne-compte strong { font-family: var(--titre); font-weight: 400; font-size: 22px; color: var(--or-clair); }
 @media (prefers-reduced-motion: reduce) { .heros-aura { animation: none; } }
+
+/* ================= Fenêtre « Active les notifications » ================= */
+.voile.fenetre-notif-voile { z-index: 900; animation: fondu 0.3s ease; }
+.fenetre-notif { position: relative; align-items: stretch; text-align: left; border-radius: 20px; padding: 22px 18px 16px; }
+.notif-grosse-cloche { align-self: center; font-size: 52px; line-height: 1; filter: drop-shadow(0 0 14px #ffd979aa); animation: cloche 1.6s ease-in-out infinite; transform-origin: 50% 10%; }
+@keyframes cloche { 0%, 60%, 100% { transform: rotate(0); } 10% { transform: rotate(14deg); } 20% { transform: rotate(-12deg); } 30% { transform: rotate(8deg); } 40% { transform: rotate(-5deg); } }
+.fenetre-notif h2 { text-align: center; margin: 0; }
+.notif-intro { margin: 0; color: #f3e6c8; font-size: 15px; line-height: 1.4; }
+.notif-raisons { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.notif-raisons li { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px; background: #0a0704; border: 1px solid #e3b04b33; color: #f3e6c8; }
+.notif-raisons span { font-size: 20px; }
+.notif-sous-titre { margin: 4px 0 0; font-family: var(--titre); font-size: 20px; color: var(--or-clair); }
+.notif-etapes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.notif-etapes li { display: flex; align-items: center; gap: 10px; color: #f3e6c8; font-size: 14px; line-height: 1.35; }
+.notif-etapes b { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-family: var(--titre); font-weight: 400; font-size: 17px; color: #1a1205; background: radial-gradient(circle, #ffe39a, #c8902e); box-shadow: 0 0 8px #ffd97988; }
+.notif-etapes em { font-style: normal; }
+.fenetre-notif .lien { align-self: center; }
+@media (prefers-reduced-motion: reduce) { .notif-grosse-cloche { animation: none; } }
