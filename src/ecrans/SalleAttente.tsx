@@ -1,9 +1,10 @@
 // Salle d'attente : les joueurs s'installent autour de la table, se déclarent prêts, l'hôte lance.
-import { useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { appel, partagerInvitation, type MembreSalon, type Salon } from '../lib/jeu.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { inviterAmi, useAmis, useEnLigne } from '../lib/amis.ts';
 import { messageErreur } from '../lib/supabase.ts';
+import { useBloques, useChatSalon, useSocial } from '../lib/social.ts';
 
 export function SalleAttente({ salon, membres, moi, quitter }: {
   salon: Salon; membres: MembreSalon[]; moi: string; quitter: () => void;
@@ -14,6 +15,19 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
   const suisHote = salon.hote === moi;
   const moiMembre = membres.find((m) => m.joueur_id === moi);
   const [panneauAmis, setPanneauAmis] = useState(false);
+  const { ouvrirProfil } = useSocial();
+  const bloques = useBloques();
+  const chat = useChatSalon(salon.id);
+  const [texte, setTexte] = useState('');
+  const finChat = useRef<HTMLDivElement>(null);
+  useEffect(() => { finChat.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages.length]);
+  const envoyerChat = async (e: FormEvent) => {
+    e.preventDefault();
+    const t = texte.trim();
+    if (!t) return;
+    setTexte('');
+    try { await chat.envoyer(t); } catch (err) { setErreur(messageErreur(err)); setTexte(t); }
+  };
   const [invites, setInvites] = useState<string[]>([]);
   const { amis } = useAmis(moi);
   const enLigne = useEnLigne();
@@ -102,7 +116,9 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
           }
           return (
             <div key={m.joueur_id} className={`siege ${m.pret || m.joueur_id === salon.hote ? 'pret' : ''}`} style={style}>
-              <Avatar photo={m.photo_url} taille={58} alt={m.pseudo} cadre={m.cadre} />
+              <button type="button" className="siege-ouvrir" disabled={m.est_robot || m.joueur_id === moi} onClick={() => ouvrirProfil(m.joueur_id)} aria-label={`Profil de ${m.pseudo}`}>
+                <Avatar photo={m.photo_url} taille={58} alt={m.pseudo} cadre={m.cadre} />
+              </button>
               <span className="siege-nom">{m.joueur_id === salon.hote && '👑 '}{m.pseudo}</span>
               {suisHote && m.joueur_id !== moi && (
                 <button type="button" className="exclure"
@@ -116,6 +132,23 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
           <strong>{membres.length} / 8</strong>
           <small>pirates à bord</small>
         </div>
+      </section>
+
+      <section className="parchemin chat-salon">
+        <p className="sous-titre">💬 Le pont · discute avant le départ</p>
+        <div className="chat-messages">
+          {chat.messages.filter((m) => !bloques.has(m.de)).length === 0 && <p className="petit-texte centre">Aucun message pour l’instant.</p>}
+          {chat.messages.filter((m) => !bloques.has(m.de)).map((m) => (
+            <p key={m.id} className={`chat-ligne ${m.de === moi ? 'moi' : ''}`}>
+              <button type="button" className="chat-auteur" onClick={() => m.de !== moi && ouvrirProfil(m.de)}>{m.pseudo}</button> {m.texte}
+            </p>
+          ))}
+          <div ref={finChat} />
+        </div>
+        <form className="ligne-pseudo" onSubmit={envoyerChat}>
+          <input value={texte} onChange={(e) => setTexte(e.target.value)} maxLength={150} placeholder="Écris à l’équipage…" autoComplete="off" enterKeyHint="send" />
+          <button type="submit" className="bouton-or petit" disabled={!texte.trim()}>Envoyer</button>
+        </form>
       </section>
 
       {erreur && <p className="message erreur">{erreur}</p>}

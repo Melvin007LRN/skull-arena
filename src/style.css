@@ -704,3 +704,70 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .defi-texte { flex: 1; font-size: 14px; }
 .defi-gain { font-size: 11px; color: var(--or-clair); white-space: nowrap; }
 .defis-jour > small { display: block; text-align: center; font-size: 11px; color: #f3e6c899; }
+
+/* ---------- Fiche joueur et conversation ---------- */
+.voile.fiche-voile { z-index: 1000; }
+.fiche-joueur, .conversation { position: relative; width: min(440px, 100%) !important; max-height: 92dvh !important; overflow: auto; }
+.fiche-fermer { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid #e3b04b66; background: #0a0704; color: var(--or-clair); cursor: pointer; z-index: 2; }
+.fiche-entete { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.fiche-entete .titre-pirate { margin: 0; text-align: left; }
+.fiche-entete .grade { margin: 2px 0; }
+.fiche-entete small { color: #f3e6c8b3; font-size: 12px; }
+.fiche-stats { grid-template-columns: repeat(5, 1fr) !important; gap: 4px !important; }
+.fiche-stats .stat { padding: 6px 2px; }
+.fiche-stats .stat-valeur { font-size: 20px; }
+.fiche-stats .stat-libelle { font-size: 10px; }
+.fiche-badges { display: flex; justify-content: center; gap: 10px; margin: 10px 0; font-size: 26px; }
+.fiche-badges span { filter: grayscale(1) brightness(0.45); }
+.fiche-badges span.obtenu { filter: drop-shadow(0 0 6px #ffd979aa); }
+.fiche-historique { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.fiche-historique li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: #0a0704; border: 1px solid #e3b04b22; font-size: 13px; }
+.fiche-historique li span:first-child { width: 28px; text-align: center; color: var(--or-clair); }
+.fiche-historique li strong { margin-left: auto; }
+.fiche-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 10px 0 4px; }
+.fiche-actions .bouton-or.petit { width: auto; padding: 0 16px; }
+.fiche-moderation { display: flex; justify-content: center; gap: 16px; }
+.fiche-moderation .lien { width: auto; margin: 0; padding: 6px; font-size: 13px; }
+.fiche-signaler { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.fiche-signaler small { text-align: center; color: #f3e6c8b3; }
+.conversation { display: flex; flex-direction: column; gap: 8px; }
+.conv-entete { display: flex; align-items: center; justify-content: space-between; }
+.conv-ami { display: flex; align-items: center; gap: 10px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.conv-ami span { display: flex; flex-direction: column; }
+.conv-ami small { font-size: 11px; color: #f3e6c8b3; }
+.conversation .fiche-fermer { position: static; }
+.conv-messages { min-height: 200px; max-height: 50dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 12px; background: #0a0704; border: 1px solid #e3b04b22; }
+.bulle-msg { align-self: flex-start; max-width: 80%; margin: 0; padding: 7px 11px; border-radius: 14px 14px 14px 4px; background: #2a1a0e; border: 1px solid #e3b04b33; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.bulle-msg.moi { align-self: flex-end; border-radius: 14px 14px 4px 14px; background: linear-gradient(180deg, #6b4a14, #4a3008); border-color: #e3b04b77; }
+.bulle-msg small { display: block; margin-top: 2px; font-size: 10px; color: #f3e6c899; text-align: right; }
+
+/* ---------- Amis : accueil, listes, pastilles ---------- */
+.pastille-nombre { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: #d9443a; color: #fff; font-size: 11px; font-weight: 800; box-shadow: 0 0 6px #d9443a99; }
+.ami-avatar .pastille-nombre { position: absolute; top: -4px; right: -6px; margin: 0; }
+.amis-accueil { padding: 12px 14px; border-radius: 16px; background: linear-gradient(180deg, #1e1308ee, #0b0805ee); border: 1px solid #e3b04b55; }
+.amis-accueil-titre { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-family: var(--titre); font-size: 20px; color: var(--or-clair); }
+.amis-accueil-titre small { font-family: var(--corps); font-size: 12px; color: #6fdc88; }
+.amis-accueil-titre .lien { margin: 0; padding: 4px; width: auto; font-size: 13px; font-family: var(--corps); }
+.amis-rangee { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: none; }
+.amis-rangee::-webkit-scrollbar { display: none; }
+.ami-bulle { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 66px; border: 0; background: none; color: inherit; cursor: pointer; }
+.ami-bulle:not(.en-ligne) .avatar { filter: grayscale(0.7) brightness(0.7); }
+.ami-bulle small { max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.amis-vide { width: 100%; padding: 10px; border-radius: 10px; border: 1px dashed #e3b04b66; background: none; color: #f3e6c8cc; font: inherit; font-size: 13px; cursor: pointer; }
+.liste-amis li { position: relative; }
+.ami-ouvrir { position: absolute; inset: 0; border: 0; background: none; cursor: pointer; border-radius: 12px; }
+.ami-actions { position: relative; z-index: 1; }
+.ami-msg { position: relative; min-width: 44px; }
+.ami-msg .pastille-nombre { position: absolute; top: -6px; right: -6px; margin: 0; }
+.classement li.cliquable { cursor: pointer; }
+
+/* ---------- Chat de la salle d'attente ---------- */
+.chat-salon .sous-titre { margin: 0 0 6px; }
+.chat-messages { max-height: 160px; min-height: 60px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; border-radius: 10px; background: #0a0704; border: 1px solid #e3b04b22; margin-bottom: 6px; }
+.chat-ligne { margin: 0; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.chat-auteur { border: 0; background: none; padding: 0; color: var(--or-clair); font: inherit; font-weight: 700; cursor: pointer; }
+.chat-ligne.moi .chat-auteur { color: #8fe39a; }
+.siege-ouvrir { border: 0; background: none; padding: 0; cursor: pointer; }
+.siege-ouvrir:disabled { cursor: default; }
+.signalement > span { display: flex; flex-direction: column; }
+.signalement small .lien { display: inline; width: auto; margin: 0; padding: 0; font-size: inherit; }

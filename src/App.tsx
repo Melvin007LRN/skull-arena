@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, messageErreur } from './lib/supabase.ts';
 import { chargerProfil, type Profil } from './lib/profil.ts';
@@ -16,6 +16,8 @@ import { EcranLegal, type PageLegale } from './ecrans/Legal.tsx';
 import { EcranAmis } from './ecrans/Amis.tsx';
 import { EcranBoutique } from './ecrans/Boutique.tsx';
 import { demarrerPresence, useInvitations } from './lib/amis.ts';
+import { ContexteSocial, demarrerNonLus } from './lib/social.ts';
+import { Conversation, FicheJoueur } from './composants/FicheJoueur.tsx';
 import { appel, salonEnCours } from './lib/jeu.ts';
 
 type Ecran =
@@ -93,6 +95,11 @@ export function App() {
   // Présence en ligne (pour les amis) dès qu'on est connecté.
   const moiId = profil && !profil.banni ? profil.id : null;
   useEffect(() => (moiId ? demarrerPresence(moiId) : undefined), [moiId]);
+  useEffect(() => (moiId ? demarrerNonLus(moiId) : undefined), [moiId]);
+  // Fiche d'un joueur et conversation privée, ouvrables depuis n'importe quel écran.
+  const [fiche, setFiche] = useState<string | null>(null);
+  const [discussion, setDiscussion] = useState<string | null>(null);
+  const social = useMemo(() => ({ ouvrirProfil: (j: string) => { setDiscussion(null); setFiche(j); }, ouvrirMessages: (a: string) => { setFiche(null); setDiscussion(a); } }), []);
   // En revenant d'une partie, on recharge le profil (XP, statistiques, badges).
   const sortirDuSalon = useCallback(() => { setEcran(ACCUEIL); recharger(); }, [recharger]);
 
@@ -108,7 +115,14 @@ export function App() {
     return <Message texte="Ton compte a été banni de Skull Arena." action="Se déconnecter" surAction={() => supabase.auth.signOut()} />;
   }
   const contenu = rendreEcran();
-  return <>{contenu}{ecran.nom !== 'salon' && <ToastInvitation moi={profil.id} entrer={(id) => setEcran({ nom: 'salon', id })} />}</>;
+  return (
+    <ContexteSocial.Provider value={social}>
+      {contenu}
+      {ecran.nom !== 'salon' && <ToastInvitation moi={profil.id} entrer={(id) => setEcran({ nom: 'salon', id })} />}
+      {fiche && <FicheJoueur joueur={fiche} moi={profil.id} fermer={() => setFiche(null)} salonInvitation={ecran.nom === 'salon' ? ecran.id : null} />}
+      {discussion && <Conversation ami={discussion} moi={profil.id} fermer={() => setDiscussion(null)} />}
+    </ContexteSocial.Provider>
+  );
 
   function rendreEcran() {
   if (!profil) return null;

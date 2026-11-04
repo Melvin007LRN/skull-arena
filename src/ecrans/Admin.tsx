@@ -4,9 +4,10 @@ import { supabase, messageErreur } from '../lib/supabase.ts';
 import { grade, niveau, PSEUDO_REGEX, type Profil } from '../lib/profil.ts';
 import { chargerPhrases, type Phrase } from '../lib/phrases.ts';
 import { Avatar } from '../composants/Avatar.tsx';
+import { chargerSignalements, traiterSignalement, useSocial, type Signalement } from '../lib/social.ts';
 
 export function EcranAdmin({ profil, retour }: { profil: Profil; retour: () => void }) {
-  const [onglet, setOnglet] = useState<'joueurs' | 'phrases'>('joueurs');
+  const [onglet, setOnglet] = useState<'joueurs' | 'phrases' | 'signalements'>('joueurs');
   const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null);
 
   const action = useCallback(async (fn: () => Promise<unknown>, succes: string) => {
@@ -36,10 +37,11 @@ export function EcranAdmin({ profil, retour }: { profil: Profil; retour: () => v
       <h1 className="titre-pirate grand">Espace Admin</h1>
       <div className="onglets">
         <button type="button" className={onglet === 'joueurs' ? 'actif' : ''} onClick={() => setOnglet('joueurs')}>Joueurs</button>
-        <button type="button" className={onglet === 'phrases' ? 'actif' : ''} onClick={() => setOnglet('phrases')}>Phrases rapides</button>
+        <button type="button" className={onglet === 'phrases' ? 'actif' : ''} onClick={() => setOnglet('phrases')}>Phrases</button>
+        <button type="button" className={onglet === 'signalements' ? 'actif' : ''} onClick={() => setOnglet('signalements')}>Signalements</button>
       </div>
       {message && <p className={`message ${message.ok ? 'info' : 'erreur'}`}>{message.texte}</p>}
-      {onglet === 'joueurs' ? <Joueurs moi={profil.id} action={action} /> : <Phrases action={action} />}
+      {onglet === 'joueurs' ? <Joueurs moi={profil.id} action={action} /> : onglet === 'phrases' ? <Phrases action={action} /> : <Signalements action={action} />}
     </main>
   );
 }
@@ -158,6 +160,49 @@ function Phrases({ action }: { action: Action }) {
         <input value={nouvelle} onChange={(e) => setNouvelle(e.target.value)} maxLength={40} placeholder="Nouvelle phrase…" />
         <button type="submit" className="bouton-or petit" disabled={!nouvelle.trim()}>Ajouter</button>
       </form>
+    </section>
+  );
+}
+
+function Signalements({ action }: { action: Action }) {
+  const [liste, setListe] = useState<Signalement[] | null>(null);
+  const [noms, setNoms] = useState<Record<string, string>>({});
+  const [voirTraites, setVoirTraites] = useState(false);
+  const { ouvrirProfil } = useSocial();
+  const charger = useCallback(async () => {
+    const l = await chargerSignalements();
+    setListe(l);
+    const ids = [...new Set(l.flatMap((x) => [x.auteur, x.cible]))];
+    if (ids.length) {
+      const { data } = await supabase.from('profils').select('id, pseudo').in('id', ids);
+      setNoms(Object.fromEntries(((data ?? []) as Array<{ id: string; pseudo: string }>).map((p) => [p.id, p.pseudo])));
+    }
+  }, []);
+  useEffect(() => { charger().catch(() => setListe([])); }, [charger]);
+  const visibles = (liste ?? []).filter((x) => voirTraites || !x.traite);
+  return (
+    <section className="parchemin">
+      <label className="case"><input type="checkbox" checked={voirTraites} onChange={(e) => setVoirTraites(e.target.checked)} /><span>Afficher aussi les signalements traités</span></label>
+      {liste === null ? <p className="petit-texte centre">Chargement…</p>
+        : visibles.length === 0 ? <p className="petit-texte centre">Aucun signalement en attente. Tout est calme à bord ⚓</p>
+        : (
+          <ul className="admin-phrases">
+            {visibles.map((x) => (
+              <li key={x.id} className="signalement">
+                <span>
+                  <strong>{x.motif}</strong>
+                  <small>
+                    <button type="button" className="lien" onClick={() => ouvrirProfil(x.cible)}>{noms[x.cible] ?? '?'}</button> signalé par {noms[x.auteur] ?? '?'} · {new Date(x.cree_le).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </small>
+                </span>
+                {!x.traite
+                  ? <button type="button" className="bouton-or petit" onClick={() => action(() => traiterSignalement(x.id), 'Signalement traité.').then(charger)}>Traité</button>
+                  : <small>✓ traité</small>}
+              </li>
+            ))}
+          </ul>
+        )}
+      <p className="petit-texte">Pour sanctionner : ouvre l’onglet Joueurs (renommer, effacer la photo, bannir).</p>
     </section>
   );
 }

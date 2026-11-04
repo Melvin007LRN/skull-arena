@@ -4,11 +4,13 @@ import {
   chargerClassement, chargerClassementSaison, grade, niveau, nomSaison, PARTIES_AVANT_CLASSEMENT, type Profil,
 } from '../lib/profil.ts';
 import { Avatar } from '../composants/Avatar.tsx';
+import { useSocial } from '../lib/social.ts';
 
 interface Ligne { id: string; pseudo: string; photo_url: string | null; cadre: string | null; xp: number; parties: number; victoires: number; pm: number }
 
 export function EcranClassement({ profil, retour }: { profil: Profil; retour: () => void }) {
   const [onglet, setOnglet] = useState<'saison' | 'permanent'>('saison');
+  const { ouvrirProfil } = useSocial();
   const [listes, setListes] = useState<{ saison: Ligne[] | null; permanent: Ligne[] | null }>({ saison: null, permanent: null });
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -55,7 +57,7 @@ export function EcranClassement({ profil, retour }: { profil: Profil; retour: ()
             {liste.map((l, i) => {
               const n = niveau(l.xp);
               return (
-                <li key={l.id} className={`${l.id === profil.id ? 'moi' : ''} ${i < 3 ? `top top-${i + 1}` : ''}`}>
+                <li key={l.id} className={`${l.id === profil.id ? 'moi' : ''} ${i < 3 ? `top top-${i + 1}` : ''} cliquable`} onClick={() => ouvrirProfil(l.id)}>
                   <span className="cl-rang">{i === 0 ? '👑' : i + 1}</span>
                   <Avatar photo={l.photo_url} taille={i === 0 ? 56 : 44} cadre={l.cadre} />
                   <span className="cl-nom">

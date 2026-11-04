@@ -4,6 +4,7 @@ import { messageErreur } from '../lib/supabase.ts';
 import { demanderAmi, repondreAmi, retirerAmi, useAmis, useEnLigne, type Ami } from '../lib/amis.ts';
 import { grade, niveau } from '../lib/profil.ts';
 import { Avatar } from '../composants/Avatar.tsx';
+import { useNonLus, useSocial } from '../lib/social.ts';
 
 const REPONSES = {
   demande: 'Demande envoyée ! Elle apparaîtra chez lui.',
@@ -104,8 +105,11 @@ export function EcranAmis({ moi, retour }: { moi: string; retour: () => void }) 
 
 function LigneAmi({ ami, enLigne, children }: { ami: Ami; enLigne: boolean; children?: ReactNode }) {
   const n = niveau(ami.xp);
+  const { ouvrirProfil, ouvrirMessages } = useSocial();
+  const nonLus = useNonLus()[ami.id] ?? 0;
   return (
     <li>
+      <button type="button" className="ami-ouvrir" onClick={() => ouvrirProfil(ami.id)} aria-label={`Voir le profil de ${ami.pseudo}`} />
       <span className="ami-avatar">
         <Avatar photo={ami.photo_url} taille={46} cadre={ami.cadre} />
         <span className={`pastille-co ${enLigne ? 'en-ligne' : 'hors-ligne'}`} />
@@ -114,7 +118,14 @@ function LigneAmi({ ami, enLigne, children }: { ami: Ami; enLigne: boolean; chil
         <strong>{ami.pseudo}</strong>
         <small>{enLigne ? 'En ligne' : 'Hors ligne'} · Niv. {n} · {grade(n)}</small>
       </span>
-      <span className="ami-actions">{children}</span>
+      <span className="ami-actions">
+        {ami.statut === 'acceptee' && (
+          <button type="button" className="bouton-or petit ami-msg" onClick={() => ouvrirMessages(ami.id)} aria-label={`Écrire à ${ami.pseudo}`}>
+            💬{nonLus > 0 && <b className="pastille-nombre">{nonLus}</b>}
+          </button>
+        )}
+        {children}
+      </span>
     </li>
   );
 }

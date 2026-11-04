@@ -6,6 +6,8 @@ import { chargerClassement, chargerClassementSaison, chargerDefisDuJour, DEFIS, 
 import { Louidors } from './Boutique.tsx';
 import { Avatar } from '../composants/Avatar.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
+import { useAmis, useEnLigne } from '../lib/amis.ts';
+import { totalNonLus, useNonLus, useSocial } from '../lib/social.ts';
 
 interface Entree {
   id: string;
@@ -30,6 +32,14 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
   // Avis de recherche : le numéro 1 de la saison (sinon celui du classement permanent).
   const [numeroUn, setNumeroUn] = useState<{ id: string; pseudo: string; photo_url: string | null; cadre: string | null; pm: number; victoires: number; saison: boolean } | null>(null);
   const [defis, setDefis] = useState<Array<{ id: string; reussi: boolean }>>([]);
+  const { amis } = useAmis(profil.id);
+  const enLigne = useEnLigne();
+  const nonLus = useNonLus();
+  const { ouvrirProfil: voirJoueur, ouvrirMessages } = useSocial();
+  const compagnons = (amis ?? []).filter((a) => a.statut === 'acceptee')
+    .sort((a, b) => Number(enLigne.has(b.id)) - Number(enLigne.has(a.id)) || (nonLus[b.id] ?? 0) - (nonLus[a.id] ?? 0));
+  const demandesRecues = (amis ?? []).filter((a) => a.statut === 'attente' && a.recue).length;
+  const nbEnLigne = compagnons.filter((a) => enLigne.has(a.id)).length;
   useEffect(() => {
     chargerClassementSaison().then(async (s) => {
       if (s[0]) return setNumeroUn({ ...s[0], saison: true });
@@ -123,6 +133,34 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       </Apparition>
 
       <InstallerAppli compact />
+
+      <Apparition>
+        <section className="amis-accueil">
+          <div className="amis-accueil-titre">
+            <span>👥 Mon équipage <small>{nbEnLigne > 0 ? `· ${nbEnLigne} en ligne` : ''}</small></span>
+            <button type="button" className="lien" onClick={ouvrirAmis}>
+              Tout voir{demandesRecues + totalNonLus(nonLus) > 0 && <b className="pastille-nombre">{demandesRecues + totalNonLus(nonLus)}</b>}
+            </button>
+          </div>
+          {compagnons.length === 0 ? (
+            <button type="button" className="amis-vide" onClick={ouvrirAmis}>Ajoute tes amis pirates pour les voir ici, leur écrire et les inviter →</button>
+          ) : (
+            <div className="amis-rangee">
+              {compagnons.map((a) => (
+                <button key={a.id} type="button" className={`ami-bulle ${enLigne.has(a.id) ? 'en-ligne' : ''}`}
+                  onClick={() => ((nonLus[a.id] ?? 0) > 0 ? ouvrirMessages(a.id) : voirJoueur(a.id))}>
+                  <span className="ami-avatar">
+                    <Avatar photo={a.photo_url} taille={54} cadre={a.cadre} />
+                    <span className={`pastille-co ${enLigne.has(a.id) ? 'en-ligne' : 'hors-ligne'}`} />
+                    {(nonLus[a.id] ?? 0) > 0 && <b className="pastille-nombre">{nonLus[a.id]}</b>}
+                  </span>
+                  <small>{a.pseudo}</small>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      </Apparition>
 
       {defis.length > 0 && (
         <Apparition>

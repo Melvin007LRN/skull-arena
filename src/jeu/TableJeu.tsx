@@ -9,6 +9,7 @@ import { Avatar } from '../composants/Avatar.tsx';
 import { debloquerSon, musique, son, vibrer } from '../lib/sons.ts';
 import { resoudrePli, role } from '../engine/pli.ts';
 import { OBJETS } from '../lib/boutique.ts';
+import { useBloques, useSocial } from '../lib/social.ts';
 
 export const REVELATION_MS = 2500;
 export const GAGNANT_MS = 2000;
@@ -127,7 +128,10 @@ export function TableJeu(p: PropsTable) {
   const [distribution, setDistribution] = useState(0);
   const [carteEnVol, setCarteEnVol] = useState<string | null>(null);
   const [voirDernierPli, setVoirDernierPli] = useState(false);
-  const [muets, setMuets] = useState<string[]>([]);
+  const [muetsChoisis, setMuets] = useState<string[]>([]);
+  const bloques = useBloques();
+  const muets = useMemo(() => [...muetsChoisis, ...bloques], [muetsChoisis, bloques]);
+  const { ouvrirProfil } = useSocial();
   const [juanitaFermee, setJuanitaFermee] = useState<string | null>(null);
   const [musiqueOn, setMusiqueOn] = useState(() => musique.active());
   const [panneauObjets, setPanneauObjets] = useState(false);
@@ -516,7 +520,7 @@ export function TableJeu(p: PropsTable) {
                   <img key={k} src="/decor/dos-carte.webp" alt="" style={{ transform: `rotate(${(k - Math.min(nbCartes, 6) / 2) * 9}deg)` }} />
                 ))}
               </div>
-              <div className="adv-avatar" data-joueur={j}>
+              <div className="adv-avatar" data-joueur={j} onClick={() => { if (!vue.robots?.includes(j)) ouvrirProfil(j); }}>
                 {vue.joueurs.indexOf(j) === vue.couronne && <span className="adv-couronne">👑</span>}
                 {vue.phase === 'mise' && vue.meneur === j && <span className="adv-ouvre" title="Ouvre le premier pli">▶ 1er</span>}
                 <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} cadre={cadre(j)} />
