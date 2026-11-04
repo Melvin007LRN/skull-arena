@@ -12,7 +12,7 @@ export function debloquerSon() {
   }
 }
 
-function note(freq: number, debut: number, duree: number, volume = 0.12, type: OscillatorType = 'sine') {
+function note(freq: number, debut: number, duree: number, volume = 0.12, type: OscillatorType = 'sine', sortie?: AudioNode) {
   if (!ctx) return;
   const t = ctx.currentTime + debut;
   const osc = ctx.createOscillator();
@@ -22,7 +22,7 @@ function note(freq: number, debut: number, duree: number, volume = 0.12, type: O
   gain.gain.setValueAtTime(0.0001, t);
   gain.gain.exponentialRampToValueAtTime(volume, t + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, t + duree);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sortie ?? ctx.destination);
   osc.start(t);
   osc.stop(t + duree + 0.02);
 }
@@ -53,6 +53,65 @@ export const son = {
   baleine: () => { note(196, 0, 0.8, 0.12); note(147, 0.2, 0.9, 0.12); },
   decompte: () => note(440, 0, 0.15, 0.1, 'triangle'),
   abordage: () => { note(392, 0, 0.15); note(523, 0.12, 0.15); note(659, 0.24, 0.35); },
+  /** Fanfare de victoire */
+  fanfare: () => {
+    const m: [number, number, number][] = [[392, 0, 0.14], [392, 0.15, 0.14], [392, 0.3, 0.14], [523, 0.45, 0.5], [466, 0.95, 0.16], [523, 1.12, 0.16], [659, 1.3, 0.25], [784, 1.55, 0.9]];
+    for (const [f, t, d] of m) { note(f, t, d, 0.11, 'triangle'); note(f / 2, t, d, 0.05, 'square'); }
+    note(1047, 1.55, 0.9, 0.05, 'sine');
+  },
+  /** Petit tintement de pièce */
+  piece: () => { note(1568, 0, 0.08, 0.05, 'triangle'); note(2093, 0.05, 0.12, 0.04, 'triangle'); },
+};
+
+// ---------- Musique d'ambiance : un chant de marins (domaine public), joué doucement en boucle ----------
+const CLE_MUSIQUE = 'skull-musique';
+const N: Record<string, number> = { C3: 131, D3: 147, E3: 165, F3: 175, G3: 196, A3: 220, B3: 247, C4: 262, D4: 294, E4: 330, F4: 349, G4: 392, A4: 440, B4: 494, C5: 523, D5: 587 };
+// [note, temps] : « What shall we do with a drunken sailor »
+const MELODIE: [string, number][] = [
+  ['A4', 1], ['A4', .5], ['A4', .5], ['A4', 1], ['A4', .5], ['A4', .5], ['A4', 1], ['D4', 1], ['F4', 1], ['A4', 1],
+  ['G4', 1], ['G4', .5], ['G4', .5], ['G4', 1], ['G4', .5], ['G4', .5], ['G4', 1], ['C4', 1], ['E4', 1], ['G4', 1],
+  ['A4', 1], ['A4', .5], ['A4', .5], ['A4', 1], ['A4', .5], ['A4', .5], ['A4', 1], ['B4', 1], ['C5', 1], ['D5', 1],
+  ['C5', 1], ['A4', 1], ['G4', 1], ['E4', 1], ['D4', 2], ['D4', 2],
+];
+const BASSE = ['D3', 'A3', 'D3', 'A3', 'C3', 'G3', 'C3', 'G3', 'D3', 'A3', 'D3', 'A3', 'C3', 'G3', 'D3', 'D3'];
+const TEMPS = 0.36;
+let boucle = 0;
+let maitre: GainNode | null = null;
+
+function jouerBoucle() {
+  if (!ctx || !maitre) return;
+  let t = 0.05;
+  for (const [n, d] of MELODIE) { note(N[n], t, d * TEMPS * 0.9, 0.5, 'triangle', maitre); t += d * TEMPS; }
+  BASSE.forEach((n, i) => note(N[n], 0.05 + i * 2 * TEMPS, 1.6 * TEMPS, 0.35, 'sine', maitre!));
+  boucle = window.setTimeout(jouerBoucle, (t + 2 * TEMPS) * 1000);
+}
+
+export const musique = {
+  active(): boolean { try { return localStorage.getItem(CLE_MUSIQUE) === '1'; } catch { return false; } },
+  demarrer() {
+    debloquerSon();
+    if (!ctx || maitre) return;
+    ctx.resume?.();
+    maitre = ctx.createGain();
+    maitre.gain.value = 0.09;
+    maitre.connect(ctx.destination);
+    jouerBoucle();
+  },
+  arreter() {
+    clearTimeout(boucle);
+    if (maitre && ctx) {
+      const g = maitre;
+      g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.15);
+      setTimeout(() => g.disconnect(), 800);
+    }
+    maitre = null;
+  },
+  basculer(): boolean {
+    const v = !musique.active();
+    try { localStorage.setItem(CLE_MUSIQUE, v ? '1' : '0'); } catch { /* stockage indisponible */ }
+    if (v) musique.demarrer(); else musique.arreter();
+    return v;
+  },
 };
 
 export function vibrer(ms = 60) {

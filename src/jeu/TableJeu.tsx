@@ -6,10 +6,59 @@ import type { VueJeu, MembreSalon } from '../lib/jeu.ts';
 import type { VuePrivee } from '../engine/vues.ts';
 import { carteParId, NOMS_PIRATES, COULEURS } from '../engine/cards.ts';
 import { Avatar } from '../composants/Avatar.tsx';
-import { debloquerSon, son, vibrer } from '../lib/sons.ts';
+import { debloquerSon, musique, son, vibrer } from '../lib/sons.ts';
 
 export const REVELATION_MS = 2500;
 export const GAGNANT_MS = 2000;
+// Entraînement en vitesse rapide : le serveur attend 3,1 s après un pli.
+const REVELATION_RAPIDE_MS = 1500;
+const GAGNANT_RAPIDE_MS = 1300;
+
+/** Petit rappel de règle affiché quand on agrandit une carte. */
+export function regleCarte(id: string): { nom: string; texte: string } {
+  const c = carteParId(id);
+  const NOMS_COULEURS = { jaune: 'Coffre (jaune)', violet: 'Carte au trésor (violet)', vert: 'Perroquet (vert)', noir: 'Pavillon noir (atout)' } as const;
+  switch (c.type) {
+    case 'numero':
+      return c.couleur === 'noir'
+        ? { nom: `${c.valeur} ${NOMS_COULEURS.noir}`, texte: `L’atout : bat toutes les couleurs, mais perd contre les personnages.${c.valeur === 14 ? ' Le capturer rapporte +20 (si la mise est exacte).' : ''}` }
+        : { nom: `${c.valeur} ${NOMS_COULEURS[c.couleur]}`, texte: `Il faut suivre la couleur demandée si tu en as. La plus haute de la couleur gagne.${c.valeur === 14 ? ' Le capturer rapporte +10 (si la mise est exacte).' : ''}` };
+    case 'fuite': return { nom: 'Fuite', texte: 'Perd toujours (sauf si tout le monde fuit : la première gagne). Se joue à tout moment.' };
+    case 'butin': return { nom: 'Butin', texte: 'Comme une Fuite. Si un autre joueur gagne le pli, vous formez une alliance : +20 chacun si vos deux mises sont exactes.' };
+    case 'tigresse': return { nom: 'Tigresse', texte: 'Au choix : jouée en Pirate (sans pouvoir) ou en Fuite.' };
+    case 'skull_king': return { nom: 'Skull King', texte: 'Bat les Pirates (+30 par Pirate capturé) mais tombe face à une Sirène.' };
+    case 'sirene': return { nom: 'Sirène', texte: 'Bat les cartes numérotées. Perd contre les Pirates, mais capture le Skull King (+40).' };
+    case 'kraken': return { nom: 'Kraken', texte: 'Détruit le pli : personne ne le gagne. Celui qui aurait gagné ouvre le pli suivant.' };
+    case 'baleine': return { nom: 'Baleine blanche', texte: 'Les cartes spéciales ne valent plus rien : la plus haute carte numérotée gagne, toutes couleurs confondues.' };
+    case 'pirate': {
+      const pouvoirs = {
+        rosie: 'Choisis qui ouvre le prochain pli.',
+        bendt: 'Pioche 2 cartes non distribuées, puis défausse-en 2.',
+        rascal: 'Parie 0, 10 ou 20 points : gagnés si ta mise est exacte, perdus sinon.',
+        juanita: 'Regarde en secret les cartes non distribuées.',
+        harry: 'En fin de manche, modifie ta mise de −1, 0 ou +1.',
+      } as const;
+      return { nom: NOMS_PIRATES[c.pirate], texte: `Pirate : bat les numéros et les Sirènes (+20 par Sirène), perd contre le Skull King. Pouvoir s’il gagne le pli : ${pouvoirs[c.pirate]}${c.pirate !== 'harry' ? ' (Pas au dernier pli.)' : ''}` };
+    }
+  }
+}
+
+/** Compte de 0 jusqu'à la valeur, pour animer les scores. */
+function useCompteur(cible: number, duree = 900, retard = 0) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const debut = performance.now() + retard;
+    const pas = (t: number) => {
+      const k = Math.min(1, Math.max(0, (t - debut) / duree));
+      setV(Math.round(cible * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) raf = requestAnimationFrame(pas);
+    };
+    raf = requestAnimationFrame(pas);
+    return () => cancelAnimationFrame(raf);
+  }, [cible, duree, retard]);
+  return v;
+}
 const DISTANCE_GLISSER = 70;
 
 export interface PropsTable {
@@ -30,6 +79,8 @@ export interface PropsTable {
   /** Pour les captures d'écran de test : force l'état d'affichage du pli. */
   etapeForcee?: 'aucune' | 'revelation' | 'gagnant';
   decompteDesactive?: boolean;
+  /** Joueurs humains actuellement connectés (pastille verte). */
+  presents?: string[];
 }
 
 /** Ordre de tri de la main : par couleur, puis par valeur, spéciales à part. */
@@ -59,6 +110,7 @@ export function TableJeu(p: PropsTable) {
   const [voirDernierPli, setVoirDernierPli] = useState(false);
   const [muets, setMuets] = useState<string[]>([]);
   const [juanitaFermee, setJuanitaFermee] = useState<string | null>(null);
+  const [musiqueOn, setMusiqueOn] = useState(() => musique.active());
   const mancheVue = useRef(0);
   const pliVu = useRef(0);
   const appui = useRef<{ id: string; x: number; y: number; t: number; minuterie: number } | null>(null);
@@ -69,6 +121,26 @@ export function TableJeu(p: PropsTable) {
   const photo = (id: string) => infos.get(id)?.photo_url ?? null;
   const piloteParRobot = (j: string) => vue.robots?.includes(j) || vue.remplaces?.includes(j);
   const finie = vue.phase === 'fin_partie' || vue.annulee;
+  const tRevelation = vue.rapide ? REVELATION_RAPIDE_MS : REVELATION_MS;
+  const tGagnant = vue.rapide ? GAGNANT_RAPIDE_MS : GAGNANT_MS;
+
+  // Musique d'ambiance (si activée) : démarre au premier toucher, s'arrête en quittant la table.
+  useEffect(() => {
+    if (!musiqueOn) return;
+    const go = () => musique.demarrer();
+    go();
+    document.addEventListener('pointerdown', go, { once: true });
+    return () => { document.removeEventListener('pointerdown', go); musique.arreter(); };
+  }, [musiqueOn]);
+
+  // Victoire : pluie d'or et fanfare pour le (ou les) vainqueur(s).
+  const meilleur = Math.max(...vue.joueurs.map((j) => vue.scores[j]));
+  const jeGagne = vue.phase === 'fin_partie' && !vue.annulee && vue.scores[moi] === meilleur;
+  useEffect(() => {
+    if (!jeGagne) return;
+    const t = setTimeout(() => { son.fanfare(); vibrer(200); }, 400);
+    return () => clearTimeout(t);
+  }, [jeGagne]);
 
   // ---------- Décompte de 3 s au début de chaque manche ----------
   useEffect(() => {
@@ -97,9 +169,9 @@ export function TableJeu(p: PropsTable) {
       else if (r?.gagnant && vue.dernierPli && r.indexGagnant !== null &&
         carteParId(vue.dernierPli.cartes[r.indexGagnant].carteId).type === 'skull_king') { setEffet('skull'); son.skull(); }
       else son.pli();
-    }, REVELATION_MS - 200);
-    const t1 = setTimeout(() => setEtapePli('gagnant'), REVELATION_MS);
-    const t2 = setTimeout(() => { setEtapePli('aucune'); setEffet(null); }, REVELATION_MS + GAGNANT_MS);
+    }, tRevelation - 200);
+    const t1 = setTimeout(() => setEtapePli('gagnant'), tRevelation);
+    const t2 = setTimeout(() => { setEtapePli('aucune'); setEffet(null); }, tRevelation + tGagnant);
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); setEtapePli('aucune'); setEffet(null); };
   }, [clePli]);
 
@@ -245,6 +317,19 @@ export function TableJeu(p: PropsTable) {
 
   const classement = [...vue.joueurs].sort((a, b) => vue.scores[b] - vue.scores[a]);
   const miseDe = (j: string) => (vue.mises ? vue.mises[j] + (vue.harry[j] ?? 0) : null);
+  /** Ce qu'il reste à faire pendant la manche : « Encore 2 plis », « Ne prends plus rien ! »… */
+  function objectif(j: string): { texte: string; ton: 'or' | 'vert' | 'rouge' } | null {
+    const m = miseDe(j);
+    if (m === null || !['jeu', 'pouvoir', 'harry'].includes(vue.phase)) return null;
+    const reste = m - vue.plisGagnes[j];
+    const plisRestants = (vue.cartesEnMain[j] ?? 0) + (vue.pliEnCours.some((c) => c.joueur === j) ? 1 : 0);
+    if (reste < 0) return { texte: 'Mise dépassée', ton: 'rouge' };
+    if (reste === 0) return { texte: 'Ne prends plus rien !', ton: 'vert' };
+    if (reste > plisRestants && vue.phase === 'jeu') return { texte: 'Mise hors d’atteinte', ton: 'rouge' };
+    return { texte: `Encore ${reste} pli${reste > 1 ? 's' : ''}`, ton: 'or' };
+  }
+  const humain = (j: string) => !vue.robots?.includes(j);
+  const connecte = (j: string) => !p.presents || p.presents.includes(j);
 
   // Petits badges sur l'avatar : alliance de Butin (avec qui) et pari de Rascal.
   function Badges({ j }: { j: string }) {
@@ -280,6 +365,7 @@ export function TableJeu(p: PropsTable) {
         <button type="button" className="rail-rond" onClick={() => setMenuOuvert((m) => !m)} aria-label="Réglages">⚙</button>
         {menuOuvert && (
           <div className="jeu-menu">
+            <button type="button" onClick={() => setMusiqueOn(musique.basculer())}>{musiqueOn ? '🎵 Musique : oui' : '🔇 Musique : non'}</button>
             {!finie && <button type="button" onClick={() => { setMenuOuvert(false); setConfirmQuitter(true); }}>Quitter la partie</button>}
             <button type="button" onClick={() => setMenuOuvert(false)}>Fermer</button>
           </div>
@@ -331,6 +417,7 @@ export function TableJeu(p: PropsTable) {
               <div className="adv-avatar">
                 {vue.joueurs.indexOf(j) === vue.couronne && <span className="adv-couronne">👑</span>}
                 <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} />
+                {humain(j) && <span className={`pastille-co ${connecte(j) ? 'en-ligne' : 'hors-ligne'}`} title={connecte(j) ? 'Connecté' : 'Déconnecté'} />}
                 {vue.mises && <span className="adv-ruban">{vue.plisGagnes[j]}/{miseDe(j)}</span>}
                 <Badges j={j} />
                 {!vue.mises && vue.phase === 'mise' && <span className={`adv-ruban ${vue.aMise[j] ? 'ok' : 'attente'}`}>{vue.aMise[j] ? '✓' : '…'}</span>}
@@ -339,6 +426,7 @@ export function TableJeu(p: PropsTable) {
                 <span className="adv-medaillon">☠</span>
                 <span>{pseudo(j)}</span>
               </div>
+              {(() => { const o = objectif(j); return o ? <span className={`adv-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
               {vue.remplaces?.includes(j) && <span className="adv-robot">🤖 robot</span>}
               {p.hote === moi && !vue.robots?.includes(j) && !vue.definitifs?.includes(j) && !finie && (
                 <button type="button" className="adv-exclure" aria-label={`Exclure ${pseudo(j)}`}
@@ -363,6 +451,7 @@ export function TableJeu(p: PropsTable) {
         <span className="adv-ruban">{vue.mises ? `${vue.plisGagnes[moi]}/${miseDe(moi)}` : vue.aMise[moi] ? '✓' : '…'}</span>
         <Badges j={moi} />
         {vue.joueurs.indexOf(moi) === vue.couronne && <span className="adv-couronne">👑</span>}
+        {(() => { const o = objectif(moi); return o ? <span key={o.texte} className={`moi-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
       </div>
 
       {/* Ma main */}
@@ -513,7 +602,7 @@ export function TableJeu(p: PropsTable) {
         </Fenetre>
       )}
       {!pliAffiche && !vue.annulee && vue.phase === 'fin_partie' && (
-        <Fenetre titre="Fin de la partie" large>
+        <Fenetre titre={jeGagne ? 'Victoire !' : 'Fin de la partie'} large>
           <div className="podium">
             {[1, 0, 2].map((rang) => {
               const j = classement[rang];
@@ -532,6 +621,7 @@ export function TableJeu(p: PropsTable) {
           <button type="button" className="bouton-or" onClick={p.retourAccueil}>Retour au port</button>
         </Fenetre>
       )}
+      {!pliAffiche && jeGagne && <PluieOr />}
       {vue.annulee && (
         <Fenetre titre="Partie annulée" sousTitre="Plus aucun pirate humain à bord : cette partie ne compte pas.">
           <button type="button" className="bouton-or" onClick={p.retourAccueil}>Retour au port</button>
@@ -600,6 +690,7 @@ export function TableJeu(p: PropsTable) {
       {zoom && (
         <div className="voile zoom" onClick={() => setZoom(null)}>
           <img src={`/cartes/${zoom}.webp`} alt={zoom} />
+          {(() => { const r = regleCarte(zoom); return <div className="zoom-regle"><strong>{r.nom}</strong><p>{r.texte}</p></div>; })()}
         </div>
       )}
 
@@ -633,27 +724,50 @@ function Fenetre({ titre, sousTitre, children, large, transparente }: {
   );
 }
 
+function PluieOr() {
+  const pieces = useMemo(() => Array.from({ length: 42 }, (_, k) => ({
+    k, gauche: Math.random() * 100, retard: Math.random() * 2.4, duree: 2.2 + Math.random() * 1.8, taille: 14 + Math.random() * 16, tour: Math.random() * 720 - 360,
+  })), []);
+  useEffect(() => {
+    const ts = [600, 900, 1300, 1700, 2200].map((ms) => setTimeout(son.piece, ms));
+    return () => ts.forEach(clearTimeout);
+  }, []);
+  return (
+    <div className="pluie-or" aria-hidden="true">
+      {pieces.map((x) => (
+        <span key={x.k} style={{ left: `${x.gauche}%`, width: x.taille, height: x.taille, animationDelay: `${x.retard}s`, animationDuration: `${x.duree}s`, ['--tour' as string]: `${x.tour}deg` }} />
+      ))}
+    </div>
+  );
+}
+
+function LigneManche({ j, rang, vue, moi, pseudo }: { j: string; rang: number; vue: VueJeu; moi: string; pseudo: (id: string) => string }) {
+  const r = vue.historique.at(-1)?.find((x) => x.joueur === j);
+  const gain = r?.total ?? 0;
+  const avant = vue.scores[j] - gain;
+  const retard = 250 + rang * 140;
+  const compte = useCompteur(gain, 900, retard);
+  const extra = r ? r.bonus + r.alliances + r.rascal : 0;
+  return (
+    <tr className={`ligne-animee ${j === moi ? 'moi' : ''}`} style={{ animationDelay: `${rang * 140}ms` }}>
+      <td>{pseudo(j)}</td>
+      <td>{r?.mise}</td>
+      <td>{r?.plis} {r?.reussie ? '✓' : '✗'}</td>
+      <td>{extra !== 0 ? `${extra > 0 ? '+' : ''}${extra}` : ''}</td>
+      <td className={gain >= 0 ? 'positif' : 'negatif'}>{compte > 0 ? '+' : ''}{compte}</td>
+      <td><strong>{avant + compte}</strong></td>
+    </tr>
+  );
+}
+
 function TableauManche({ vue, classement, moi, pseudo }: {
   vue: VueJeu; classement: string[]; moi: string; pseudo: (id: string) => string;
 }) {
-  const derniere = vue.historique.at(-1) ?? [];
   return (
     <table className="scores">
       <thead><tr><th>Pirate</th><th>Mise</th><th>Plis</th><th>Bonus</th><th>Manche</th><th>Total</th></tr></thead>
       <tbody>
-        {classement.map((j) => {
-          const r = derniere.find((x) => x.joueur === j);
-          return (
-            <tr key={j} className={j === moi ? 'moi' : ''}>
-              <td>{pseudo(j)}</td>
-              <td>{r?.mise}</td>
-              <td>{r?.plis} {r?.reussie ? '✓' : ''}</td>
-              <td>{r && r.bonus + r.alliances + r.rascal !== 0 ? `${r.bonus + r.alliances + r.rascal > 0 ? '+' : ''}${r.bonus + r.alliances + r.rascal}` : ''}</td>
-              <td className={r && r.total >= 0 ? 'positif' : 'negatif'}>{r && r.total > 0 ? '+' : ''}{r?.total}</td>
-              <td><strong>{vue.scores[j]}</strong></td>
-            </tr>
-          );
-        })}
+        {classement.map((j, rang) => <LigneManche key={`${vue.manche}-${j}`} j={j} rang={rang} vue={vue} moi={moi} pseudo={pseudo} />)}
       </tbody>
     </table>
   );

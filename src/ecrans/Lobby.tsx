@@ -6,6 +6,7 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
   const salons = useSalonsPublics();
   const [code, setCode] = useState('');
   const [nbRobots, setNbRobots] = useState(3);
+  const [rapide, setRapide] = useState(false);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -45,8 +46,13 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
               <button key={n} type="button" className={n === nbRobots ? 'bouton-or petit' : 'bouton-sombre petit-rond'} onClick={() => setNbRobots(n)}>{n}</button>
             ))}
           </div>
+          <p className="sous-titre">Vitesse des robots</p>
+          <div className="boutons-mise">
+            <button type="button" className={!rapide ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setRapide(false)}>Normale</button>
+            <button type="button" className={rapide ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setRapide(true)}>Rapide ⚡</button>
+          </div>
           <button type="button" className="bouton-or bouton-jouer" disabled={enCours}
-            onClick={() => faire(() => appel('entrainement', { robots: nbRobots }))}>
+            onClick={() => faire(() => appel('entrainement', { robots: nbRobots, vitesse: rapide ? 'rapide' : 'normale' }))}>
             {enCours ? 'Préparation…' : 'Lever l’ancre !'}
           </button>
         </section>

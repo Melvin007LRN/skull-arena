@@ -265,7 +265,8 @@
 .marche-3 .socle { height: 30px; background: linear-gradient(180deg, #d8995a, #7a4a1c); }
 .podium-couronne { font-size: 26px; animation: pulsation 1.4s ease-in-out infinite; }
 
-.zoom img { width: min(62dvh, 60vw); max-width: 360px; border-radius: 14px; box-shadow: 0 0 40px #e3b04b88; animation: ouvrir 0.2s ease; }
+.zoom { flex-direction: row; gap: 18px; }
+.zoom img { width: min(56dvh, 44vw); max-width: 330px; border-radius: 14px; box-shadow: 0 0 40px #e3b04b88; animation: ouvrir 0.2s ease; }
 .jeu .decompte span { font-size: clamp(80px, 34dvh, 160px); }
 .jeu .decompte span.abordage { font-size: clamp(40px, 15dvh, 80px); }
 
@@ -303,3 +304,36 @@
 .couper { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #e3b04b33; }
 .couper small { font-size: 10px; color: #f3e6c8aa; text-align: center; }
 .couper button.coupe { opacity: 0.6; }
+
+/* ---------- Objectif de la manche ---------- */
+.adv-objectif, .moi-objectif {
+  display: block; margin-top: 2px; padding: 1px 7px; border-radius: 8px; font-size: 10px; font-weight: 700; white-space: nowrap;
+  background: #120a04d9; border: 1px solid #e3b04b88; color: var(--or-clair, #ffd979); text-shadow: 0 1px 2px #000; text-align: center;
+}
+.adv-objectif.vert, .moi-objectif.vert { color: #a8f0b4; border-color: #6fcf86aa; }
+.adv-objectif.rouge, .moi-objectif.rouge { color: #ffaaa0; border-color: #d9584caa; }
+.moi-objectif { position: absolute; left: calc(100% + 4px); bottom: 34px; font-size: 12px; padding: 3px 9px; animation: ouvrir 0.3s ease; }
+
+/* ---------- Pastille de connexion ---------- */
+.pastille-co { position: absolute; z-index: 3; right: 8%; top: 8%; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #120a04; }
+.pastille-co.en-ligne { background: #45d168; box-shadow: 0 0 6px #45d168; }
+.pastille-co.hors-ligne { background: #7b7b7b; }
+
+/* ---------- Règle de la carte (zoom) ---------- */
+.zoom-regle { max-width: min(42vw, 320px); padding: 14px 16px; border-radius: 12px; background: linear-gradient(180deg, #2a1a0c, #120a04); border: 1px solid #e3b04b99; box-shadow: 0 0 30px #000c; animation: ouvrir 0.25s ease; }
+.zoom-regle strong { display: block; font-family: var(--titre); font-weight: 400; font-size: 20px; color: var(--or-clair, #ffd979); margin-bottom: 6px; }
+.zoom-regle p { margin: 0; font-size: 14px; line-height: 1.4; color: #f3e6c8; }
+
+/* ---------- Fin de manche animée ---------- */
+.ligne-animee { animation: ligneEntre 0.45s ease both; }
+@keyframes ligneEntre { from { opacity: 0; transform: translateX(-24px); } }
+
+/* ---------- Pluie d'or ---------- */
+.pluie-or { position: fixed; inset: 0; z-index: 300; pointer-events: none; overflow: hidden; }
+.pluie-or span {
+  position: absolute; top: -40px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c9, #ffd979 30%, #c98d22 70%, #7a5216);
+  box-shadow: 0 0 8px #ffd97988, inset 0 0 0 2px #a8741f;
+  animation-name: piece; animation-timing-function: cubic-bezier(.3,.1,.7,1); animation-iteration-count: 2; animation-fill-mode: both;
+}
+@keyframes piece { from { transform: translateY(0) rotateY(0) rotate(0); } to { transform: translateY(115dvh) rotateY(900deg) rotate(var(--tour)); } }

@@ -26,6 +26,7 @@ const ALPHABET_CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const INACTIVITE_MS = 120_000; // 2 minutes sans jouer : un robot prend le relais
 const PAUSE_FIN_PLI_MS = 4_800; // le temps que les joueurs voient le pli terminé
 const PAUSE_ROBOT_MS = 1_100;
+const PAUSE_ROBOT_RAPIDE_MS = 450;
 const NOMS_ROBOTS = [
   'Barbe-Grise', 'Jack l’Écumeur', 'Anne la Rouge', 'Le Borgne', 'Calico', 'Mary la Brave', 'Long John',
   'Œil-de-Lynx', 'Capitaine Fûtaille', 'La Murène', 'Vieux Corbeau', 'Dents-de-Requin',
@@ -68,7 +69,7 @@ Deno.serve(async (req) => {
 async function traiter(moi: string, c: any): Promise<unknown> {
   switch (c?.action) {
     case 'creer_salon': return creerSalon(moi, Boolean(c.public));
-    case 'entrainement': return entrainement(moi, Number(c.robots ?? 3));
+    case 'entrainement': return entrainement(moi, Number(c.robots ?? 3), c.vitesse === 'rapide');
     case 'rejoindre': return rejoindre(moi, String(c.code ?? ''));
     case 'quitter': return quitter(moi, String(c.salon_id));
     case 'pret': return pret(moi, String(c.salon_id), Boolean(c.pret));
@@ -157,14 +158,14 @@ async function insererRobot(salonId: string, place: number, dejaPris: string[]) 
   }));
 }
 
-async function entrainement(moi: string, nbRobots: number) {
+async function entrainement(moi: string, nbRobots: number, rapide: boolean) {
   const n = Math.max(1, Math.min(7, Math.floor(nbRobots) || 3));
   const s = await nouveauSalon(moi, false, true);
   for (let i = 0; i < n; i++) {
     const pris = (await membres(s.salon_id)).map((m) => m.pseudo);
     await insererRobot(s.salon_id, i + 1, pris);
   }
-  await lancer(moi, s.salon_id);
+  await lancer(moi, s.salon_id, rapide);
   return s;
 }
 
@@ -259,6 +260,7 @@ interface Extra {
   entrainement: boolean;
   annulee: boolean;
   finPliA: number; // horodatage de la fin du dernier pli
+  rapide: boolean; // entraînement : robots rapides
 }
 
 function ajouter(liste: string[], x: string) {
@@ -268,7 +270,7 @@ function ajouter(liste: string[], x: string) {
 function normaliser(extra: Partial<Extra>): Extra {
   return {
     continuer: [], debutManche: new Date().toISOString(), robots: [], remplaces: [], definitifs: [], retours: [],
-    abandons: [], exclus: [], humainsAuDepart: 0, entrainement: false, annulee: false, finPliA: 0, ...extra,
+    abandons: [], exclus: [], humainsAuDepart: 0, entrainement: false, annulee: false, finPliA: 0, rapide: false, ...extra,
   };
 }
 
@@ -279,7 +281,7 @@ function vueComplete(etat: EtatPartie, extra: Extra, partieId: string) {
     ...vuePublique(etat), partieId,
     continuer: extra.continuer, debutManche: extra.debutManche,
     robots: extra.robots, remplaces: extra.remplaces, definitifs: extra.definitifs,
-    entrainement: extra.entrainement, annulee: extra.annulee,
+    entrainement: extra.entrainement, annulee: extra.annulee, rapide: extra.rapide,
   };
 }
 
@@ -336,7 +338,7 @@ async function modifierPartie(partieId: string, fn: (etat: EtatPartie, extra: Ex
   throw new Refus('Trop de coups en même temps, réessaie.');
 }
 
-async function lancer(moi: string, salonId: string) {
+async function lancer(moi: string, salonId: string, rapide = false) {
   const s = await salon(salonId);
   if (s.hote !== moi) throw new Refus("Seul l'hôte peut lancer la partie.");
   if (s.statut !== 'attente') throw new Refus('La partie est déjà lancée.');
@@ -353,7 +355,7 @@ async function lancer(moi: string, salonId: string) {
   const etat = creerPartie(liste.map((m) => m.joueur_id), graine);
   const robots = liste.filter((m) => m.est_robot).map((m) => m.joueur_id);
   const extra = normaliser({
-    robots, humainsAuDepart: liste.length - robots.length, entrainement: s.entrainement,
+    robots, humainsAuDepart: liste.length - robots.length, entrainement: s.entrainement, rapide: s.entrainement && rapide,
   });
   const partie = verifier(await db.from('parties').insert({ salon_id: salonId, vue: {} }).select('id').single());
   verifier(await db.from('parties_etat').insert({ partie_id: partie.id, etat, extra }));
@@ -466,9 +468,9 @@ async function avancerRobots(partieId: string, attenteInitiale = 0) {
       if (etat.phase === 'mise') pause = 400;
       else if (etat.phase === 'jeu') {
         // Juste après un pli terminé, on laisse le temps de le voir avant que le robot rejoue.
-        const reste = extra.finPliA + PAUSE_FIN_PLI_MS - Date.now();
-        pause = Math.max(PAUSE_ROBOT_MS, reste);
-      } else pause = 1_200;
+        const reste = extra.finPliA + (extra.rapide ? 3_100 : PAUSE_FIN_PLI_MS) - Date.now();
+        pause = Math.max(extra.rapide ? PAUSE_ROBOT_RAPIDE_MS : PAUSE_ROBOT_MS, reste);
+      } else pause = extra.rapide ? 500 : 1_200;
     }
 
     await dormir(pause);

@@ -31,6 +31,7 @@ export type VueJeu = VuePublique & {
   definitifs: string[];
   entrainement: boolean;
   annulee: boolean;
+  rapide?: boolean;
 };
 
 /** Appelle l'arbitre. En cas de refus, lève une erreur avec le message en français. */

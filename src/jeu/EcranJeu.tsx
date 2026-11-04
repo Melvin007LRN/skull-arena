@@ -3,12 +3,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { appel, usePartie, type MembreSalon } from '../lib/jeu.ts';
 import { TableJeu } from './TableJeu.tsx';
+import { creerPaquet } from '../engine/cards.ts';
 import './jeu.css';
 
 export const PHRASES_RAPIDES = [
   'C’est très fort', 'Ah oui les jean', 'Bravo', 'Pardon', 'Masterclass', 'Tu fais chauffer', 'C’est pour moi', 'Il va la chercher',
 ];
 const ANTI_SPAM_MS = 3000;
+
+// Préchargement des illustrations : la main d'abord, puis tout le paquet, pour qu'aucune carte n'apparaisse en retard.
+const dejaCharge = new Set<string>();
+function precharger(ids: string[]) {
+  for (const id of ids) {
+    if (dejaCharge.has(id)) continue;
+    dejaCharge.add(id);
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = `/cartes/${id}.webp`;
+  }
+}
 
 export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   partieId: string; membres: MembreSalon[]; moi: string; hote: string; retourAccueil: () => void;
@@ -19,6 +32,15 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   const [bulle, setBulle] = useState<{ de: string; texte: string; cle: number } | null>(null);
   const canalChat = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const dernierEnvoi = useRef(0);
+  const [presents, setPresents] = useState<string[] | undefined>(undefined);
+
+  useEffect(() => {
+    if (main?.main) precharger(main.main);
+  }, [main?.main]);
+  useEffect(() => {
+    const t = setTimeout(() => precharger(creerPaquet().map((c) => c.id)), 300);
+    return () => clearTimeout(t);
+  }, []);
 
   const envoyer = useCallback(async (coup: Record<string, unknown>) => {
     setEnCours(true);
@@ -57,7 +79,9 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
 
   // Phrases rapides : diffusées en direct, la dernière remplace aussitôt la précédente.
   useEffect(() => {
-    const canal = supabase.channel(`phrases-${partieId}`, { config: { broadcast: { self: true } } });
+    const canal = supabase.channel(`phrases-${partieId}`, { config: { broadcast: { self: true }, presence: { key: moi } } });
+    // Présence : qui a la table ouverte en ce moment (pastille verte / grise).
+    canal.on('presence', { event: 'sync' }, () => setPresents(Object.keys(canal.presenceState())));
     let minuterie = 0;
     canal.on('broadcast', { event: 'phrase' }, ({ payload }) => {
       const { de, texte } = payload as { de: string; texte: string };
@@ -65,10 +89,10 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
       clearTimeout(minuterie);
       setBulle({ de, texte, cle: Date.now() });
       minuterie = window.setTimeout(() => setBulle(null), 2600);
-    }).subscribe();
+    }).subscribe((statut) => { if (statut === 'SUBSCRIBED') canal.track({ en_ligne: true }).catch(() => {}); });
     canalChat.current = canal;
     return () => { clearTimeout(minuterie); supabase.removeChannel(canal); };
-  }, [partieId]);
+  }, [partieId, moi]);
 
   const envoyerPhrase = useCallback((texte: string) => {
     if (Date.now() - dernierEnvoi.current < ANTI_SPAM_MS) return;
@@ -100,7 +124,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   return (
     <TableJeu
       vue={vue} main={main} membres={membres} moi={moi} hote={hote}
-      enCours={enCours} erreur={erreur} bulle={bulle} phrases={PHRASES_RAPIDES}
+      enCours={enCours} erreur={erreur} bulle={bulle} phrases={PHRASES_RAPIDES} presents={presents}
       envoyer={envoyer} envoyerPhrase={envoyerPhrase}
       quitter={async () => { try { await appel('abandonner', { partie_id: partieId }); } catch { /* déjà finie */ } sortir(); }}
       exclure={(j) => appel('exclure', { salon_id: membres[0]?.salon_id, joueur_id: j }).catch((e) => setErreur((e as Error).message))}
