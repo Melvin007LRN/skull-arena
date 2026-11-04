@@ -167,3 +167,12 @@ test('pouvoir activé seulement quand le pirate gagne le pli (jamais la Tigresse
   assert.equal(resoudrePli(pli('A:tigresse=pirate', 'B:jaune_2')).pouvoir, null);
   assert.equal(resoudrePli(pli('A:pirate_rosie', 'B:pirate_harry')).pouvoir, 'rosie');
 });
+
+test('plusieurs pirates : le premier posé l’emporte (Tigresse en Pirate comprise)', () => {
+  assert.equal(gagne('A:pirate_rosie', 'B:pirate_harry', 'C:pirate_bendt'), 'A');
+  assert.equal(gagne('A:jaune_5', 'B:pirate_juanita', 'C:pirate_rascal', 'D:noir_14'), 'B');
+  assert.equal(gagne('A:pirate_rosie', 'B:tigresse=pirate'), 'A');
+  assert.equal(gagne('A:tigresse=pirate', 'B:pirate_rosie'), 'A');
+  assert.equal(gagne('A:pirate_rosie', 'B:sirene_1', 'C:pirate_harry'), 'A');
+  assert.equal(gagne('A:pirate_rosie', 'B:pirate_harry', 'C:skull_king'), 'C');
+});
