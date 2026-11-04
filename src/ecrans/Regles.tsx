@@ -132,6 +132,51 @@ const PAGES: Page[] = [
     ),
   },
   {
+    titre: 'L’extension · les couleurs',
+    cartes: ['jaune_7x', 'vert_8x', 'violet_0_14', 'joker_15'],
+    contenu: (
+      <>
+        <p>L’hôte peut choisir de jouer <strong>avec l’extension</strong> : 19 cartes en plus.</p>
+        <p><strong>7 et 8</strong> (un de chaque couleur) : cartes normales. Celui qui remporte le pli qui contient le 7 perd <strong>5 points</strong>, celui qui remporte le 8 en gagne <strong>5</strong> (si sa mise est exacte). À valeur égale, la première posée gagne.</p>
+        <p><strong>0 / 14</strong> : en la posant, tu choisis si elle vaut 0 ou 14. Elle ne rapporte aucun bonus.</p>
+        <p><strong>Joker 15</strong> : un 15 jaune, violet ou vert, qui se pose toujours. Si la couleur n’est pas lancée, tu la choisis ; sinon il prend la couleur demandée. Sur un pli noir, il perd contre le noir.</p>
+      </>
+    ),
+  },
+  {
+    titre: 'L’extension · l’équipage',
+    cartes: ['pirate_mary', 'second'],
+    contenu: (
+      <>
+        <p><strong>Mary Thorne</strong> : un Pirate. Si elle gagne le pli, tu prends au hasard une carte dans la main d’un adversaire : il devra <strong>la poser au pli suivant</strong>, même sans suivre la couleur.</p>
+        <p><strong>Le Second</strong> : bat toutes les cartes sauf le Skull King et les Sirènes. S’il gagne, il prend les <strong>pouvoirs des Pirates</strong> capturés (pas leurs bonus). Le Skull King ou une Sirène qui le capture gagne <strong>+30</strong>.</p>
+        <p>Sirène, Pirate et Second dans le même pli : la Sirène gagne.</p>
+      </>
+    ),
+  },
+  {
+    titre: 'L’extension · les abysses',
+    cartes: ['raie', 'davy_jones'],
+    contenu: (
+      <>
+        <p><strong>Raie tachetée</strong> 🐟 : un léviathan, l’inverse de la Baleine. La <strong>plus petite carte numérotée</strong> gagne, toutes couleurs confondues (égalité : la première posée). Sans carte numérotée, personne ne gagne.</p>
+        <p>Avec plusieurs léviathans (Kraken, Baleine, Raie), c’est le <strong>dernier posé</strong> qui décide.</p>
+        <p><strong>Casier de Davy Jones</strong> : ne gagne jamais. Il détruit tous les léviathans du pli, puis le pli se joue normalement. Le gagnant touche <strong>+20 par léviathan détruit</strong>.</p>
+      </>
+    ),
+  },
+  {
+    titre: 'L’extension · la poudre',
+    cartes: ['planche', 'salve'],
+    contenu: (
+      <>
+        <p><strong>Supplice de la planche</strong> : ne gagne jamais. À la fin du pli, tu jettes un Pirate à la mer (tu choisis s’il y en a plusieurs). Le pli se joue <strong>comme s’il n’avait pas été posé</strong> : il ne gagne rien et ne rapporte rien.</p>
+        <p><strong>Dernière salve</strong> : ne gagne jamais (ce n’est pas une Fuite). Quand tout le monde a joué, tu poses <strong>une deuxième carte</strong>, en suivant la couleur. Tu auras donc une carte de moins et tu ne joueras pas le dernier pli.</p>
+        <p>Si la Raie, le Casier, la Planche ou la Salve ouvre le pli, c’est la carte suivante qui fixe la couleur.</p>
+      </>
+    ),
+  },
+  {
     titre: 'À bord de Skull Arena',
     cartes: ['pirate_rascal'],
     contenu: (

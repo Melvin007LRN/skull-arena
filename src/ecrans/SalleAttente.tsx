@@ -151,6 +151,18 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
         </form>
       </section>
 
+      <section className="parchemin regle-extension">
+        {suisHote ? (
+          <button type="button" className={`interrupteur ${salon.extension ? 'actif' : ''}`} role="switch" aria-checked={Boolean(salon.extension)} disabled={enCours}
+            onClick={() => faire(() => appel('regler_salon', { salon_id: salon.id, extension: !salon.extension }))}>
+            <span className="interrupteur-texte"><strong>Avec l’extension</strong><small>19 cartes en plus : Mary Thorne, le Second, la Raie, Davy Jones…</small></span>
+            <span className="interrupteur-curseur" aria-hidden="true"><span /></span>
+          </button>
+        ) : (
+          <p className="petit-texte centre">{salon.extension ? '🃏 Partie avec l’extension (19 cartes en plus)' : 'Partie avec le jeu de base'}</p>
+        )}
+      </section>
+
       {erreur && <p className="message erreur">{erreur}</p>}
       {suisHote && membres.length < 8 && (
         <button type="button" className="bouton-sombre" disabled={enCours} onClick={() => faire(() => appel('ajouter_robot', { salon_id: salon.id }))}>

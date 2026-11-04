@@ -10,6 +10,8 @@ export interface Salon {
   hote: string;
   statut: 'attente' | 'en_jeu' | 'terminee';
   entrainement: boolean;
+  /** Partie avec les 19 cartes de l'extension. */
+  extension?: boolean;
 }
 
 export interface MembreSalon {

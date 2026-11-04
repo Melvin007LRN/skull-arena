@@ -550,3 +550,25 @@
   10%, 32% { opacity: 1; transform: translate(-50%, -50%) translateX(var(--ecart)); }
   100% { opacity: 0; transform: translate(-50%, -50%) translateX(90vw) rotate(40deg); }
 }
+
+/* ---------- Extension ---------- */
+.etiquette-tigresse.rouge { background: #0d3550; border: 1px solid #9fd3ff88; }
+.etiquette-tigresse.couleur-jaune { background: #b8860b; }
+.etiquette-tigresse.couleur-violet { background: #6a2c91; }
+.etiquette-tigresse.couleur-vert { background: #2e7d32; }
+.etiquette-tigresse.couleur-aucune { background: #333; }
+.bouton-mise.couleur-jaune { background: linear-gradient(#e9b93a, #a8780e); color: #1a1205; }
+.bouton-mise.couleur-violet { background: linear-gradient(#9a52c8, #5a2580); color: #fff; }
+.bouton-mise.couleur-vert { background: linear-gradient(#4caf50, #22652a); color: #fff; }
+/* Mary Thorne : la carte qu'on doit poser brille en rouge */
+.carte-main.imposee img { box-shadow: 0 0 0 3px #e2483d, 0 0 18px #e2483dcc, 0 8px 18px #000d; }
+.carte-main.imposee::after { content: '🗡️'; position: absolute; top: -10px; right: -6px; font-size: 18px; filter: drop-shadow(0 2px 3px #000); }
+.choix-cartes { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.choix-cartes button { background: none; border: 0; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--creme, #f3e6c8); cursor: pointer; }
+.choix-cartes button img { width: 72px; border-radius: 6px; box-shadow: 0 0 0 2px #e3b04b, 0 6px 14px #000c; transition: transform 0.15s; }
+.choix-cartes button:active img { transform: scale(0.94); }
+.aide-geste.haut { bottom: auto; top: 58px; }
+/* Grandes animations de l'extension */
+.anim-davy { --ga-c1: #1f6b5c88; --ga-c2: #021512dd; --ga-bord: #7fe0c8; --ga-lueur: #2fb894; --ga-titre: #b8f5e4; --ga-part: #0a2b24; }
+.anim-raie { --ga-c1: #3fa6d988; --ga-c2: #021a2bdd; --ga-bord: #a8e2ff; --ga-lueur: #3fa6d9; --ga-titre: #d6f2ff; }
+.anim-planche { --ga-c1: #c0392b88; --ga-c2: #1a0503dd; --ga-bord: #ffb199; --ga-lueur: #e2483d; --ga-titre: #ffd5c8; }

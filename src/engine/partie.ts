@@ -3,7 +3,11 @@
 // valider chaque coup, et les robots pour choisir les leurs.
 import { creerPaquet, cartesParJoueur, carteParId, type NomPirate } from './cards.ts';
 import { creerHasard, melanger } from './hasard.ts';
-import { cartesJouables, resoudrePli, type CarteJouee, type ModeTigresse, type ResultatPli } from './pli.ts';
+import {
+  cartesJouables, couleurImposeeJoker, COULEURS_JOKER, piratesDuPli, resoudrePli,
+  type CarteJouee, type ModeTigresse, type ResultatPli,
+} from './pli.ts';
+import type { Couleur } from './cards.ts';
 
 export const NB_MANCHES = 10;
 
@@ -12,7 +16,7 @@ export class ErreurRegle extends Error {}
 export type Phase =
   | 'mise' // tout le monde mise en secret
   | 'jeu' // les plis se jouent
-  | 'pouvoir' // un pirate gagnant doit faire un choix (Rosie, Bendt, Rascal)
+  | 'pouvoir' // un choix est attendu (Rosie, Bendt, Rascal, Mary, Supplice de la planche)
   | 'harry' // fin de manche : Harry choisit -1, 0 ou +1
   | 'fin_manche' // scores de la manche affichés, en attente de "Continuer"
   | 'fin_partie';
@@ -20,7 +24,11 @@ export type Phase =
 export type PouvoirEnAttente =
   | { type: 'rosie'; joueur: string }
   | { type: 'bendt'; joueur: string; aDefausser: number }
-  | { type: 'rascal'; joueur: string };
+  | { type: 'rascal'; joueur: string }
+  /** Mary Thorne : choisir l'adversaire à qui prendre une carte au hasard. */
+  | { type: 'mary'; joueur: string; cibles: string[] }
+  /** Supplice de la planche : choisir le Pirate à jeter à la mer (index dans le pli en cours). */
+  | { type: 'planche'; joueur: string; pirates: number[] };
 
 export interface PliTermine {
   cartes: CarteJouee[];
@@ -68,6 +76,12 @@ export interface EtatPartie {
   revelationJuanita: { joueur: string; cartes: string[] } | null;
   scores: Record<string, number>;
   historique: ScoreManche[][];
+  /** Partie jouée avec les 19 cartes de l'extension. */
+  extension?: boolean;
+  /** Mary Thorne : carte que ce joueur doit obligatoirement poser au pli suivant. */
+  imposee?: { joueur: string; carteId: string; par: string } | null;
+  /** Pouvoirs encore à appliquer pour ce joueur (le Second peut en cumuler plusieurs). */
+  filePouvoirs?: { joueur: string; pouvoirs: NomPirate[]; dernier: boolean } | null;
 }
 
 function joueurApres(etat: EtatPartie, joueur: string, decalage = 1): string {
@@ -84,7 +98,7 @@ function parJoueur<T>(joueurs: string[], valeur: () => T): Record<string, T> {
   return Object.fromEntries(joueurs.map((j) => [j, valeur()]));
 }
 
-export function creerPartie(joueurs: string[], graine: number): EtatPartie {
+export function creerPartie(joueurs: string[], graine: number, options: { extension?: boolean } = {}): EtatPartie {
   if (joueurs.length < 2 || joueurs.length > 8) throw new ErreurRegle('Une partie se joue de 2 à 8 joueurs.');
   if (new Set(joueurs).size !== joueurs.length) throw new ErreurRegle('Chaque joueur doit être unique.');
   const hasard = creerHasard(graine);
@@ -95,6 +109,7 @@ export function creerPartie(joueurs: string[], graine: number): EtatPartie {
     detailBonusManche: {}, alliances: [], rascal: {}, harry: {}, harryEnAttente: [], meneur: joueurs[0],
     pliEnCours: [], numeroPli: 1, dernierPli: null, pouvoir: null, revelationJuanita: null,
     scores: parJoueur(joueurs, () => 0), historique: [],
+    extension: Boolean(options.extension), imposee: null, filePouvoirs: null,
   };
   return demarrerManche(etat, 1);
 }
@@ -103,11 +118,11 @@ function demarrerManche(etat: EtatPartie, manche: number): EtatPartie {
   const e = etat;
   const n = e.joueurs.length;
   e.manche = manche;
-  e.cartesParJoueur = cartesParJoueur(manche, n);
+  e.cartesParJoueur = cartesParJoueur(manche, n, Boolean(e.extension));
   if (manche > 1) e.couronne = (e.couronne + 1) % n; // la couronne tourne dans le sens des aiguilles d'une montre
   const hasard = creerHasard((e.graine ^ (e.tirage * 0x9e3779b1)) >>> 0);
   e.tirage += 1;
-  const paquet = melanger(creerPaquet().map((c) => c.id), hasard);
+  const paquet = melanger(creerPaquet(Boolean(e.extension)).map((c) => c.id), hasard);
   e.mains = {};
   e.joueurs.forEach((j, i) => {
     e.mains[j] = paquet.slice(i * e.cartesParJoueur, (i + 1) * e.cartesParJoueur);
@@ -128,28 +143,60 @@ function demarrerManche(etat: EtatPartie, manche: number): EtatPartie {
   e.dernierPli = null;
   e.pouvoir = null;
   e.revelationJuanita = null;
+  e.imposee = null;
+  e.filePouvoirs = null;
   e.phase = 'mise';
   return e;
+}
+
+/**
+ * Joueurs qui participent au pli en cours, dans l'ordre, à partir du meneur.
+ * Un joueur sans carte (après une Dernière salve) passe son tour.
+ */
+export function ordreDuPli(etat: EtatPartie): string[] {
+  const n = etat.joueurs.length;
+  const ordre: string[] = [];
+  for (let k = 0; k < n; k++) {
+    const j = joueurApres(etat, etat.meneur, k);
+    if (etat.mains[j].length > 0 || etat.pliEnCours.some((c) => c.joueur === j)) ordre.push(j);
+  }
+  return ordre;
+}
+
+/** Dernière salve : joueur qui doit encore poser sa carte supplémentaire, s'il y en a un. */
+export function salveEnAttente(etat: EtatPartie): string | null {
+  const salve = etat.pliEnCours.find((c) => carteParId(c.carteId).type === 'salve');
+  if (!salve) return null;
+  const nbCartes = etat.pliEnCours.filter((c) => c.joueur === salve.joueur).length;
+  if (nbCartes >= 2 || etat.mains[salve.joueur].length === 0) return null;
+  return salve.joueur;
 }
 
 /** Joueur qui doit poser une carte maintenant (phase "jeu"). */
 export function joueurActif(etat: EtatPartie): string | null {
   if (etat.phase !== 'jeu') return null;
-  return joueurApres(etat, etat.meneur, etat.pliEnCours.length);
+  const ordre = ordreDuPli(etat);
+  const premiers = new Set(etat.pliEnCours.map((c) => c.joueur)).size;
+  if (premiers < ordre.length) return ordre[premiers];
+  return salveEnAttente(etat);
 }
 
 /** Cartes que ce joueur peut poser maintenant (vide si ce n'est pas son tour). */
 export function cartesAutorisees(etat: EtatPartie, joueur: string): string[] {
   if (joueurActif(etat) !== joueur) return [];
+  // Mary Thorne : la carte prise doit être posée, quelles que soient les cartes déjà jouées.
+  if (etat.imposee?.joueur === joueur && etat.mains[joueur].includes(etat.imposee.carteId)) return [etat.imposee.carteId];
   return cartesJouables(etat.mains[joueur], etat.pliEnCours);
 }
 
 export type Action =
   | { type: 'miser'; joueur: string; mise: number }
-  | { type: 'jouer'; joueur: string; carteId: string; tigresse?: ModeTigresse }
+  | { type: 'jouer'; joueur: string; carteId: string; tigresse?: ModeTigresse; valeur?: 0 | 14; couleur?: Couleur }
   | { type: 'rosie'; joueur: string; choix: string }
   | { type: 'bendt'; joueur: string; defausse: string[] }
   | { type: 'rascal'; joueur: string; pari: 0 | 10 | 20 }
+  | { type: 'mary'; joueur: string; cible: string }
+  | { type: 'planche'; joueur: string; index: number }
   | { type: 'harry'; joueur: string; ajustement: -1 | 0 | 1 }
   | { type: 'continuer' };
 
@@ -159,13 +206,17 @@ export function appliquer(etat: EtatPartie, action: Action): EtatPartie {
     case 'miser':
       return miser(e, action.joueur, action.mise);
     case 'jouer':
-      return jouer(e, action.joueur, action.carteId, action.tigresse);
+      return jouer(e, action.joueur, action.carteId, action.tigresse, action.valeur, action.couleur);
     case 'rosie':
       return pouvoirRosie(e, action.joueur, action.choix);
     case 'bendt':
       return pouvoirBendt(e, action.joueur, action.defausse);
     case 'rascal':
       return pouvoirRascal(e, action.joueur, action.pari);
+    case 'mary':
+      return pouvoirMary(e, action.joueur, action.cible);
+    case 'planche':
+      return choixPlanche(e, action.joueur, action.index);
     case 'harry':
       return pouvoirHarry(e, action.joueur, action.ajustement);
     case 'continuer':
@@ -194,28 +245,70 @@ function miser(e: EtatPartie, joueur: string, mise: number): EtatPartie {
   return e;
 }
 
-function jouer(e: EtatPartie, joueur: string, carteId: string, tigresse?: ModeTigresse): EtatPartie {
+function jouer(
+  e: EtatPartie, joueur: string, carteId: string, tigresse?: ModeTigresse, valeur?: number, couleur?: Couleur,
+): EtatPartie {
   verifierJoueur(e, joueur);
   if (e.phase !== 'jeu') throw new ErreurRegle("Ce n'est pas le moment de jouer une carte.");
   if (joueurActif(e) !== joueur) throw new ErreurRegle("Ce n'est pas ton tour.");
   if (!e.mains[joueur].includes(carteId)) throw new ErreurRegle("Tu n'as pas cette carte.");
-  if (!cartesJouables(e.mains[joueur], e.pliEnCours).includes(carteId)) {
-    throw new ErreurRegle('Tu dois suivre la couleur demandée (ou jouer une carte spéciale).');
+  if (!cartesAutorisees(e, joueur).includes(carteId)) {
+    throw new ErreurRegle(e.imposee?.joueur === joueur
+      ? 'Mary Thorne t’oblige à poser la carte qu’elle t’a prise.'
+      : 'Tu dois suivre la couleur demandée (ou jouer une carte spéciale).');
   }
-  const estTigresse = carteParId(carteId).type === 'tigresse';
-  if (estTigresse && tigresse !== 'pirate' && tigresse !== 'fuite') {
-    throw new ErreurRegle('Choisis si la Tigresse est jouée en Pirate ou en Fuite.');
+  const type = carteParId(carteId).type;
+  const posee: CarteJouee = { joueur, carteId };
+  if (type === 'tigresse') {
+    if (tigresse !== 'pirate' && tigresse !== 'fuite') throw new ErreurRegle('Choisis si la Tigresse est jouée en Pirate ou en Fuite.');
+    posee.tigresse = tigresse;
+  }
+  if (type === 'double') {
+    if (valeur !== 0 && valeur !== 14) throw new ErreurRegle('Choisis si cette carte vaut 0 ou 14.');
+    posee.valeur = valeur;
+  }
+  if (type === 'joker') {
+    const imposee = couleurImposeeJoker(e.pliEnCours);
+    if (imposee === undefined) {
+      if (!couleur || !COULEURS_JOKER.includes(couleur)) throw new ErreurRegle('Choisis la couleur du 15 : jaune, violet ou vert.');
+      posee.couleur = couleur;
+    } else if (imposee) posee.couleur = imposee;
   }
   e.mains[joueur] = e.mains[joueur].filter((id) => id !== carteId);
-  e.pliEnCours.push(estTigresse ? { joueur, carteId, tigresse } : { joueur, carteId });
+  if (e.imposee?.joueur === joueur) e.imposee = null;
+  e.pliEnCours.push(posee);
   e.revelationJuanita = null;
-  if (e.pliEnCours.length < e.joueurs.length) return e;
-  return terminerPli(e);
+  if (joueurActif(e) !== null) return e; // d'autres joueurs (ou la Dernière salve) doivent encore poser
+  return finDePose(e);
 }
 
-function terminerPli(e: EtatPartie): EtatPartie {
+/** Tout le monde a posé : Supplice de la planche à décider, ou pli résolu. */
+function finDePose(e: EtatPartie): EtatPartie {
+  const planche = e.pliEnCours.find((c) => carteParId(c.carteId).type === 'planche');
+  if (planche) {
+    const pirates = piratesDuPli(e.pliEnCours);
+    if (pirates.length === 1) return terminerPli(e, pirates[0]);
+    if (pirates.length > 1) {
+      e.pouvoir = { type: 'planche', joueur: planche.joueur, pirates };
+      e.phase = 'pouvoir';
+      return e;
+    }
+  }
+  return terminerPli(e, null);
+}
+
+function choixPlanche(e: EtatPartie, joueur: string, index: number): EtatPartie {
+  verifierPouvoir(e, 'planche', joueur);
+  const p = e.pouvoir as Extract<PouvoirEnAttente, { type: 'planche' }>;
+  if (!p.pirates.includes(index)) throw new ErreurRegle('Choisis un des Pirates du pli.');
+  e.pouvoir = null;
+  e.phase = 'jeu';
+  return terminerPli(e, index);
+}
+
+function terminerPli(e: EtatPartie, retire: number | null): EtatPartie {
   const cartes = e.pliEnCours;
-  const resultat = resoudrePli(cartes);
+  const resultat = resoudrePli(cartes, retire);
   e.dernierPli = { cartes, resultat };
   e.defausse.push(...cartes.map((c) => c.carteId));
   e.pliEnCours = [];
@@ -232,13 +325,32 @@ function terminerPli(e: EtatPartie): EtatPartie {
 
   e.numeroPli += 1;
   e.phase = 'jeu';
-  activerPouvoir(e, resultat.gagnant, resultat.pouvoir, dernierDeLaManche);
-  if (dernierDeLaManche && e.phase === 'jeu') finirManche(e);
+  e.filePouvoirs = resultat.gagnant && resultat.pouvoirs.length
+    ? { joueur: resultat.gagnant, pouvoirs: [...resultat.pouvoirs], dernier: dernierDeLaManche }
+    : null;
+  return continuerPouvoirs(e);
+}
+
+/** Applique les pouvoirs en attente, un par un ; s'arrête dès qu'un choix est demandé. */
+function continuerPouvoirs(e: EtatPartie): EtatPartie {
+  const f = e.filePouvoirs;
+  while (f && f.pouvoirs.length > 0 && e.phase === 'jeu') {
+    activerPouvoir(e, f.joueur, f.pouvoirs.shift()!, f.dernier);
+  }
+  if (e.phase !== 'jeu') return e;
+  const dernier = f?.dernier ?? e.numeroPli > e.cartesParJoueur;
+  e.filePouvoirs = null;
+  if (dernier) finirManche(e);
   return e;
 }
 
-function activerPouvoir(e: EtatPartie, gagnant: string | null, pouvoir: NomPirate | null, dernier: boolean) {
-  if (!gagnant || !pouvoir) return;
+function apresChoix(e: EtatPartie): EtatPartie {
+  e.pouvoir = null;
+  e.phase = 'jeu';
+  return continuerPouvoirs(e);
+}
+
+function activerPouvoir(e: EtatPartie, gagnant: string, pouvoir: NomPirate, dernier: boolean) {
   // Harry agit en fin de manche, même sur le dernier pli. Les autres pouvoirs ne servent à rien sur le dernier pli.
   if (pouvoir === 'harry') {
     e.harryEnAttente.push(gagnant);
@@ -266,6 +378,13 @@ function activerPouvoir(e: EtatPartie, gagnant: string | null, pouvoir: NomPirat
     case 'juanita':
       if (e.nonDistribuees.length > 0) e.revelationJuanita = { joueur: gagnant, cartes: [...e.nonDistribuees] };
       break;
+    case 'mary': {
+      const cibles = e.joueurs.filter((j) => j !== gagnant && e.mains[j].length > 0);
+      if (cibles.length === 0) return;
+      e.pouvoir = { type: 'mary', joueur: gagnant, cibles };
+      e.phase = 'pouvoir';
+      break;
+    }
   }
 }
 
@@ -280,9 +399,7 @@ function pouvoirRosie(e: EtatPartie, joueur: string, choix: string): EtatPartie 
   verifierPouvoir(e, 'rosie', joueur);
   verifierJoueur(e, choix);
   e.meneur = choix; // Rosie peut se choisir elle-même
-  e.pouvoir = null;
-  e.phase = 'jeu';
-  return e;
+  return apresChoix(e);
 }
 
 function pouvoirBendt(e: EtatPartie, joueur: string, defausse: string[]): EtatPartie {
@@ -296,18 +413,26 @@ function pouvoirBendt(e: EtatPartie, joueur: string, defausse: string[]): EtatPa
   }
   e.mains[joueur] = e.mains[joueur].filter((id) => !defausse.includes(id));
   e.defausse.push(...defausse);
-  e.pouvoir = null;
-  e.phase = 'jeu';
-  return e;
+  return apresChoix(e);
 }
 
 function pouvoirRascal(e: EtatPartie, joueur: string, pari: number): EtatPartie {
   verifierPouvoir(e, 'rascal', joueur);
   if (pari !== 0 && pari !== 10 && pari !== 20) throw new ErreurRegle('Le pari de Rascal est de 0, 10 ou 20 points.');
   e.rascal[joueur] = pari;
-  e.pouvoir = null;
-  e.phase = 'jeu';
-  return e;
+  return apresChoix(e);
+}
+
+function pouvoirMary(e: EtatPartie, joueur: string, cible: string): EtatPartie {
+  verifierPouvoir(e, 'mary', joueur);
+  const p = e.pouvoir as Extract<PouvoirEnAttente, { type: 'mary' }>;
+  if (!p.cibles.includes(cible)) throw new ErreurRegle('Choisis un adversaire qui a encore des cartes.');
+  // Carte tirée au hasard, mais de façon reproductible (même graine = même partie).
+  const hasard = creerHasard((e.graine ^ (e.tirage * 0x85ebca6b) ^ (e.numeroPli * 0xc2b2ae35)) >>> 0);
+  e.tirage += 1;
+  const main = e.mains[cible];
+  e.imposee = { joueur: cible, carteId: main[Math.floor(hasard() * main.length)], par: joueur };
+  return apresChoix(e);
 }
 
 function pouvoirHarry(e: EtatPartie, joueur: string, ajustement: number): EtatPartie {

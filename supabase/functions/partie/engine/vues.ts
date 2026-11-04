@@ -1,7 +1,7 @@
 // Ce que chaque joueur a le droit de voir. Le serveur garde l'état complet et n'envoie que ces vues.
 import type { EtatPartie, Phase, PliTermine, PouvoirEnAttente, ScoreManche } from './partie.ts';
 import type { CarteJouee } from './pli.ts';
-import { cartesAutorisees, joueurActif } from './partie.ts';
+import { cartesAutorisees, joueurActif, salveEnAttente } from './partie.ts';
 
 export interface VuePublique {
   joueurs: string[];
@@ -28,12 +28,20 @@ export interface VuePublique {
   rascal: Record<string, number>;
   scores: Record<string, number>;
   historique: ScoreManche[][];
+  /** Partie avec l'extension. */
+  extension: boolean;
+  /** Mary Thorne : qui doit poser la carte prise (la carte elle-même reste secrète), et qui l'a prise. */
+  imposee: { joueur: string; par: string } | null;
+  /** Dernière salve : joueur qui doit poser sa carte supplémentaire. */
+  salve: string | null;
 }
 
 export interface VuePrivee {
   main: string[];
   jouables: string[];
   revelationJuanita: string[] | null;
+  /** Mary Thorne : carte que je dois poser au prochain pli. */
+  carteImposee: string | null;
 }
 
 export function vuePublique(e: EtatPartie): VuePublique {
@@ -61,6 +69,12 @@ export function vuePublique(e: EtatPartie): VuePublique {
     rascal: e.rascal,
     scores: e.scores,
     historique: e.historique,
+    extension: Boolean(e.extension),
+    imposee: e.imposee ? { joueur: e.imposee.joueur, par: e.imposee.par } : null,
+    salve: (() => {
+      const a = joueurActif(e);
+      return a && a === salveEnAttente(e) && e.pliEnCours.some((c) => c.joueur === a) ? a : null;
+    })(),
   };
 }
 
@@ -69,5 +83,6 @@ export function vuePrivee(e: EtatPartie, joueur: string): VuePrivee {
     main: e.mains[joueur] ?? [],
     jouables: cartesAutorisees(e, joueur),
     revelationJuanita: e.revelationJuanita?.joueur === joueur ? e.revelationJuanita.cartes : null,
+    carteImposee: e.imposee?.joueur === joueur ? e.imposee.carteId : null,
   };
 }

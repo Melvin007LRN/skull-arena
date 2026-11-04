@@ -7,6 +7,7 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
   const [code, setCode] = useState('');
   const [nbRobots, setNbRobots] = useState(3);
   const [rapide, setRapide] = useState(false);
+  const [extension, setExtension] = useState(false);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -51,8 +52,13 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
             <button type="button" className={!rapide ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setRapide(false)}>Normale</button>
             <button type="button" className={rapide ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setRapide(true)}>Rapide ⚡</button>
           </div>
+          <p className="sous-titre">Cartes</p>
+          <div className="boutons-mise">
+            <button type="button" className={!extension ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setExtension(false)}>Jeu de base</button>
+            <button type="button" className={extension ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setExtension(true)}>Avec l’extension 🃏</button>
+          </div>
           <button type="button" className="bouton-or bouton-jouer" disabled={enCours}
-            onClick={() => faire(() => appel('entrainement', { robots: nbRobots, vitesse: rapide ? 'rapide' : 'normale' }))}>
+            onClick={() => faire(() => appel('entrainement', { robots: nbRobots, vitesse: rapide ? 'rapide' : 'normale', extension }))}>
             {enCours ? 'Préparation…' : 'Lever l’ancre !'}
           </button>
         </section>

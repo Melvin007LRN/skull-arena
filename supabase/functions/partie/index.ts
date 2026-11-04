@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
 async function traiter(moi: string, c: any): Promise<unknown> {
   switch (c?.action) {
     case 'creer_salon': return creerSalon(moi, Boolean(c.public));
-    case 'entrainement': return entrainement(moi, Number(c.robots ?? 3), c.vitesse === 'rapide');
+    case 'entrainement': return entrainement(moi, Number(c.robots ?? 3), c.vitesse === 'rapide', Boolean(c.extension));
+    case 'regler_salon': return reglerSalon(moi, String(c.salon_id), Boolean(c.extension));
     case 'rejoindre': return rejoindre(moi, String(c.code ?? ''));
     case 'quitter': return quitter(moi, String(c.salon_id));
     case 'pret': return pret(moi, String(c.salon_id), Boolean(c.pret));
@@ -95,7 +96,7 @@ async function profil(moi: string) {
   return p as { pseudo: string; photo_url: string | null; cadre: string | null };
 }
 
-interface SalonLigne { id: string; code: string; public: boolean; hote: string; statut: string; entrainement: boolean }
+interface SalonLigne { id: string; code: string; public: boolean; hote: string; statut: string; entrainement: boolean; extension: boolean }
 interface Membre { joueur_id: string; pseudo: string; est_robot: boolean; pret: boolean; place: number }
 
 async function salon(id: string): Promise<SalonLigne> {
@@ -159,9 +160,10 @@ async function insererRobot(salonId: string, place: number, dejaPris: string[]) 
   }));
 }
 
-async function entrainement(moi: string, nbRobots: number, rapide: boolean) {
+async function entrainement(moi: string, nbRobots: number, rapide: boolean, extension: boolean) {
   const n = Math.max(1, Math.min(7, Math.floor(nbRobots) || 3));
   const s = await nouveauSalon(moi, false, true);
+  if (extension) verifier(await db.from('salons').update({ extension: true }).eq('id', s.salon_id));
   for (let i = 0; i < n; i++) {
     const pris = (await membres(s.salon_id)).map((m) => m.pseudo);
     await insererRobot(s.salon_id, i + 1, pris);
@@ -225,6 +227,15 @@ async function rejouer(moi: string, salonId: string) {
     await lancer(moi, salonId, Boolean(ligne?.extra?.rapide));
   }
   return { salon_id: salonId };
+}
+
+/** L'hôte choisit de jouer avec ou sans l'extension (avant le lancement). */
+async function reglerSalon(moi: string, salonId: string, extension: boolean) {
+  const s = await salon(salonId);
+  if (s.hote !== moi) throw new Refus("Seul l'hôte peut choisir les règles.");
+  if (s.statut !== 'attente') throw new Refus('La partie a déjà commencé.');
+  verifier(await db.from('salons').update({ extension, maj_le: new Date().toISOString() }).eq('id', salonId));
+  return { ok: true };
 }
 
 async function pret(moi: string, salonId: string, valeur: boolean) {
@@ -477,7 +488,7 @@ async function lancer(moi: string, salonId: string, rapide = false) {
   if (verrou.length === 0) throw new Refus('La partie est déjà lancée.');
 
   const graine = crypto.getRandomValues(new Uint32Array(1))[0];
-  const etat = creerPartie(liste.map((m) => m.joueur_id), graine);
+  const etat = creerPartie(liste.map((m) => m.joueur_id), graine, { extension: Boolean(s.extension) });
   const robots = liste.filter((m) => m.est_robot).map((m) => m.joueur_id);
   const extra = normaliser({
     robots, humainsAuDepart: liste.length - robots.length, entrainement: s.entrainement, rapide: s.entrainement && rapide,

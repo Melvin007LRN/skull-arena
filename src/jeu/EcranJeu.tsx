@@ -55,9 +55,9 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     if (main?.main) precharger(main.main);
   }, [main?.main]);
   useEffect(() => {
-    const t = setTimeout(() => precharger(creerPaquet().map((c) => c.id)), 300);
+    const t = setTimeout(() => precharger(creerPaquet(Boolean(vue?.extension)).map((c) => c.id)), 300);
     return () => clearTimeout(t);
-  }, []);
+  }, [vue?.extension]);
 
   const envoyer = useCallback(async (coup: Record<string, unknown>) => {
     setEnCours(true);

@@ -4,10 +4,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE, type ReactNode, type RefObject } from 'react';
 import type { VueJeu, MembreSalon } from '../lib/jeu.ts';
 import type { VuePrivee } from '../engine/vues.ts';
-import { carteParId, NOMS_PIRATES, COULEURS } from '../engine/cards.ts';
+import { carteParId, NOMS_PIRATES, COULEURS, type Couleur } from '../engine/cards.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { debloquerSon, musique, son, vibrer } from '../lib/sons.ts';
-import { resoudrePli, role } from '../engine/pli.ts';
+import { couleurImposeeJoker, COULEURS_JOKER, resoudrePli, role, type CarteJouee } from '../engine/pli.ts';
 import { OBJETS } from '../lib/boutique.ts';
 import { useBloques, useSocial } from '../lib/social.ts';
 
@@ -23,12 +23,22 @@ export function regleCarte(id: string): { nom: string; texte: string } {
   const NOMS_COULEURS = { jaune: 'Coffre (jaune)', violet: 'Carte au trésor (violet)', vert: 'Perroquet (vert)', noir: 'Pavillon noir (atout)' } as const;
   switch (c.type) {
     case 'numero':
+      if (c.bonusPli) {
+        return { nom: `${c.valeur} ${NOMS_COULEURS[c.couleur]} · extension`, texte: `Carte numérotée normale. À valeur égale, la première posée gagne. Celui qui remporte le pli qui la contient gagne ${c.bonusPli > 0 ? '+5' : '−5'} (si sa mise est exacte).` };
+      }
       return c.couleur === 'noir'
         ? { nom: `${c.valeur} ${NOMS_COULEURS.noir}`, texte: `L’atout : bat toutes les couleurs, mais perd contre les personnages.${c.valeur === 14 ? ' Le capturer rapporte +20 (si la mise est exacte).' : ''}` }
         : { nom: `${c.valeur} ${NOMS_COULEURS[c.couleur]}`, texte: `Il faut suivre la couleur demandée si tu en as. La plus haute de la couleur gagne.${c.valeur === 14 ? ' Le capturer rapporte +10 (si la mise est exacte).' : ''}` };
     case 'fuite': return { nom: 'Fuite', texte: 'Perd toujours (sauf si tout le monde fuit : la première gagne). Se joue à tout moment.' };
     case 'butin': return { nom: 'Butin', texte: 'Comme une Fuite. Si un autre joueur gagne le pli, vous formez une alliance : +20 chacun si vos deux mises sont exactes.' };
     case 'tigresse': return { nom: 'Tigresse', texte: 'Au choix : jouée en Pirate (sans pouvoir) ou en Fuite.' };
+    case 'double': return { nom: `0 / 14 ${NOMS_COULEURS[c.couleur]}`, texte: 'En la posant, tu choisis : elle vaut 0 ou 14 dans sa couleur. Elle ne rapporte jamais de bonus.' };
+    case 'joker': return { nom: 'Joker 15', texte: 'Un 15 jaune, violet ou vert. Si la couleur n’est pas encore lancée, tu la choisis ; sinon il prend la couleur demandée. Sur un pli noir, il perd contre le noir. Il se pose toujours.' };
+    case 'second': return { nom: 'Le Second', texte: 'Bat toutes les cartes sauf le Skull King et les Sirènes. S’il gagne, il prend les pouvoirs des Pirates capturés (sans leurs bonus). Capturé par le Skull King ou une Sirène : +30.' };
+    case 'raie': return { nom: 'Raie tachetée', texte: 'Léviathan : la plus petite carte numérotée gagne le pli (égalité : la première posée). Avec d’autres léviathans, le dernier posé décide.' };
+    case 'davy': return { nom: 'Casier de Davy Jones', texte: 'Ne gagne jamais. Détruit tous les léviathans du pli (Kraken, Baleine, Raie), puis le pli se joue normalement. Le gagnant touche +20 par léviathan détruit.' };
+    case 'planche': return { nom: 'Supplice de la planche', texte: 'Ne gagne jamais. À la fin du pli, jette un Pirate à la mer (tu choisis s’il y en a plusieurs) : le pli se joue comme s’il n’avait pas été posé.' };
+    case 'salve': return { nom: 'Dernière salve', texte: 'Ne gagne jamais (ce n’est pas une Fuite). Quand tout le monde a joué, tu poses immédiatement une deuxième carte. Tu ne joueras donc pas le dernier pli de la manche.' };
     case 'skull_king': return { nom: 'Skull King', texte: 'Bat les Pirates (+30 par Pirate capturé) mais tombe face à une Sirène.' };
     case 'sirene': return { nom: 'Sirène', texte: 'Bat les cartes numérotées. Perd contre les Pirates, mais capture le Skull King (+40).' };
     case 'kraken': return { nom: 'Kraken', texte: 'Détruit le pli : personne ne le gagne. Celui qui aurait gagné ouvre le pli suivant.' };
@@ -40,6 +50,7 @@ export function regleCarte(id: string): { nom: string; texte: string } {
         rascal: 'Parie 0, 10 ou 20 points : gagnés si ta mise est exacte, perdus sinon.',
         juanita: 'Regarde en secret les cartes non distribuées.',
         harry: 'En fin de manche, modifie ta mise de −1, 0 ou +1.',
+        mary: 'Prends une carte au hasard dans la main d’un adversaire : il devra la poser au pli suivant.',
       } as const;
       return { nom: NOMS_PIRATES[c.pirate], texte: `Pirate : bat les numéros et les Sirènes (+20 par Sirène), perd contre le Skull King. Pouvoir s’il gagne le pli : ${pouvoirs[c.pirate]}${c.pirate !== 'harry' ? ' (Pas au dernier pli.)' : ''}` };
     }
@@ -102,8 +113,9 @@ const EMOJIS = ['😂', '😱', '🔥', '👏', '😡', '🤔', '😎', '🙏'];
 /** Ordre de tri de la main : par couleur, puis par valeur, spéciales à part. */
 function rangCarte(id: string): number {
   const c = carteParId(id);
-  if (c.type === 'numero') return COULEURS.indexOf(c.couleur) * 100 + c.valeur;
-  const ordre = ['fuite', 'butin', 'tigresse', 'pirate', 'sirene', 'skull_king', 'kraken', 'baleine'];
+  if (c.type === 'numero') return COULEURS.indexOf(c.couleur) * 100 + c.valeur + (c.bonusPli ? 0.5 : 0);
+  if (c.type === 'double') return COULEURS.indexOf(c.couleur) * 100 + 14.5;
+  const ordre = ['fuite', 'butin', 'salve', 'planche', 'tigresse', 'pirate', 'second', 'sirene', 'skull_king', 'joker', 'kraken', 'baleine', 'raie', 'davy'];
   return 1000 + ordre.indexOf(c.type) * 10 + (c.type === 'pirate' ? id.length : 0);
 }
 
@@ -119,6 +131,9 @@ export function TableJeu(p: PropsTable) {
   const [pouvoirEnvoye, setPouvoirEnvoye] = useState<string | null>(null);
   const [zoom, setZoom] = useState<string | null>(null);
   const [tigresse, setTigresse] = useState(false);
+  // Extension : choix à faire en posant le 0/14 ou le Joker 15.
+  const [choixValeur, setChoixValeur] = useState<string | null>(null);
+  const [choixJoker, setChoixJoker] = useState(false);
   const [defausse, setDefausse] = useState<string[]>([]);
   const [chatOuvert, setChatOuvert] = useState(false);
   const [scoresOuverts, setScoresOuverts] = useState(false);
@@ -301,7 +316,7 @@ export function TableJeu(p: PropsTable) {
   // ---------- Pli affiché ----------
   const pliServeur = pliAffiche && vue.dernierPli ? vue.dernierPli.cartes : vue.pliEnCours;
   // La carte que je viens de lancer apparaît tout de suite sur la table, sans attendre le serveur.
-  const pliMontre = carteEnVol && !pliServeur.some((c) => c.carteId === carteEnVol)
+  const pliMontre: CarteJouee[] = carteEnVol && !pliServeur.some((c) => c.carteId === carteEnVol)
     ? [...pliServeur, { joueur: moi, carteId: carteEnVol }]
     : pliServeur;
   const resultat = pliAffiche && etape === 'gagnant' ? vue.dernierPli?.resultat ?? null : null;
@@ -318,7 +333,8 @@ export function TableJeu(p: PropsTable) {
     const cx = 50, cy = 45;
     const ancreY = joueur === moi ? 100 : pos.y + 12;
     const depart = joueur === moi ? { x: 50, y: 120 } : { x: pos.x, y: pos.y + 12 };
-    let x = cx + (pos.x - cx) * 0.5 + (index - (pliMontre.length - 1) / 2) * 2.5;
+    const dejaPose = pliMontre.slice(0, index).some((c) => c.joueur === joueur); // Dernière salve : 2e carte décalée
+    let x = cx + (pos.x - cx) * 0.5 + (index - (pliMontre.length - 1) / 2) * 2.5 + (dejaPose ? 7 : 0);
     let y = cy + (ancreY - cy) * 0.14;
     const rot = ((index * 37) % 13) - 6;
     if (cible && etape === 'gagnant') {
@@ -352,7 +368,10 @@ export function TableJeu(p: PropsTable) {
   function jouerCarte(id: string) {
     if (!aMoi || !main.jouables.includes(id)) return;
     setSelection(null);
-    if (carteParId(id).type === 'tigresse') return setTigresse(true);
+    const type = carteParId(id).type;
+    if (type === 'tigresse') return setTigresse(true);
+    if (type === 'double') return setChoixValeur(id);
+    if (type === 'joker' && couleurImposeeJoker(vue.pliEnCours) === undefined) return setChoixJoker(true);
     lancer({ type: 'jouer', carteId: id }, id);
   }
 
@@ -481,20 +500,26 @@ export function TableJeu(p: PropsTable) {
               style={styleCartePli(c.joueur, i)} onClick={() => (!pliAffiche && vue.dernierPli && vue.pliEnCours.length === 0 ? setVoirDernierPli(true) : setZoom(c.carteId))}>
               <img src={`/cartes/${c.carteId}.webp`} alt="" draggable={false} />
               {c.tigresse && <span className="etiquette-tigresse">{c.tigresse === 'pirate' ? 'Pirate' : 'Fuite'}</span>}
+              {c.valeur !== undefined && <span className="etiquette-tigresse">vaut {c.valeur}</span>}
+              {carteParId(c.carteId).type === 'joker' && <span className={`etiquette-tigresse couleur-${c.couleur ?? 'aucune'}`}>{c.couleur ? `15 ${c.couleur}` : '15 sans couleur'}</span>}
+              {resultat && resultat.retire === i && <span className="etiquette-tigresse rouge">🌊 à la mer</span>}
+              {resultat && resultat.detruits?.includes(i) && <span className="etiquette-tigresse rouge">⚓ au Casier</span>}
             </figure>
           ))}
           {resultat && (
             <p className="annonce-pli">
               {resultat.effet === 'kraken' ? '🐙 Le Kraken engloutit le pli !'
-                : resultat.gagnant ? <>{pseudo(resultat.gagnant)} remporte le pli{resultat.bonus ? <strong> +{resultat.bonus}</strong> : null}</>
-                : '🐋 La Baleine blanche disperse le pli !'}
+                : resultat.gagnant ? <>{pseudo(resultat.gagnant)} remporte le pli{resultat.bonus ? <strong> {resultat.bonus > 0 ? '+' : ''}{resultat.bonus}</strong> : null}</>
+                : resultat.effet === 'raie' ? '🐟 La Raie tachetée disperse le pli !'
+                : resultat.effet === 'baleine' ? '🐋 La Baleine blanche disperse le pli !'
+                : 'Personne ne remporte ce pli'}
             </p>
           )}
           {maitresse && (
             <p className="meneur-pli">
               {maitresse.effet === 'kraken' ? '🐙 Le Kraken rôde : personne ne gagnera ce pli…'
-                : maitresse.gagnant ? <>⚔ {maitresse.gagnant === moi ? 'Tu mènes' : `${pseudo(maitresse.gagnant)} mène`}</>
-                : '🐋 La Baleine rôde…'}
+                : maitresse.gagnant ? <>⚔ {maitresse.gagnant === moi ? 'Tu mènes' : `${pseudo(maitresse.gagnant)} mène`}{maitresse.effet === 'raie' ? ' · 🐟 la plus petite gagne' : ''}</>
+                : maitresse.effet === 'raie' ? '🐟 La Raie rôde…' : maitresse.effet === 'baleine' ? '🐋 La Baleine rôde…' : null}
             </p>
           )}
           {!pliAffiche && vue.phase === 'jeu' && pliMontre.length === 0 && (
@@ -580,7 +605,7 @@ export function TableJeu(p: PropsTable) {
             animationDelay: `${i * 70}ms`,
           };
           return (
-            <button key={id} type="button" className={`carte-main ${jouable ? 'jouable' : ''} ${interdite ? 'interdite' : ''} ${levee ? 'levee' : ''} ${g ? 'glissee' : ''} ${defausse.includes(id) ? 'a-defausser' : ''}`}
+            <button key={id} type="button" className={`carte-main ${main.carteImposee === id ? 'imposee' : ''} ${jouable ? 'jouable' : ''} ${interdite ? 'interdite' : ''} ${levee ? 'levee' : ''} ${g ? 'glissee' : ''} ${defausse.includes(id) ? 'a-defausser' : ''}`}
               style={style} onPointerDown={(e) => surAppui(e, id)} onPointerMove={surDeplacement} onPointerUp={surRelache}
               onPointerCancel={() => { if (appui.current) clearTimeout(appui.current.minuterie); appui.current = null; setGlisse(null); }}
               onContextMenu={(e) => e.preventDefault()}>
@@ -590,14 +615,21 @@ export function TableJeu(p: PropsTable) {
         })}
       </section>
 
-      {aMoi && !tigresse && (
+      {aMoi && !tigresse && !choixValeur && !choixJoker && (
         <p className="aide-geste">
           <span className="fleches">⌃⌃</span>
           {selection ? 'Glisse-la vers l’arène, ou touche-la encore pour la jouer' : 'Glisse ta carte vers l’arène pour la jouer'}
         </p>
       )}
       {!aMoi && !pliAffiche && vue.phase === 'jeu' && vue.joueurActif && vue.joueurActif !== moi && pliMontre.length > 0 && (
-        <p className="aide-geste discret">Au tour de {pseudo(vue.joueurActif)}…</p>
+        <p className="aide-geste discret">{vue.salve === vue.joueurActif ? `💥 ${pseudo(vue.joueurActif)} tire sa Dernière salve…` : `Au tour de ${pseudo(vue.joueurActif)}…`}</p>
+      )}
+      {!pliAffiche && vue.phase === 'jeu' && vue.salve === moi && <p className="bandeau">💥 Dernière salve : pose ta deuxième carte !</p>}
+      {!pliAffiche && main.carteImposee && main.main.includes(main.carteImposee) && (
+        <p className="bandeau">🗡️ {vue.imposee ? pseudo(vue.imposee.par) : 'Mary Thorne'} t’a pris une carte : tu dois la poser à ce pli.</p>
+      )}
+      {!pliAffiche && vue.imposee && vue.imposee.joueur !== moi && ['jeu', 'pouvoir'].includes(vue.phase) && (
+        <p className="aide-geste discret haut">🗡️ Mary Thorne : {pseudo(vue.imposee.joueur)} doit poser la carte prise par {pseudo(vue.imposee.par)}</p>
       )}
 
       {/* Phrases rapides */}
@@ -689,7 +721,31 @@ export function TableJeu(p: PropsTable) {
 
       {/* Pouvoirs */}
       {!pliAffiche && vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
-        <p className="aide-geste discret">{NOMS_PIRATES[vue.pouvoir.type]} · {pseudo(vue.pouvoir.joueur)} choisit…</p>
+        <p className="aide-geste discret">{vue.pouvoir.type === 'planche' ? 'Supplice de la planche' : NOMS_PIRATES[vue.pouvoir.type]} · {pseudo(vue.pouvoir.joueur)} choisit…</p>
+      )}
+      {pouvoirMoi?.type === 'mary' && pouvoirEnvoye !== `${vue.manche}-${vue.numeroPli}-${vue.pouvoir?.type}` && (
+        <Fenetre titre="Mary Thorne" sousTitre="À qui prends-tu une carte au hasard ? Il devra la poser au pli suivant.">
+          <div className="boutons-mise">
+            {pouvoirMoi.cibles.map((j) => (
+              <button key={j} type="button" className="bouton-or petit" disabled={p.enCours} onClick={() => envoyerPouvoir({ type: 'mary', cible: j })}>{pseudo(j)}</button>
+            ))}
+          </div>
+        </Fenetre>
+      )}
+      {pouvoirMoi?.type === 'planche' && pouvoirEnvoye !== `${vue.manche}-${vue.numeroPli}-${vue.pouvoir?.type}` && (
+        <Fenetre titre="Supplice de la planche" sousTitre="Quel Pirate jettes-tu à la mer ?">
+          <div className="mini-cartes choix-cartes">
+            {pouvoirMoi.pirates.map((i) => {
+              const c = vue.pliEnCours[i];
+              return (
+                <button key={i} type="button" disabled={p.enCours} onClick={() => envoyerPouvoir({ type: 'planche', index: i })}>
+                  <img src={`/cartes/${c.carteId}.webp`} alt="" />
+                  <small>{c.joueur === moi ? 'Le mien' : pseudo(c.joueur)}</small>
+                </button>
+              );
+            })}
+          </div>
+        </Fenetre>
       )}
       {pouvoirMoi?.type === 'rosie' && pouvoirEnvoye !== `${vue.manche}-${vue.numeroPli}-${vue.pouvoir?.type}` && (
         <Fenetre titre="Rosie de Laney" sousTitre="Choisis qui commence le prochain pli">
@@ -731,6 +787,29 @@ export function TableJeu(p: PropsTable) {
         <Fenetre titre="Juanita Jade" sousTitre="Les cartes non distribuées, pour tes yeux seulement (15 secondes)">
           <div className="mini-cartes">{main.revelationJuanita.map((c) => <img key={c} src={`/cartes/${c}.webp`} alt={c} />)}</div>
           <button type="button" className="bouton-or" onClick={() => setJuanitaFermee(cleJuanita)}>J’ai vu</button>
+        </Fenetre>
+      )}
+
+      {choixValeur && (
+        <Fenetre titre="0 ou 14 ?" sousTitre="Choisis la valeur de ta carte (aucun bonus)">
+          <div className="boutons-mise">
+            {[0, 14].map((v) => (
+              <button key={v} type="button" className="bouton-mise large" onClick={() => { const id = choixValeur; setChoixValeur(null); lancer({ type: 'jouer', carteId: id, valeur: v }, id); }}>{v}</button>
+            ))}
+          </div>
+          <button type="button" className="lien" onClick={() => setChoixValeur(null)}>Annuler</button>
+        </Fenetre>
+      )}
+      {choixJoker && (
+        <Fenetre titre="Joker 15" sousTitre="Quelle couleur lances-tu ?">
+          <div className="boutons-mise">
+            {COULEURS_JOKER.map((co: Couleur) => (
+              <button key={co} type="button" className={`bouton-mise large couleur-${co}`} onClick={() => { setChoixJoker(false); lancer({ type: 'jouer', carteId: 'joker_15', couleur: co }, 'joker_15'); }}>
+                {co === 'jaune' ? 'Jaune' : co === 'violet' ? 'Violet' : 'Vert'}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="lien" onClick={() => setChoixJoker(false)}>Annuler</button>
         </Fenetre>
       )}
 
@@ -998,15 +1077,28 @@ function ResumePartie({ vue, pseudo }: { vue: VueJeu; pseudo: (id: string) => st
 const DUREE_GRANDE_ANIM = 1700;
 
 type TypeEvenement = 'regicide' | 'roi' | 'abordage' | 'kraken' | 'baleine';
-interface GrandEvenement { type: TypeEvenement; titre: string; texte: string; carte: string; victimes: string[]; son: 'regicide' | 'roiFrappe' | 'abordageFort' | 'krakenFort' | 'baleineForte' }
+interface GrandEvenement { type: TypeEvenement; /** Classe d'animation, si différente du type. */ classe?: string; titre: string; texte: string; carte: string; victimes: string[]; son: 'regicide' | 'roiFrappe' | 'abordageFort' | 'krakenFort' | 'baleineForte' }
 
 /** Repère les grands moments d'un pli terminé. */
 function detecterEvenement(
   cartes: Array<{ joueur: string; carteId: string; tigresse?: 'pirate' | 'fuite' }>,
-  r: { effet: string; gagnant: string | null; indexGagnant: number | null; bonus: number },
+  r: { effet: string; gagnant: string | null; indexGagnant: number | null; bonus: number; retire?: number | null; detruits?: number[] },
   pseudo: (id: string) => string,
 ): GrandEvenement | null {
   const ids = cartes.map((c) => c.carteId);
+  if (r.detruits?.length) {
+    return { type: 'kraken', classe: 'davy', titre: 'Le Casier de Davy Jones !', carte: 'davy_jones', son: 'krakenFort', victimes: r.detruits.map((i) => ids[i]),
+      texte: `${r.detruits.length > 1 ? 'Les léviathans sombrent' : 'Le léviathan sombre'} au fond des mers${r.gagnant ? ` · ${pseudo(r.gagnant)} +${20 * r.detruits.length}` : ''}` };
+  }
+  if (r.retire !== null && r.retire !== undefined) {
+    return { type: 'abordage', classe: 'planche', titre: 'Par-dessus bord !', carte: 'planche', son: 'abordageFort', victimes: [ids[r.retire]],
+      texte: `Le Pirate de ${pseudo(cartes[r.retire].joueur)} marche sur la planche` };
+  }
+  if (r.effet === 'raie') {
+    const g = r.gagnant && r.indexGagnant !== null ? cartes[r.indexGagnant] : null;
+    return { type: 'baleine', classe: 'raie', titre: 'La Raie tachetée !', carte: 'raie', victimes: ids.filter((i) => i !== 'raie'), son: 'baleineForte',
+      texte: g ? `${pseudo(g.joueur)} l’emporte avec la plus petite carte` : 'Le pli est dispersé par les flots' };
+  }
   if (r.effet === 'kraken') {
     return { type: 'kraken', titre: 'Le Kraken !', texte: 'Le pli est englouti par les abysses', carte: 'kraken', victimes: ids.filter((i) => i !== 'kraken'), son: 'krakenFort' };
   }
@@ -1026,6 +1118,16 @@ function detecterEvenement(
     const rois = de('skull_king');
     if (rois.length) return { type: 'regicide', titre: 'Régicide !', texte: `${nom} capture le Skull King avec une Sirène · +40`, carte: gagnante.carteId, victimes: rois, son: 'regicide' };
   }
+  if (type === 'skull_king' || type === 'sirene') {
+    const seconds = de('second');
+    if (seconds.length && type === 'skull_king' && !de('pirate').length) {
+      return { type: 'roi', titre: 'Le Second tombe !', texte: `${nom} capture le Second · +30`, carte: gagnante.carteId, victimes: seconds, son: 'roiFrappe' };
+    }
+  }
+  if (type === 'second') {
+    const pirates = de('pirate');
+    if (pirates.length) return { type: 'abordage', titre: 'Le Second !', texte: `${nom} capture ${pirates.length > 1 ? 'les Pirates et leurs pouvoirs' : 'le Pirate et son pouvoir'}`, carte: gagnante.carteId, victimes: pirates, son: 'abordageFort' };
+  }
   if (type === 'skull_king') {
     const pirates = de('pirate');
     if (pirates.length) return { type: 'roi', titre: 'Le Roi frappe !', texte: `${nom} capture ${pirates.length} pirate${pirates.length > 1 ? 's' : ''} · +${30 * pirates.length}`, carte: gagnante.carteId, victimes: pirates, son: 'roiFrappe' };
@@ -1043,7 +1145,7 @@ export function GrandeAnimation({ evt, passer }: { evt: GrandEvenement; passer: 
     k, x: Math.random() * 100, y: Math.random() * 100, r: Math.random() * 0.6, t: 0.6 + Math.random() * 0.9, s: 0.6 + Math.random() * 1.1,
   })), []);
   return (
-    <div className={`grande-anim anim-${evt.type}`} onClick={passer} role="alert">
+    <div className={`grande-anim anim-${evt.type} ${evt.classe ? `anim-${evt.classe}` : ''}`} onClick={passer} role="alert">
       <div className="ga-fond" />
       <div className="ga-particules" aria-hidden="true">
         {particules.map((p) => (
