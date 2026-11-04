@@ -521,3 +521,67 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .cl-nom small { color: #f3e6c8b3; font-size: 12px; }
 .cl-pm { display: flex; flex-direction: column; align-items: center; font-family: var(--titre); font-size: 24px; color: var(--or-clair); }
 .cl-pm small { font-family: inherit; font-size: 10px; color: #f3e6c8b3; }
+
+/* ---------- Le grimoire (livre à feuilleter) ---------- */
+.ecran-regles { gap: 12px; }
+.livre {
+  display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; border-radius: 16px; margin: 0 -2px;
+}
+.livre::-webkit-scrollbar { display: none; }
+.page-livre { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; padding: 2px; box-sizing: border-box; }
+.page-contenu {
+  min-height: 62dvh; padding: 20px 18px 22px; border-radius: 14px; box-sizing: border-box;
+  background: radial-gradient(ellipse at 50% 0%, #f6e7c2 0%, #e6cf9a 60%, #cfae6c 100%);
+  color: #2e1c0b; border: 2px solid #8a5d1e; box-shadow: inset 0 0 40px #8a5d1e66, 0 10px 30px #000a;
+}
+.page-contenu .titre-pirate { color: #5a1a0e; margin: 0 0 10px; text-align: center; font-size: 30px; }
+.page-numero { margin: 0; text-align: center; font-family: var(--gravure); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #8a5d1e; }
+.page-cartes { display: flex; justify-content: center; gap: 8px; margin: 6px 0 14px; }
+.page-cartes img { width: min(26vw, 92px); border-radius: 8px; box-shadow: 0 4px 12px #0007; }
+.page-cartes img:nth-child(odd) { transform: rotate(-4deg); }
+.page-cartes img:nth-child(even) { transform: rotate(4deg) translateY(4px); }
+.page-texte p, .page-texte li { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+.page-texte ul { padding-left: 18px; margin: 0 0 10px; }
+.page-texte strong { color: #5a1a0e; }
+.page-texte .exemple { font-style: italic; padding: 8px 10px; border-left: 3px solid #8a5d1e; background: #ffffff40; border-radius: 4px; }
+.livre-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.livre-points { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.livre-points button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 0; background: #e3b04b44; cursor: pointer; }
+.livre-points button.actif { background: var(--or-clair); transform: scale(1.3); }
+
+/* ---------- Réglages ---------- */
+.ecran-reglages, .ecran-admin, .ecran-legal, .ecran-classement { gap: 14px; }
+.interrupteur {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 12px; cursor: pointer;
+  background: #0a0704; border: 1px solid #e3b04b33; color: inherit; text-align: left; font: inherit;
+}
+.interrupteur-texte { flex: 1; display: flex; flex-direction: column; }
+.interrupteur-texte small { color: #f3e6c8b3; font-size: 12px; }
+.interrupteur-curseur { position: relative; flex: none; width: 50px; height: 28px; border-radius: 14px; background: #3a2a1a; transition: background 0.2s; }
+.interrupteur-curseur span { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #c9b48a; transition: transform 0.2s, background 0.2s; }
+.interrupteur.actif .interrupteur-curseur { background: #9a6b1c; }
+.interrupteur.actif .interrupteur-curseur span { transform: translateX(22px); background: #ffd979; }
+.ecran-reglages .parchemin > * + * { margin-top: 10px; }
+.liens-legaux { display: flex; flex-direction: column; align-items: flex-start; }
+
+/* ---------- Pages légales ---------- */
+.texte-legal h1 { margin-top: 0; }
+.texte-legal h2 { margin: 16px 0 6px; font-family: var(--gravure); font-size: 16px; color: var(--or-clair); }
+.texte-legal p, .texte-legal li { font-size: 14px; line-height: 1.55; color: #f3e6c8; }
+.texte-legal ul { padding-left: 18px; }
+.texte-legal a { color: var(--or-clair); }
+.pied-liens { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 10px; }
+.pied-liens small { width: 100%; text-align: center; color: #f3e6c899; font-size: 12px; }
+.pied-liens button { border: 0; background: none; padding: 4px 0; color: #e3b04bcc; font-size: 12px; text-decoration: underline; cursor: pointer; font-family: inherit; }
+
+/* ---------- Admin ---------- */
+.champ-recherche { margin-bottom: 8px; }
+.admin-joueurs, .admin-phrases { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.admin-joueurs li { border-radius: 12px; background: #0a0704; border: 1px solid #e3b04b22; }
+.admin-joueurs li.banni { border-color: #7d1a15; opacity: 0.8; }
+.admin-ligne { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.admin-actions { display: flex; flex-direction: column; gap: 8px; padding: 0 10px 12px; }
+.admin-phrases li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #0a0704; border: 1px solid #e3b04b22; }
+.admin-phrases li > span { flex: 1; }
+.admin-phrases .lien { width: auto; padding: 0; }

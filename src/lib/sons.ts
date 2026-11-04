@@ -114,6 +114,13 @@ export const musique = {
   },
 };
 
+const CLE_VIBRATIONS = 'skull-vibrations';
+export const vibrations = {
+  actives(): boolean { try { return localStorage.getItem(CLE_VIBRATIONS) !== '0'; } catch { return true; } },
+  regler(v: boolean) { try { localStorage.setItem(CLE_VIBRATIONS, v ? '1' : '0'); } catch { /* stockage indisponible */ } },
+};
+
 export function vibrer(ms = 60) {
+  if (!vibrations.actives()) return;
   try { navigator.vibrate?.(ms); } catch { /* non disponible (iPhone) */ }
 }

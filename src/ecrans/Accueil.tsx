@@ -21,8 +21,9 @@ const ACCROCHES = [
   'Le Skull King n’attend que toi.',
 ];
 
-export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement }: {
+export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirLegal }: {
   profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
+  ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void;
 }) {
   const [numeroUn, setNumeroUn] = useState<LigneClassement | null>(null);
   useEffect(() => { chargerClassement().then((l) => setNumeroUn(l[0] ?? null)).catch(() => {}); }, []);
@@ -70,7 +71,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement }:
       phrase: 'Ton visage, ton nom, tes trophées : forge ta légende.',
     },
     {
-      id: 'regles', titre: 'Le grimoire', image: '/cartes/sirene_1.webp', cadrage: '50% 25%',
+      id: 'regles', titre: 'Le grimoire', image: '/cartes/sirene_1.webp', cadrage: '50% 25%', action: ouvrirRegles,
       phrase: 'Sirènes, Kraken, Baleine blanche… tous les secrets du jeu, page après page.',
     },
   ];
@@ -131,13 +132,18 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement }:
       </Apparition>
 
       <Apparition>
-        <button type="button" className="lien-reglages" onClick={() => setBientot('Réglages')}>
+        <button type="button" className="lien-reglages" onClick={ouvrirReglages}>
           ⚙ Réglages du navire
         </button>
       </Apparition>
 
       <footer className="pied">
         <p>« Un bon pirate ne promet que ce qu’il peut prendre. »</p>
+        <nav className="pied-liens">
+          <button type="button" onClick={() => ouvrirLegal('mentions')}>Mentions légales</button>
+          <button type="button" onClick={() => ouvrirLegal('confidentialite')}>Confidentialité</button>
+          <button type="button" onClick={() => ouvrirLegal('cgu')}>Conditions</button>
+        </nav>
       </footer>
 
       {bientot && <div className="toast">{bientot} : bientôt disponible</div>}

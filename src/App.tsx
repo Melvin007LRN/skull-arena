@@ -9,12 +9,20 @@ import { EcranProfil } from './ecrans/Profil.tsx';
 import { Lobby } from './ecrans/Lobby.tsx';
 import { EcranSalon } from './ecrans/EcranSalon.tsx';
 import { EcranClassement } from './ecrans/Classement.tsx';
+import { EcranRegles } from './ecrans/Regles.tsx';
+import { EcranReglages } from './ecrans/Reglages.tsx';
+import { EcranAdmin } from './ecrans/Admin.tsx';
+import { EcranLegal, type PageLegale } from './ecrans/Legal.tsx';
 import { appel, salonEnCours } from './lib/jeu.ts';
 
 type Ecran =
   | { nom: 'accueil' }
   | { nom: 'profil' }
   | { nom: 'classement' }
+  | { nom: 'regles' }
+  | { nom: 'reglages' }
+  | { nom: 'admin' }
+  | { nom: 'legal'; page: PageLegale; retour: Ecran }
   | { nom: 'lobby'; mode: 'jouer' | 'code' | 'entrainement' }
   | { nom: 'salon'; id: string };
 
@@ -27,6 +35,8 @@ export function App() {
   const [recuperation, setRecuperation] = useState(false);
   const [ecran, setEcran] = useState<Ecran>(ACCUEIL);
   const [repriseFaite, setRepriseFaite] = useState(false);
+  // Pages légales consultables même sans être connecté.
+  const [legalHorsConnexion, setLegalHorsConnexion] = useState<PageLegale | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -79,7 +89,10 @@ export function App() {
 
   if (session === undefined) return <Chargement />;
   if (recuperation && session) return <NouveauMotDePasse fini={() => setRecuperation(false)} />;
-  if (!session) return <Connexion />;
+  if (!session && legalHorsConnexion) {
+    return <EcranLegal page={legalHorsConnexion} retour={() => setLegalHorsConnexion(null)} changer={setLegalHorsConnexion} />;
+  }
+  if (!session) return <Connexion ouvrirLegal={setLegalHorsConnexion} />;
   if (erreur) return <Message texte={erreur} action="Réessayer" surAction={recharger} />;
   if (!profil) return <Chargement />;
   if (profil.banni) {
@@ -91,9 +104,23 @@ export function App() {
   }
   if (ecran.nom === 'salon') return <EcranSalon key={ecran.id} salonId={ecran.id} moi={profil.id} sortir={sortirDuSalon} />;
   if (ecran.nom === 'classement') return <EcranClassement profil={profil} retour={versAccueil} />;
+  if (ecran.nom === 'regles') return <EcranRegles retour={versAccueil} />;
+  if (ecran.nom === 'admin') return <EcranAdmin profil={profil} retour={() => setEcran({ nom: 'reglages' })} />;
+  if (ecran.nom === 'legal') {
+    const e = ecran;
+    return <EcranLegal page={e.page} retour={() => setEcran(e.retour)} changer={(page) => setEcran({ ...e, page })} />;
+  }
+  if (ecran.nom === 'reglages') {
+    return (
+      <EcranReglages profil={profil} retour={versAccueil} ouvrirProfil={() => setEcran({ nom: 'profil' })}
+        ouvrirAdmin={() => setEcran({ nom: 'admin' })} ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: { nom: 'reglages' } })} />
+    );
+  }
   return (
     <Accueil profil={profil} ouvrirProfil={() => setEcran({ nom: 'profil' })}
-      ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} ouvrirClassement={() => setEcran({ nom: 'classement' })} />
+      ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} ouvrirClassement={() => setEcran({ nom: 'classement' })}
+      ouvrirRegles={() => setEcran({ nom: 'regles' })} ouvrirReglages={() => setEcran({ nom: 'reglages' })}
+      ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: ACCUEIL })} />
   );
 }
 

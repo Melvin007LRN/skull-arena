@@ -5,11 +5,9 @@ import { appel, usePartie, type MembreSalon } from '../lib/jeu.ts';
 import { TableJeu } from './TableJeu.tsx';
 import { creerPaquet } from '../engine/cards.ts';
 import { niveau } from '../lib/profil.ts';
+import { usePhrases } from '../lib/phrases.ts';
 import './jeu.css';
 
-export const PHRASES_RAPIDES = [
-  'C’est très fort', 'Ah oui les jean', 'Bravo', 'Pardon', 'Masterclass', 'Tu fais chauffer', 'C’est pour moi', 'Il va la chercher',
-];
 const ANTI_SPAM_MS = 3000;
 
 // Préchargement des illustrations : la main d'abord, puis tout le paquet, pour qu'aucune carte n'apparaisse en retard.
@@ -28,6 +26,9 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   partieId: string; membres: MembreSalon[]; moi: string; hote: string; retourAccueil: () => void;
 }) {
   const { vue, main } = usePartie(partieId, moi);
+  const phrases = usePhrases();
+  const phrasesRef = useRef(phrases);
+  phrasesRef.current = phrases;
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [bulle, setBulle] = useState<{ de: string; texte: string; cle: number } | null>(null);
@@ -117,7 +118,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     let minuterie = 0;
     canal.on('broadcast', { event: 'phrase' }, ({ payload }) => {
       const { de, texte } = payload as { de: string; texte: string };
-      if (!PHRASES_RAPIDES.includes(texte)) return;
+      if (!phrasesRef.current.includes(texte)) return;
       clearTimeout(minuterie);
       setBulle({ de, texte, cle: Date.now() });
       minuterie = window.setTimeout(() => setBulle(null), 2600);
@@ -161,7 +162,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   return (
     <TableJeu
       vue={vue} main={main} membres={tousMembres} moi={moi} hote={hote} gain={gain} rejouer={rejouer}
-      enCours={enCours} erreur={erreur} bulle={bulle} phrases={PHRASES_RAPIDES} presents={presents}
+      enCours={enCours} erreur={erreur} bulle={bulle} phrases={phrases} presents={presents}
       envoyer={envoyer} envoyerPhrase={envoyerPhrase}
       quitter={async () => { try { await appel('abandonner', { partie_id: partieId }); } catch { /* déjà finie */ } sortir(); }}
       exclure={(j) => appel('exclure', { salon_id: salonId, joueur_id: j }).catch((e) => setErreur((e as Error).message))}

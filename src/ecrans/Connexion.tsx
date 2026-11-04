@@ -4,7 +4,7 @@ import { PSEUDO_REGEX, pseudoDisponible } from '../lib/profil.ts';
 
 type Onglet = 'connexion' | 'inscription' | 'oubli';
 
-export function Connexion() {
+export function Connexion({ ouvrirLegal }: { ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void }) {
   const [onglet, setOnglet] = useState<Onglet>('connexion');
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
@@ -102,6 +102,12 @@ export function Connexion() {
         {onglet === 'connexion' && <button type="button" className="lien" onClick={() => changer('oubli')}>Mot de passe oublié ?</button>}
         {onglet === 'oubli' && <button type="button" className="lien" onClick={() => changer('connexion')}>Retour à la connexion</button>}
       </section>
+      <nav className="pied-liens">
+        {onglet === 'inscription' && <small>En créant un compte, tu acceptes les conditions d’utilisation et la politique de confidentialité.</small>}
+        <button type="button" onClick={() => ouvrirLegal('mentions')}>Mentions légales</button>
+        <button type="button" onClick={() => ouvrirLegal('confidentialite')}>Confidentialité</button>
+        <button type="button" onClick={() => ouvrirLegal('cgu')}>Conditions</button>
+      </nav>
     </main>
   );
 }
