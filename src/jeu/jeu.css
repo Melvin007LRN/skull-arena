@@ -337,3 +337,18 @@
   animation-name: piece; animation-timing-function: cubic-bezier(.3,.1,.7,1); animation-iteration-count: 2; animation-fill-mode: both;
 }
 @keyframes piece { from { transform: translateY(0) rotateY(0) rotate(0); } to { transform: translateY(115dvh) rotateY(900deg) rotate(var(--tour)); } }
+
+/* ---------- Fin de partie ---------- */
+.gain-xp { margin: 2px 0 6px; text-align: center; font-family: var(--titre); font-size: 20px; color: var(--or-clair, #ffd979); animation: ouvrir 0.4s ease; }
+.gain-xp strong { color: #a8f0b4; font-weight: 400; }
+.boutons-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-height: 450px) {
+  .jeu .podium .avatar { width: 52px !important; height: 52px !important; }
+  .jeu .marche-1 .avatar { width: 64px !important; height: 64px !important; }
+  .jeu .marche strong { font-size: 16px; }
+  .jeu .marche-1 .socle { height: 40px; }
+  .jeu .marche-2 .socle { height: 28px; }
+  .jeu .marche-3 .socle { height: 20px; }
+  .jeu .socle { font-size: 18px; }
+  .jeu .fenetre .titre-pirate { margin: 2px 0; }
+}

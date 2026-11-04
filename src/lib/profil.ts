@@ -14,6 +14,9 @@ export interface Profil {
   points_total: number;
   mises_reussies: number;
   mises_total: number;
+  regicides: number;
+  fantomes: number;
+  badges: string[];
 }
 
 export const PSEUDO_REGEX = /^[A-Za-z0-9_\-À-ÿ]{3,16}$/;
@@ -49,6 +52,53 @@ export const BADGES = [
   { id: 'fantome', nom: 'Fantôme', icone: '🫥', condition: 'Réussir 10 fois une mise de 0 à la manche 10' },
   { id: 'legende', nom: 'Légende des mers', icone: '💰', condition: 'Marquer 500 points ou plus en une partie' },
 ] as const;
+
+export type IdBadge = (typeof BADGES)[number]['id'];
+
+/** Progression vers chaque badge : [valeur actuelle, objectif]. */
+export function progressionBadge(p: Profil, id: IdBadge): { obtenu: boolean; actuel: number; objectif: number } {
+  switch (id) {
+    case 'centurion': return { obtenu: p.victoires >= 100, actuel: Math.min(p.victoires, 100), objectif: 100 };
+    case 'regicide': return { obtenu: (p.regicides ?? 0) >= 25, actuel: Math.min(p.regicides ?? 0, 25), objectif: 25 };
+    case 'fantome': return { obtenu: (p.fantomes ?? 0) >= 10, actuel: Math.min(p.fantomes ?? 0, 10), objectif: 10 };
+    default: {
+      const obtenu = (p.badges ?? []).includes(id);
+      return { obtenu, actuel: obtenu ? 1 : 0, objectif: 1 };
+    }
+  }
+}
+
+export interface LigneHistorique {
+  partie_id: string;
+  rang: number;
+  nb_joueurs: number;
+  score: number;
+  xp_gagne: number;
+  victoire: boolean;
+  abandon: boolean;
+  mises_reussies: number;
+  joue_le: string;
+}
+
+export async function chargerHistorique(joueur: string, limite = 10): Promise<LigneHistorique[]> {
+  const { data, error } = await supabase.from('historique_parties').select('*').eq('joueur_id', joueur)
+    .order('joue_le', { ascending: false }).limit(limite);
+  if (error) throw error;
+  return (data ?? []) as LigneHistorique[];
+}
+
+export type LigneClassement = Pick<Profil, 'id' | 'pseudo' | 'photo_url' | 'xp' | 'parties_jouees' | 'victoires' | 'points_total' | 'meilleur_score' | 'mises_reussies' | 'mises_total'> & { pm: number };
+
+/** Classement permanent : joueurs ayant au moins 5 parties, triés par points moyens (PM), puis victoires. */
+export async function chargerClassement(): Promise<LigneClassement[]> {
+  const { data, error } = await supabase.from('profils')
+    .select('id, pseudo, photo_url, xp, parties_jouees, victoires, points_total, meilleur_score, mises_reussies, mises_total')
+    .eq('banni', false).gte('parties_jouees', PARTIES_AVANT_CLASSEMENT).limit(1000);
+  if (error) throw error;
+  return ((data ?? []) as Omit<LigneClassement, 'pm'>[])
+    .map((p) => ({ ...p, pm: Math.round(p.points_total / p.parties_jouees) }))
+    .sort((a, b) => b.pm - a.pm || b.victoires - a.victoires || b.xp - a.xp);
+}
 
 export async function chargerProfil(id: string): Promise<Profil | null> {
   const { data, error } = await supabase.from('profils').select('*').eq('id', id).maybeSingle();

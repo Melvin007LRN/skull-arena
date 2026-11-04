@@ -489,3 +489,35 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .joueur-table .exclure { position: absolute; top: 2px; right: 2px; }
 .barre-jeu { align-items: center; gap: 8px; }
 .barre-jeu .quitter { margin: 0; padding: 4px 6px; font-size: 13px; }
+
+/* ---------- Badges : progression ---------- */
+.badge.obtenu { border-color: #e3b04baa; background: linear-gradient(90deg, #2a1a0a, #0a0704); box-shadow: 0 0 14px #e3b04b33; }
+.badge.obtenu em { color: #a8f0b4; font-style: normal; font-size: 13px; }
+.badge-texte { flex: 1; }
+.badge-barre { position: relative; display: block; height: 14px; margin-top: 6px; border-radius: 7px; background: #1e140a; border: 1px solid #e3b04b44; overflow: hidden; }
+.badge-barre span { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #9a6b1c, #ffd979); }
+.badge-barre b { position: relative; display: block; text-align: center; font-size: 10px; line-height: 12px; color: #fff; text-shadow: 0 1px 2px #000; }
+
+/* ---------- Historique des parties ---------- */
+.historique { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.historique li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #0a0704; border: 1px solid #e3b04b22; }
+.historique li.victoire { border-color: #e3b04b88; }
+.historique li.abandon { opacity: 0.7; }
+.hist-rang { width: 34px; text-align: center; font-family: var(--titre); font-size: 20px; color: var(--or-clair); }
+.hist-texte { flex: 1; display: flex; flex-direction: column; }
+.hist-texte small, .hist-score small { color: #f3e6c8b3; font-size: 12px; }
+.hist-score { display: flex; flex-direction: column; align-items: flex-end; font-weight: 700; }
+
+/* ---------- Classement ---------- */
+.classement { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.classement li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: #0a0704; border: 1px solid #e3b04b22; }
+.classement li.moi { border-color: #ffd979; box-shadow: 0 0 12px #e3b04b44; }
+.classement li.top-1 { background: linear-gradient(90deg, #3a2608, #0a0704); border-color: #ffd979aa; }
+.classement li.top-2 { border-color: #d7d7d777; }
+.classement li.top-3 { border-color: #d8995a77; }
+.cl-rang { width: 30px; text-align: center; font-family: var(--titre); font-size: 22px; color: var(--or-clair); }
+.cl-nom { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cl-nom strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-nom small { color: #f3e6c8b3; font-size: 12px; }
+.cl-pm { display: flex; flex-direction: column; align-items: center; font-family: var(--titre); font-size: 24px; color: var(--or-clair); }
+.cl-pm small { font-family: inherit; font-size: 10px; color: #f3e6c8b3; }

@@ -25,5 +25,5 @@ export function EcranSalon({ salonId, moi, sortir }: { salonId: string; moi: str
   }
   if (salon.statut === 'attente') return <SalleAttente salon={salon} membres={membres} moi={moi} quitter={sortir} />;
   if (!partieId) return <main className="ecran ecran-centre"><p className="petit-texte">Distribution des cartes…</p></main>;
-  return <EcranJeu partieId={partieId} membres={membres} moi={moi} hote={salon.hote} retourAccueil={sortir} />;
+  return <EcranJeu key={partieId} partieId={partieId} membres={membres} moi={moi} hote={salon.hote} retourAccueil={sortir} />;
 }

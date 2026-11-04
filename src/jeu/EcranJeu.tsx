@@ -1,9 +1,10 @@
 // Branche l'écran de jeu sur le serveur : état en temps réel, coups, réveil des robots, phrases rapides.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { appel, usePartie, type MembreSalon } from '../lib/jeu.ts';
 import { TableJeu } from './TableJeu.tsx';
 import { creerPaquet } from '../engine/cards.ts';
+import { niveau } from '../lib/profil.ts';
 import './jeu.css';
 
 export const PHRASES_RAPIDES = [
@@ -33,6 +34,14 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   const canalChat = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const dernierEnvoi = useRef(0);
   const [presents, setPresents] = useState<string[] | undefined>(undefined);
+  const [gain, setGain] = useState<{ xp: number; niveauAvant: number; niveauApres: number } | null>(null);
+
+  // Les joueurs qui quittent la table après la partie gardent leur nom à l'écran.
+  const connus = useRef(new Map<string, MembreSalon>());
+  const tousMembres = useMemo(() => {
+    for (const m of membres) connus.current.set(m.joueur_id, m);
+    return [...connus.current.values()];
+  }, [membres]);
 
   useEffect(() => {
     if (main?.main) precharger(main.main);
@@ -56,6 +65,29 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
       setEnCours(false);
     }
   }, [partieId]);
+
+  // Fin de partie : XP gagnée (enregistrée par le serveur), avec passage de niveau éventuel.
+  const comptee = vue?.phase === 'fin_partie' && !vue.annulee && !vue.entrainement;
+  useEffect(() => {
+    if (!comptee) return;
+    let essais = 0, fini = false;
+    const chercher = async () => {
+      const [{ data: h }, { data: p }] = await Promise.all([
+        supabase.from('historique_parties').select('xp_gagne').eq('partie_id', partieId).eq('joueur_id', moi).maybeSingle(),
+        supabase.from('profils').select('xp').eq('id', moi).maybeSingle(),
+      ]);
+      if (fini) return;
+      if (h && p) setGain({ xp: h.xp_gagne, niveauAvant: niveau(p.xp - h.xp_gagne), niveauApres: niveau(p.xp) });
+      else if (++essais < 6) setTimeout(chercher, 1500);
+    };
+    const t = setTimeout(chercher, 1200);
+    return () => { fini = true; clearTimeout(t); };
+  }, [comptee, partieId, moi]);
+
+  const salonId = membres[0]?.salon_id ?? tousMembres[0]?.salon_id;
+  const rejouer = useCallback(async () => {
+    try { await appel('rejouer', { salon_id: salonId }); } catch (e) { setErreur((e as Error).message); setTimeout(() => setErreur(null), 3500); }
+  }, [salonId]);
 
   // Réveil toutes les 20 s : remplace les absents (2 min) et relance les robots si besoin.
   const finie = vue?.phase === 'fin_partie' || vue?.annulee;
@@ -116,6 +148,11 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     retourAccueil();
   }, [retourAccueil]);
+  // Après la partie, « Retour au port » libère aussi sa place dans le salon.
+  const retourPort = useCallback(() => {
+    if (salonId) appel('quitter', { salon_id: salonId }).catch(() => {});
+    sortir();
+  }, [salonId, sortir]);
 
   if (!vue || !main) {
     return <div className="jeu"><div className="jeu-decor" /><p className="jeu-chargement">Distribution des cartes…</p></div>;
@@ -123,12 +160,12 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
 
   return (
     <TableJeu
-      vue={vue} main={main} membres={membres} moi={moi} hote={hote}
+      vue={vue} main={main} membres={tousMembres} moi={moi} hote={hote} gain={gain} rejouer={rejouer}
       enCours={enCours} erreur={erreur} bulle={bulle} phrases={PHRASES_RAPIDES} presents={presents}
       envoyer={envoyer} envoyerPhrase={envoyerPhrase}
       quitter={async () => { try { await appel('abandonner', { partie_id: partieId }); } catch { /* déjà finie */ } sortir(); }}
-      exclure={(j) => appel('exclure', { salon_id: membres[0]?.salon_id, joueur_id: j }).catch((e) => setErreur((e as Error).message))}
-      retourAccueil={sortir}
+      exclure={(j) => appel('exclure', { salon_id: salonId, joueur_id: j }).catch((e) => setErreur((e as Error).message))}
+      retourAccueil={finie ? retourPort : sortir}
     />
   );
 }

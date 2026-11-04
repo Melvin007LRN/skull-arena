@@ -8,11 +8,13 @@ import { Accueil } from './ecrans/Accueil.tsx';
 import { EcranProfil } from './ecrans/Profil.tsx';
 import { Lobby } from './ecrans/Lobby.tsx';
 import { EcranSalon } from './ecrans/EcranSalon.tsx';
+import { EcranClassement } from './ecrans/Classement.tsx';
 import { appel, salonEnCours } from './lib/jeu.ts';
 
 type Ecran =
   | { nom: 'accueil' }
   | { nom: 'profil' }
+  | { nom: 'classement' }
   | { nom: 'lobby'; mode: 'jouer' | 'code' | 'entrainement' }
   | { nom: 'salon'; id: string };
 
@@ -72,6 +74,8 @@ export function App() {
   }, [profil, repriseFaite]);
 
   const versAccueil = useCallback(() => setEcran(ACCUEIL), []);
+  // En revenant d'une partie, on recharge le profil (XP, statistiques, badges).
+  const sortirDuSalon = useCallback(() => { setEcran(ACCUEIL); recharger(); }, [recharger]);
 
   if (session === undefined) return <Chargement />;
   if (recuperation && session) return <NouveauMotDePasse fini={() => setRecuperation(false)} />;
@@ -85,10 +89,11 @@ export function App() {
   if (ecran.nom === 'lobby') {
     return <Lobby mode={ecran.mode} retour={versAccueil} entrer={(id) => setEcran({ nom: 'salon', id })} />;
   }
-  if (ecran.nom === 'salon') return <EcranSalon key={ecran.id} salonId={ecran.id} moi={profil.id} sortir={versAccueil} />;
+  if (ecran.nom === 'salon') return <EcranSalon key={ecran.id} salonId={ecran.id} moi={profil.id} sortir={sortirDuSalon} />;
+  if (ecran.nom === 'classement') return <EcranClassement profil={profil} retour={versAccueil} />;
   return (
     <Accueil profil={profil} ouvrirProfil={() => setEcran({ nom: 'profil' })}
-      ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} />
+      ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} ouvrirClassement={() => setEcran({ nom: 'classement' })} />
   );
 }
 

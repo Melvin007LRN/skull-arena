@@ -2,7 +2,7 @@
 // avec une phrase d'accroche. Les sections apparaissent en douceur au défilement.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
-import { grade, niveau } from '../lib/profil.ts';
+import { chargerClassement, grade, niveau, type LigneClassement } from '../lib/profil.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 
 interface Entree {
@@ -21,9 +21,11 @@ const ACCROCHES = [
   'Le Skull King n’attend que toi.',
 ];
 
-export function Accueil({ profil, ouvrirProfil, ouvrirLobby }: {
-  profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void;
+export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement }: {
+  profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
 }) {
+  const [numeroUn, setNumeroUn] = useState<LigneClassement | null>(null);
+  useEffect(() => { chargerClassement().then((l) => setNumeroUn(l[0] ?? null)).catch(() => {}); }, []);
   const [reduit, setReduit] = useState(false);
   const [bientot, setBientot] = useState<string | null>(null);
   const [accroche, setAccroche] = useState(0);
@@ -60,7 +62,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby }: {
       phrase: 'Affûte ton sabre contre l’équipage fantôme, sans rien risquer.',
     },
     {
-      id: 'classement', titre: 'Classement', image: '/cartes/jaune_14.webp', cadrage: '50% 45%',
+      id: 'classement', titre: 'Classement', image: '/cartes/jaune_14.webp', cadrage: '50% 45%', action: ouvrirClassement,
       phrase: 'Les capitaines les plus redoutés des sept mers. Ta place t’attend.',
     },
     {
@@ -118,9 +120,13 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby }: {
         <section className="avis-recherche">
           <p className="avis-titre">AVIS DE RECHERCHE</p>
           <p className="avis-sous-titre">Mort ou vif</p>
-          <div className="avis-portrait"><Avatar photo={null} taille={130} /></div>
-          <p className="avis-nom">Le pirate à abattre</p>
-          <p className="avis-detail">Le numéro 1 du classement sera affiché ici. Détrône-le et prends sa place.</p>
+          <div className="avis-portrait"><Avatar photo={numeroUn?.photo_url ?? null} taille={130} /></div>
+          <p className="avis-nom">{numeroUn ? numeroUn.pseudo : 'Le pirate à abattre'}</p>
+          <p className="avis-detail">
+            {numeroUn
+              ? <>Numéro 1 du classement · {numeroUn.pm} PM · {numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
+              : 'Le numéro 1 du classement sera affiché ici. Détrône-le et prends sa place.'}
+          </p>
         </section>
       </Apparition>
 

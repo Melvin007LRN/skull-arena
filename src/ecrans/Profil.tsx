@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
 import {
   BADGES, CHANGEMENTS_PSEUDO_MAX, PARTIES_AVANT_CLASSEMENT, PSEUDO_REGEX,
-  envoyerPhoto, grade, niveau, pointsMoyens, precisionMises, supprimerMonCompte, type Profil,
+  chargerHistorique, envoyerPhoto, grade, niveau, pointsMoyens, precisionMises, progressionBadge, supprimerMonCompte,
+  type LigneHistorique, type Profil,
 } from '../lib/profil.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 
@@ -14,6 +15,8 @@ export function EcranProfil({ profil, retour, recharger }: { profil: Profil; ret
   const [erreur, setErreur] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const fichier = useRef<HTMLInputElement>(null);
+  const [historique, setHistorique] = useState<LigneHistorique[] | null>(null);
+  useEffect(() => { chargerHistorique(profil.id).then(setHistorique).catch(() => setHistorique([])); }, [profil.id, profil.parties_jouees]);
 
   const n = niveau(profil.xp);
   const xpDansNiveau = profil.xp % 100;
@@ -109,13 +112,41 @@ export function EcranProfil({ profil, retour, recharger }: { profil: Profil; ret
       <section className="parchemin">
         <h2 className="titre-pirate">Badges</h2>
         <ul className="badges">
-          {BADGES.map((b) => (
-            <li key={b.id} className="badge verrouille">
-              <span className="badge-icone">{b.icone}</span>
-              <span><strong>{b.nom}</strong><br /><small>{b.condition}</small></span>
-            </li>
-          ))}
+          {BADGES.map((b) => {
+            const pr = progressionBadge(profil, b.id);
+            return (
+              <li key={b.id} className={`badge ${pr.obtenu ? 'obtenu' : 'verrouille'}`}>
+                <span className="badge-icone">{b.icone}</span>
+                <span className="badge-texte">
+                  <strong>{b.nom}</strong>{pr.obtenu && <em> · obtenu !</em>}<br /><small>{b.condition}</small>
+                  {!pr.obtenu && pr.objectif > 1 && (
+                    <span className="badge-barre"><span style={{ width: `${(100 * pr.actuel) / pr.objectif}%` }} /><b>{pr.actuel}/{pr.objectif}</b></span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
         </ul>
+      </section>
+
+      <section className="parchemin">
+        <h2 className="titre-pirate">Dernières parties</h2>
+        {historique === null ? <p className="petit-texte centre">Chargement…</p>
+          : historique.length === 0 ? <p className="petit-texte centre">Aucune partie comptée pour l’instant. Les parties d’entraînement ne comptent pas.</p>
+          : (
+            <ul className="historique">
+              {historique.map((h) => (
+                <li key={h.partie_id} className={h.victoire ? 'victoire' : h.abandon ? 'abandon' : ''}>
+                  <span className="hist-rang">{h.victoire ? '👑' : h.abandon ? '🏳' : `${h.rang}e`}</span>
+                  <span className="hist-texte">
+                    <strong>{h.victoire ? 'Victoire' : h.abandon ? 'Abandon' : `${h.rang}e sur ${h.nb_joueurs}`}</strong>
+                    <small>{new Date(h.joue_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} · {h.mises_reussies}/10 mises réussies</small>
+                  </span>
+                  <span className="hist-score">{h.score} pts<small>+{h.xp_gagne} XP</small></span>
+                </li>
+              ))}
+            </ul>
+          )}
       </section>
 
       <section className="parchemin actions-compte">

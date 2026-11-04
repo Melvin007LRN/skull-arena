@@ -81,6 +81,9 @@ export interface PropsTable {
   decompteDesactive?: boolean;
   /** Joueurs humains actuellement connectés (pastille verte). */
   presents?: string[];
+  /** XP gagnée à la fin de la partie (parties comptées). */
+  gain?: { xp: number; niveauAvant: number; niveauApres: number } | null;
+  rejouer?: () => void;
 }
 
 /** Ordre de tri de la main : par couleur, puis par valeur, spéciales à part. */
@@ -618,7 +621,15 @@ export function TableJeu(p: PropsTable) {
               );
             })}
           </div>
-          <button type="button" className="bouton-or" onClick={p.retourAccueil}>Retour au port</button>
+          {vue.entrainement
+            ? <p className="centre petit-texte">Partie d’entraînement : elle ne compte pas pour le classement.</p>
+            : p.gain
+              ? <p className="gain-xp">+{p.gain.xp} XP{p.gain.niveauApres > p.gain.niveauAvant && <strong> · Niveau {p.gain.niveauApres} atteint !</strong>}</p>
+              : <p className="centre petit-texte">Calcul de ton butin…</p>}
+          <div className="boutons-fin">
+            {p.rejouer && <button type="button" className="bouton-or" onClick={p.rejouer}>Rejouer</button>}
+            <button type="button" className="bouton-sombre" onClick={p.retourAccueil}>Retour au port</button>
+          </div>
         </Fenetre>
       )}
       {!pliAffiche && jeGagne && <PluieOr />}

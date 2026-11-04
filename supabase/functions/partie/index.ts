@@ -3,7 +3,7 @@
 // Les robots jouent ici aussi, avec des pauses pour que les joueurs suivent la partie.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
-  creerPartie, appliquer, actionRobot, joueurActif, ErreurRegle, vuePublique, vuePrivee,
+  creerPartie, appliquer, actionRobot, joueurActif, ErreurRegle, vuePublique, vuePrivee, carteParId,
   type Action, type EtatPartie,
 } from './engine/index.ts';
 
@@ -81,6 +81,7 @@ async function traiter(moi: string, c: any): Promise<unknown> {
     case 'reveiller': return reveiller(moi, String(c.partie_id));
     case 'revenir': return revenir(moi, String(c.partie_id));
     case 'abandonner': return abandonner(moi, String(c.partie_id));
+    case 'rejouer': return rejouer(moi, String(c.salon_id));
     default: throw new Refus('Action inconnue.');
   }
 }
@@ -192,8 +193,38 @@ async function rejoindre(moi: string, codeBrut: string) {
 
 async function quitter(moi: string, salonId: string) {
   const s = await salon(salonId);
-  if (s.statut === 'attente') await retirerDuSalon(moi, salonId);
+  if (s.statut === 'attente' || s.statut === 'terminee') await retirerDuSalon(moi, salonId);
   return { ok: true };
+}
+
+/** « Rejouer » : tout l'équipage revient dans la même salle d'attente (l'entraînement relance aussitôt). */
+async function rejouer(moi: string, salonId: string) {
+  const s = await salon(salonId);
+  const liste = await membres(salonId);
+  if (!liste.some((m) => m.joueur_id === moi)) throw new Refus("Tu n'es plus dans ce salon.");
+  if (s.statut === 'attente') return { salon_id: salonId };
+  if (s.statut !== 'terminee') throw new Refus("La partie n'est pas terminée.");
+  const derniere = verifier(await db.from('parties').select('id').eq('salon_id', salonId).order('cree_le', { ascending: false }).limit(1).maybeSingle());
+  if (derniere) {
+    // Ceux qui ont abandonné ou ont été exclus ne reviennent pas automatiquement.
+    const ligne = verifier(await db.from('parties_etat').select('extra').eq('partie_id', derniere.id).maybeSingle());
+    const definitifs: string[] = ligne?.extra?.definitifs ?? [];
+    for (const j of definitifs) if (j !== moi) verifier(await db.from('salon_joueurs').delete().eq('salon_id', salonId).eq('joueur_id', j));
+  }
+  const verrou = verifier(await db.from('salons').update({ statut: 'attente', hote: s.hote, maj_le: new Date().toISOString() })
+    .eq('id', salonId).eq('statut', 'terminee').select('id'));
+  if (verrou.length === 0) return { salon_id: salonId }; // quelqu'un a déjà cliqué
+  const restants = (await membres(salonId)).filter((m) => !m.est_robot);
+  if (!restants.some((m) => m.joueur_id === s.hote) && restants[0]) {
+    verifier(await db.from('salons').update({ hote: restants[0].joueur_id }).eq('id', salonId));
+  }
+  verifier(await db.from('salon_joueurs').update({ pret: false }).eq('salon_id', salonId).eq('est_robot', false).neq('joueur_id', moi));
+  verifier(await db.from('salon_joueurs').update({ pret: true }).eq('salon_id', salonId).eq('joueur_id', moi));
+  if (s.entrainement) {
+    const ligne = derniere ? verifier(await db.from('parties_etat').select('extra').eq('partie_id', derniere.id).maybeSingle()) : null;
+    await lancer(moi, salonId, Boolean(ligne?.extra?.rapide));
+  }
+  return { salon_id: salonId };
 }
 
 async function pret(moi: string, salonId: string, valeur: boolean) {
@@ -261,6 +292,8 @@ interface Extra {
   annulee: boolean;
   finPliA: number; // horodatage de la fin du dernier pli
   rapide: boolean; // entraînement : robots rapides
+  aideRobot: string[]; // humains qu'un robot a aidés au moins une fois (pas de badge « Devin » ni « Légende »)
+  regicides: Record<string, number>; // Skull King capturés avec une Sirène, joués soi-même
 }
 
 function ajouter(liste: string[], x: string) {
@@ -270,7 +303,8 @@ function ajouter(liste: string[], x: string) {
 function normaliser(extra: Partial<Extra>): Extra {
   return {
     continuer: [], debutManche: new Date().toISOString(), robots: [], remplaces: [], definitifs: [], retours: [],
-    abandons: [], exclus: [], humainsAuDepart: 0, entrainement: false, annulee: false, finPliA: 0, rapide: false, ...extra,
+    abandons: [], exclus: [], humainsAuDepart: 0, entrainement: false, annulee: false, finPliA: 0, rapide: false,
+    aideRobot: [], regicides: {}, ...extra,
   };
 }
 
@@ -305,13 +339,65 @@ function continuerManche(etat: EtatPartie, extra: Extra): EtatPartie {
   return suite;
 }
 
+/** Après chaque coup : horodate la fin de pli et compte les Skull King capturés par une Sirène. */
+function apresCoup(avant: EtatPartie, suite: EtatPartie, extra: Extra) {
+  if (suite.numeroPli + suite.manche * 100 === avant.numeroPli + avant.manche * 100 || !suite.dernierPli) return;
+  extra.finPliA = Date.now();
+  const { cartes, resultat } = suite.dernierPli;
+  if (resultat.effet !== 'normal' || !resultat.gagnant || resultat.indexGagnant === null) return;
+  const gagnante = carteParId(cartes[resultat.indexGagnant].carteId);
+  const skullDedans = cartes.some((c) => carteParId(c.carteId).type === 'skull_king');
+  if (gagnante.type === 'sirene' && skullDedans && !pilotesParRobot(extra).includes(resultat.gagnant)) {
+    extra.regicides[resultat.gagnant] = (extra.regicides[resultat.gagnant] ?? 0) + 1;
+  }
+}
+
+const XP_PAR_RANG = [100, 70, 50, 30];
+
+/** Résultats de fin de partie pour chaque humain (XP, statistiques, badges). */
+function resultats(etat: EtatPartie, extra: Extra) {
+  const humains = etat.joueurs.filter((j) => !extra.robots.includes(j));
+  const partis = new Set([...extra.abandons, ...extra.exclus]);
+  const nb = etat.joueurs.length;
+  const scoreDe = (j: string) => etat.scores[j];
+  const rangDe = (j: string) => (partis.has(j) ? nb : 1 + etat.joueurs.filter((k) => !partis.has(k) && scoreDe(k) > scoreDe(j)).length);
+  const pire = Math.max(...etat.joueurs.map(rangDe));
+  return humains.map((j) => {
+    const rang = rangDe(j);
+    const victoire = rang === 1 && !partis.has(j);
+    const xp = victoire ? 100 : rang === pire ? 10 : XP_PAR_RANG[rang - 1] ?? 10;
+    const lignes = etat.historique.map((m) => m.find((x) => x.joueur === j)).filter(Boolean) as Array<{ mise: number; reussie: boolean }>;
+    const reussies = lignes.filter((l) => l.reussie).length;
+    const seul = !extra.aideRobot.includes(j);
+    const badges: string[] = [];
+    if (seul && lignes.length === 10 && reussies === 10) badges.push('devin');
+    if (seul && scoreDe(j) >= 500) badges.push('legende');
+    const m10 = etat.historique[9]?.find((x) => x.joueur === j);
+    return {
+      joueur: j, rang, nb, score: scoreDe(j), xp, victoire, abandon: partis.has(j),
+      mises_reussies: reussies, mises_total: lignes.length,
+      regicides: extra.regicides[j] ?? 0, fantomes: seul && m10 && m10.mise === 0 && m10.reussie ? 1 : 0,
+      badges, adversaires: etat.joueurs.filter((k) => k !== j),
+    };
+  });
+}
+
 async function ecrire(partieId: string, version: number, etat: EtatPartie, extra: Extra, salonId: string) {
   const termine = etat.phase === 'fin_partie' || extra.annulee;
+  for (const j of extra.remplaces) ajouter(extra.aideRobot, j);
   const ok = verifier(await db.rpc('ecrire_partie', {
     p_partie: partieId, p_version: version, p_etat: etat, p_extra: extra,
     p_vue: vueComplete(etat, extra, partieId), p_mains: vuesPrivees(etat, extra), p_termine: termine,
   }));
-  if (ok && termine) verifier(await db.from('salons').update({ statut: 'terminee' }).eq('id', salonId));
+  if (ok && termine) {
+    // Une partie compte s'il y avait au moins 2 humains au départ (jamais l'entraînement, jamais une partie annulée).
+    if (!extra.annulee && !extra.entrainement && extra.humainsAuDepart >= 2) {
+      try {
+        verifier(await db.rpc('enregistrer_resultats', { p_partie: partieId, p_resultats: resultats(etat, extra) }));
+      } catch (e) { console.error('resultats', e); }
+    }
+    verifier(await db.from('salons').update({ statut: 'terminee' }).eq('id', salonId));
+  }
   return ok as boolean;
 }
 
@@ -330,9 +416,9 @@ async function modifierPartie(partieId: string, fn: (etat: EtatPartie, extra: Ex
   for (let essai = 0; essai < 5; essai++) {
     const p = await charger(partieId);
     if (p.termine) throw new Refus('La partie est terminée.');
-    const avant = p.etat.numeroPli + p.etat.manche * 100;
+    const avant = structuredClone(p.etat);
     const etat = fn(p.etat, p.extra);
-    if (etat.numeroPli + etat.manche * 100 !== avant && etat.dernierPli) p.extra.finPliA = Date.now();
+    apresCoup(avant, etat, p.extra);
     if (await ecrire(partieId, p.version, etat, p.extra, p.salonId)) return;
   }
   throw new Refus('Trop de coups en même temps, réessaie.');
@@ -474,8 +560,7 @@ async function avancerRobots(partieId: string, attenteInitiale = 0) {
     }
 
     await dormir(pause);
-    const avant = etat.numeroPli + etat.manche * 100;
-    if (suite.numeroPli + suite.manche * 100 !== avant && suite.dernierPli) extra.finPliA = Date.now();
+    apresCoup(etat, suite, extra);
     await ecrire(partieId, p.version, suite, extra, p.salonId); // si quelqu'un a joué entre-temps, on recharge au tour suivant
   }
 }
