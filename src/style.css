@@ -802,7 +802,7 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 @keyframes neon-respire { 50% { box-shadow: 0 0 14px #ffd979cc, 0 0 30px #e3b04b66, 0 6px 14px #000c; } }
 
 /* Grande affiche « Jouer » */
-.affiche-vedette.neon { min-height: 180px; animation: neon-respire 3.2s ease-in-out infinite; }
+.affiche-vedette.neon { min-height: 180px; animation: none; box-shadow: 0 0 10px #ffd97988, 0 0 26px #e3b04b44, inset 0 0 18px #e3b04b1a, 0 12px 28px #000c; }
 .affiche-vedette.neon .affiche-titre { font-size: 58px; }
 
 /* Tuiles : deux par ligne */
