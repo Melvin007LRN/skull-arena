@@ -793,7 +793,7 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
   position: absolute; z-index: 6; right: 12px; top: max(12px, env(safe-area-inset-top));
   display: flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px; border-radius: 999px; cursor: pointer;
   border: 1px solid #ffd979cc; background: linear-gradient(180deg, #2a1a0af2, #0b0705f2); color: var(--or-clair);
-  box-shadow: 0 0 8px #ffd97988, 0 0 20px #e3b04b44, 0 6px 14px #000c; animation: neon-respire 3.2s ease-in-out infinite;
+  box-shadow: 0 0 8px #ffd97988, 0 0 20px #e3b04b44, 0 6px 14px #000c;
 }
 .puce-boutique .piece-or { width: 20px; height: 20px; }
 .puce-boutique strong { font-family: var(--titre); font-weight: 400; font-size: 20px; line-height: 1; }
