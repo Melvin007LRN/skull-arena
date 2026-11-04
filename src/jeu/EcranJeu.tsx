@@ -25,9 +25,11 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     setErreur(null);
     try {
       await appel('jouer', { partie_id: partieId, coup });
+      return true;
     } catch (e) {
       setErreur((e as Error).message);
       setTimeout(() => setErreur(null), 3500);
+      return false;
     } finally {
       setEnCours(false);
     }
