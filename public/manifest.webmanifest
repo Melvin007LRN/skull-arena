@@ -1,0 +1,19 @@
+{
+  "name": "Skull Arena",
+  "short_name": "Skull Arena",
+  "description": "Le jeu de cartes de pirates en ligne : mise juste, pille tout, règne sur l’Arena.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#0b0805",
+  "theme_color": "#0b0805",
+  "categories": ["games"],
+  "icons": [
+    { "src": "/icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -585,3 +585,14 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .admin-phrases li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #0a0704; border: 1px solid #e3b04b22; }
 .admin-phrases li > span { flex: 1; }
 .admin-phrases .lien { width: auto; padding: 0; }
+
+/* ---------- Installer l'appli ---------- */
+.installer-appli { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: linear-gradient(90deg, #2a1a0a, #120a04); border: 1px solid #e3b04b88; box-shadow: 0 0 16px #e3b04b22; }
+.installer-appli img { width: 52px; height: 52px; border-radius: 12px; flex: none; }
+.installer-texte { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.installer-texte strong { color: var(--or-clair); }
+.installer-texte small { color: #f3e6c8b3; font-size: 12px; }
+.installer-texte ol { margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.installer-boutons { display: flex; flex-direction: column; align-items: center; }
+.installer-boutons .bouton-or { width: auto; padding: 0 14px; }
+.installer-boutons .lien { font-size: 12px; padding: 4px; margin: 2px 0 0; }

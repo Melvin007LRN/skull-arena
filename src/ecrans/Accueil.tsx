@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
 import { chargerClassement, grade, niveau, type LigneClassement } from '../lib/profil.ts';
 import { Avatar } from '../composants/Avatar.tsx';
+import { InstallerAppli } from '../composants/InstallerAppli.tsx';
 
 interface Entree {
   id: string;
@@ -101,6 +102,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           <span className="fleche">›</span>
         </button>
       </Apparition>
+
+      <InstallerAppli compact />
 
       {entrees.map((e, i) => (
         <Apparition key={e.id} delai={i === 0 ? 0 : 60}>

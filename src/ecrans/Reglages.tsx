@@ -4,6 +4,7 @@ import { supabase, messageErreur } from '../lib/supabase.ts';
 import { musique, vibrations, vibrer } from '../lib/sons.ts';
 import type { Profil } from '../lib/profil.ts';
 import type { PageLegale } from './Legal.tsx';
+import { InstallerAppli } from '../composants/InstallerAppli.tsx';
 
 export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvrirLegal }: {
   profil: Profil; retour: () => void; ouvrirProfil: () => void; ouvrirAdmin: () => void; ouvrirLegal: (p: PageLegale) => void;
@@ -46,6 +47,8 @@ export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvri
     <main className="ecran ecran-reglages">
       <button type="button" className="retour" onClick={retour}>‹ Retour</button>
       <h1 className="titre-pirate grand">Réglages du navire</h1>
+
+      <InstallerAppli />
 
       <section className="parchemin">
         <h2 className="titre-pirate">Son et sensations</h2>
