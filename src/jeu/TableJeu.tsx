@@ -6,9 +6,8 @@ import type { VueJeu, MembreSalon } from '../lib/jeu.ts';
 import type { VuePrivee } from '../engine/vues.ts';
 import { carteParId, NOMS_PIRATES, COULEURS } from '../engine/cards.ts';
 import { Avatar } from '../composants/Avatar.tsx';
-import { aideMise, debloquerSon, musique, son, vibrer } from '../lib/sons.ts';
+import { debloquerSon, musique, son, vibrer } from '../lib/sons.ts';
 import { resoudrePli } from '../engine/pli.ts';
-import { miseRobot } from '../engine/robot.ts';
 import { OBJETS } from '../lib/boutique.ts';
 
 export const REVELATION_MS = 2500;
@@ -112,7 +111,11 @@ export function TableJeu(p: PropsTable) {
   const [etapePli, setEtapePli] = useState<'aucune' | 'revelation' | 'gagnant'>('aucune');
   const [decompte, setDecompte] = useState(0);
   const [selection, setSelection] = useState<string | null>(null);
-  const [glisse, setGlisse] = useState<{ id: string; dx: number; dy: number } | null>(null);
+  const [glisse, setGlisse] = useState<{ id: string } | null>(null);
+  // Réponses anticipées : la fenêtre se ferme tout de suite, sans attendre le serveur.
+  const [miseLocale, setMiseLocale] = useState<{ manche: number; mise: number } | null>(null);
+  const [continuerLocal, setContinuerLocal] = useState<number | null>(null);
+  const [pouvoirEnvoye, setPouvoirEnvoye] = useState<string | null>(null);
   const [zoom, setZoom] = useState<string | null>(null);
   const [tigresse, setTigresse] = useState(false);
   const [defausse, setDefausse] = useState<string[]>([]);
@@ -255,11 +258,19 @@ export function TableJeu(p: PropsTable) {
     autres.forEach((j, idx) => {
       // de la gauche (180°) au droite (360°) en passant par le haut, dans le sens des aiguilles d'une montre
       // à beaucoup de joueurs, l'arc descend un peu sur les côtés pour laisser de la place à chacun
-      const extra = k >= 5 ? 0.3 : k >= 3 ? 0.1 : 0;
+      // x : position sur la largeur · y : HAUT du bloc du joueur (en % de l'arène), pour qu'il ne soit jamais coupé
+      if (k >= 5) {
+        // beaucoup de joueurs : répartis régulièrement sur la largeur, en arc léger
+        const x = 5 + (90 * (idx + 0.5)) / k;
+        const t = (x - 50) / 50;
+        pos.set(j, { x, y: 2 + 20 * t * t });
+        return;
+      }
+      const extra = k >= 3 ? 0.15 : 0;
       const angle = Math.PI - extra + ((idx + 1) * (Math.PI + 2 * extra)) / (k + 1);
-      pos.set(j, { x: 50 + 46 * Math.cos(angle), y: 56 + 46 * Math.sin(angle) });
+      pos.set(j, { x: 50 + 46 * Math.cos(angle), y: 28 + 26 * Math.sin(angle) });
     });
-    pos.set(moi, { x: 50, y: 100 });
+    pos.set(moi, { x: 50, y: 92 });
     return pos;
   }, [autres, moi]);
   const tailleAvatar = autres.length <= 3 ? 74 : autres.length <= 5 ? 62 : 52;
@@ -269,7 +280,7 @@ export function TableJeu(p: PropsTable) {
     if (!distribution || !racine.current) return;
     const t = requestAnimationFrame(() => {
       const base = racine.current!.getBoundingClientRect();
-      const centre = racine.current!.querySelector('.jeu-table')?.getBoundingClientRect();
+      const centre = racine.current!.querySelector('.centre-pli')?.getBoundingClientRect();
       if (!centre) return;
       const x0 = centre.left + centre.width / 2 - base.left, y0 = centre.top + centre.height / 2 - base.top;
       const nb = Math.min(vue.cartesParJoueur, 4);
@@ -301,18 +312,18 @@ export function TableJeu(p: PropsTable) {
   const cible = resultat?.gagnant ? positions.get(resultat.gagnant) : null;
 
   function styleCartePli(joueur: string, index: number): CSSProperties {
-    const pos = positions.get(joueur) ?? { x: 50, y: 100 };
-    const cx = 50, cy = 50;
-    // Point de départ du lancer : la place du joueur (convertie du repère de l'arène vers celui de la table).
-    const depart = joueur === moi ? { x: 50, y: 135 } : { x: ((pos.x - 9) / 82) * 100, y: ((pos.y - 9) / 91) * 100 };
-    let x = cx + (pos.x - cx) * 0.55;
-    let y = cy + (pos.y - cy) * 0.55;
-    if (joueur === moi) { x = 50; y = 66; }
+    const pos = positions.get(joueur) ?? { x: 50, y: 92 };
+    // Repère de l'arène : chaque carte se pose entre le centre du pli et la place du joueur.
+    const cx = 50, cy = 45;
+    const ancreY = joueur === moi ? 100 : pos.y + 12;
+    const depart = joueur === moi ? { x: 50, y: 120 } : { x: pos.x, y: pos.y + 12 };
+    let x = cx + (pos.x - cx) * 0.5 + (index - (pliMontre.length - 1) / 2) * 2.5;
+    let y = cy + (ancreY - cy) * 0.14;
     const rot = ((index * 37) % 13) - 6;
     if (cible && etape === 'gagnant') {
       // le pli glisse doucement vers le gagnant
       x = x + (cible.x - x) * 0.25;
-      y = y + (cible.y - y) * 0.25;
+      y = y + (cible.y + 12 - y) * 0.15;
     }
     return {
       left: `${x}%`, top: `${y}%`, transform: `translate(-50%, -50%) rotate(${rot}deg)`, zIndex: 10 + index,
@@ -329,6 +340,13 @@ export function TableJeu(p: PropsTable) {
   useEffect(() => { if (carteEnVol && !main.main.includes(carteEnVol)) setCarteEnVol(null); }, [main.main, carteEnVol]);
   const pouvoirMoi = vue.phase === 'pouvoir' && vue.pouvoir?.joueur === moi && !pliAffiche ? vue.pouvoir : null;
   const modeDefausse = pouvoirMoi?.type === 'bendt';
+
+  async function envoyerPouvoir(coup: Record<string, unknown>) {
+    const k = `${vue.manche}-${vue.numeroPli}-${vue.pouvoir?.type}`;
+    setPouvoirEnvoye(k);
+    const ok = await p.envoyer(coup);
+    if (ok === false) setPouvoirEnvoye(null);
+  }
 
   function jouerCarte(id: string) {
     if (!aMoi || !main.jouables.includes(id)) return;
@@ -355,7 +373,12 @@ export function TableJeu(p: PropsTable) {
     if (!a) return;
     const dx = e.clientX - a.x, dy = e.clientY - a.y;
     if (Math.hypot(dx, dy) > 8) clearTimeout(a.minuterie);
-    if (aMoi && main.jouables.includes(a.id) && dy < -10) setGlisse({ id: a.id, dx, dy });
+    if (aMoi && main.jouables.includes(a.id) && dy < -10) {
+      const el = e.currentTarget as HTMLElement;
+      el.style.setProperty('--dx', `${dx}px`);
+      el.style.setProperty('--dy', `${dy}px`);
+      if (glisse?.id !== a.id) setGlisse({ id: a.id });
+    }
   }
   function surRelache(e: PE<HTMLButtonElement>) {
     const a = appui.current;
@@ -380,7 +403,8 @@ export function TableJeu(p: PropsTable) {
 
   // Disposition en éventail
   const n = mainTriee.length;
-  const ecart = Math.min(64, 620 / Math.max(n, 1));
+  const enMise = vue.phase === 'mise' && decompte === 0;
+  const ecart = enMise ? Math.min(92, 720 / Math.max(n, 1)) : Math.min(64, 620 / Math.max(n, 1));
   const angleMax = Math.min(28, n * 3.2);
 
   const classement = [...vue.joueurs].sort((a, b) => vue.scores[b] - vue.scores[a]);
@@ -428,7 +452,7 @@ export function TableJeu(p: PropsTable) {
         </div>
         <div className="rail-pastille rail-mise" aria-label="Ma mise">
           <small>⚔ Mise</small>
-          <strong>{miseDe(moi) ?? (vue.aMise[moi] ? '✓' : '?')}</strong>
+          <strong>{miseDe(moi) ?? (miseLocale?.manche === vue.manche ? miseLocale.mise : vue.aMise[moi] ? '✓' : '?')}</strong>
         </div>
         <button type="button" className="rail-rond" onClick={() => setScoresOuverts(true)} aria-label="Scores">📊</button>
         <button type="button" className="rail-rond" onClick={() => setMenuOuvert((m) => !m)} aria-label="Réglages">⚙</button>
@@ -442,10 +466,15 @@ export function TableJeu(p: PropsTable) {
       </nav>
 
       {/* Table */}
-      <section className="jeu-arene">
+      <section className={`jeu-arene ${autres.length >= 5 ? 'nombreux' : ''}`}>
         <div className={`jeu-table ${effet ? `effet-${effet}` : ''}`}
           onClick={(e) => { if (e.target === e.currentTarget && !pliAffiche && vue.dernierPli) setVoirDernierPli(true); }}>
           <div className="jeu-table-boussole" />
+        </div>
+
+        {/* Le pli, posé sur la table (repère de l'arène) */}
+        <div className="zone-pli" onClick={(e) => { if (e.target === e.currentTarget && !pliAffiche && vue.dernierPli) setVoirDernierPli(true); }}>
+          <span className="centre-pli" aria-hidden="true" />
           {pliMontre.map((c, i) => (
             <figure key={`${vue.manche}-${c.carteId}`} className={`carte-pli ${resultat && resultat.indexGagnant === i ? 'gagnante' : ''} ${resultat && resultat.indexGagnant !== i ? 'perdante' : ''} ${maitresse?.indexGagnant === i ? 'maitresse' : ''}`}
               style={styleCartePli(c.joueur, i)} onClick={() => (!pliAffiche && vue.dernierPli && vue.pliEnCours.length === 0 ? setVoirDernierPli(true) : setZoom(c.carteId))}>
@@ -492,6 +521,7 @@ export function TableJeu(p: PropsTable) {
               </div>
               <div className="adv-avatar" data-joueur={j}>
                 {vue.joueurs.indexOf(j) === vue.couronne && <span className="adv-couronne">👑</span>}
+                {vue.phase === 'mise' && vue.meneur === j && <span className="adv-ouvre" title="Ouvre le premier pli">▶ 1er</span>}
                 <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} cadre={cadre(j)} />
                 {humain(j) && <span className={`pastille-co ${connecte(j) ? 'en-ligne' : 'hors-ligne'}`} title={connecte(j) ? 'Connecté' : 'Déconnecté'} />}
                 {vue.mises && <span className="adv-ruban">{vue.plisGagnes[j]}/{miseDe(j)}</span>}
@@ -523,6 +553,7 @@ export function TableJeu(p: PropsTable) {
 
       {/* Mon coin : avatar, ruban, statut */}
       <div className={`moi-coin ${aMoi ? 'actif' : ''}`} data-joueur={moi}>
+        {vue.phase === 'mise' && vue.meneur === moi && <span className="adv-ouvre" title="Tu ouvres le premier pli">▶ 1er</span>}
         <Avatar photo={photo(moi)} taille={56} cadre={cadre(moi)} />
         <span className="adv-ruban">{vue.mises ? `${vue.plisGagnes[moi]}/${miseDe(moi)}` : vue.aMise[moi] ? '✓' : '…'}</span>
         <Badges j={moi} />
@@ -531,7 +562,7 @@ export function TableJeu(p: PropsTable) {
       </div>
 
       {/* Ma main */}
-      <section className={`main-eventail ${distribution ? 'distribuee' : ''}`} key={`main-${distribution}`}>
+      <section className={`main-eventail ${distribution ? 'distribuee' : ''} ${enMise ? 'en-mise' : ''}`} key={`main-${distribution}`}>
         {mainTriee.map((id, i) => {
           const centre = (n - 1) / 2;
           const angle = n > 1 ? ((i - centre) / centre) * angleMax : 0;
@@ -542,7 +573,7 @@ export function TableJeu(p: PropsTable) {
           const style: CSSProperties = {
             left: `calc(50% + ${(i - centre) * ecart}px)`,
             transform: g
-              ? `translate(calc(-50% + ${g.dx}px), ${g.dy - 30}px) rotate(0deg) scale(1.08)`
+              ? 'translate(calc(-50% + var(--dx, 0px)), calc(var(--dy, 0px) - 30px)) rotate(0deg) scale(1.08)'
               : `translate(-50%, ${levee ? -34 : Math.abs(i - centre) * 3}px) rotate(${angle}deg)`,
             zIndex: g ? 100 : levee ? 60 : i,
             animationDelay: `${i * 70}ms`,
@@ -633,40 +664,46 @@ export function TableJeu(p: PropsTable) {
       {vue.definitifs?.includes(moi) && !finie && <p className="bandeau rouge">Un robot joue à ta place jusqu’à la fin de cette partie.</p>}
       {p.erreur && <p className="bandeau rouge">{p.erreur}</p>}
 
-      {/* Fenêtre de mise */}
-      {vue.phase === 'mise' && decompte === 0 && !vue.aMise[moi] && !piloteParRobot(moi) && (
-        <Fenetre titre="Combien de plis vas-tu gagner ?" transparente>
-          <div className="boutons-mise">
+      {/* Bandeau de mise : compact, pour bien voir sa main */}
+      {vue.phase === 'mise' && decompte === 0 && !vue.aMise[moi] && miseLocale?.manche !== vue.manche && !piloteParRobot(moi) && (
+        <div className="bandeau-mise">
+          <strong className="bandeau-titre">Combien de plis vas-tu gagner ?</strong>
+          <div className="boutons-mise compacts">
             {Array.from({ length: vue.cartesParJoueur + 1 }, (_, k) => (
-              <button key={k} type="button" className="bouton-mise" disabled={p.enCours} onClick={() => p.envoyer({ type: 'miser', mise: k })}>{k}</button>
+              <button key={k} type="button" className="bouton-mise" onClick={async () => {
+                setMiseLocale({ manche: vue.manche, mise: k });
+                const ok = await p.envoyer({ type: 'miser', mise: k });
+                if (ok === false) setMiseLocale(null);
+              }}>{k}</button>
             ))}
           </div>
-          <p className="petit-texte centre">Manche {vue.manche} · {vue.cartesParJoueur} carte{vue.cartesParJoueur > 1 ? 's' : ''} en main</p>
-          {aideMise.active() && (() => { const x = miseRobot(main.main, vue.joueurs.length); return <p className="indice-mise">💡 Ta main vaut environ <strong>{x} pli{x > 1 ? 's' : ''}</strong></p>; })()}
-        </Fenetre>
+          <small>▶ {vue.meneur === moi ? 'Tu ouvres' : `${pseudo(vue.meneur)} ouvre`} le premier pli · manche {vue.manche} · {vue.cartesParJoueur} carte{vue.cartesParJoueur > 1 ? 's' : ''}</small>
+        </div>
       )}
-      {vue.phase === 'mise' && decompte === 0 && vue.aMise[moi] && (
-        <p className="aide-geste discret">Mise verrouillée · en attente des autres pirates…</p>
+      {vue.phase === 'mise' && decompte === 0 && (vue.aMise[moi] || miseLocale?.manche === vue.manche) && (
+        <p className="aide-geste discret">
+          Mise {miseLocale?.manche === vue.manche ? `de ${miseLocale.mise} ` : ''}verrouillée · ▶ {vue.meneur === moi ? 'tu ouvres' : `${pseudo(vue.meneur)} ouvre`} le premier pli
+        </p>
       )}
 
       {/* Pouvoirs */}
       {!pliAffiche && vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
         <p className="aide-geste discret">{NOMS_PIRATES[vue.pouvoir.type]} · {pseudo(vue.pouvoir.joueur)} choisit…</p>
       )}
-      {pouvoirMoi?.type === 'rosie' && (
+      {pouvoirMoi?.type === 'rosie' && pouvoirEnvoye !== `${vue.manche}-${vue.numeroPli}-${vue.pouvoir?.type}` && (
         <Fenetre titre="Rosie de Laney" sousTitre="Choisis qui commence le prochain pli">
           <div className="boutons-mise">
             {vue.joueurs.map((j) => (
-              <button key={j} type="button" className="bouton-or petit" disabled={p.enCours} onClick={() => p.envoyer({ type: 'rosie', choix: j })}>{j === moi ? 'Moi' : pseudo(j)}</button>
+              <button key={j} type="button" className="bouton-or petit" disabled={p.enCours} onClick={() => envoyerPouvoir({ type: 'rosie', choix: j })}>{j === moi ? 'Moi' : pseudo(j)}</button>
             ))}
           </div>
         </Fenetre>
       )}
-      {pouvoirMoi?.type === 'rascal' && (
+      {pouvoirMoi?.type === 'rascal' && pouvoirEnvoye !== `${vue.manche}-${vue.numeroPli}-${vue.pouvoir?.type}` && (
         <Fenetre titre="Rascal de Roatan" sousTitre="Ton pari : gagné si ta mise est exacte, perdu sinon">
           <div className="boutons-mise">
             {[0, 10, 20].map((x) => (
-              <button key={x} type="button" className="bouton-mise large" disabled={p.enCours} onClick={() => p.envoyer({ type: 'rascal', pari: x })}>{x} pts</button>
+              <button key={x} type="button" className="bouton-mise large" disabled={p.enCours} onClick={() => envoyerPouvoir({ type: 'rascal', pari: x })}>{x} pts</button>
             ))}
           </div>
         </Fenetre>
@@ -712,7 +749,13 @@ export function TableJeu(p: PropsTable) {
           <TableauManche vue={vue} classement={classement} moi={moi} pseudo={pseudo} />
           {vue.continuer.includes(moi) || piloteParRobot(moi)
             ? <p className="centre petit-texte">En attente des autres pirates…</p>
-            : <button type="button" className="bouton-or" disabled={p.enCours} onClick={() => p.envoyer({ type: 'continuer' })}>Continuer</button>}
+            : continuerLocal === vue.manche
+              ? <p className="centre petit-texte">C’est noté · en attente des autres pirates…</p>
+              : <button type="button" className="bouton-or" onClick={async () => {
+                  setContinuerLocal(vue.manche);
+                  const ok = await p.envoyer({ type: 'continuer' });
+                  if (ok === false) setContinuerLocal(null);
+                }}>Continuer</button>}
         </Fenetre>
       )}
       {!pliAffiche && !vue.annulee && vue.phase === 'fin_partie' && (

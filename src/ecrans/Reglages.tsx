@@ -1,7 +1,7 @@
 // Réglages du navire : musique, vibrations, mot de passe, compte et pages légales.
 import { useState, type FormEvent } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
-import { aideMise, musique, vibrations, vibrer } from '../lib/sons.ts';
+import { musique, vibrations, vibrer } from '../lib/sons.ts';
 import type { Profil } from '../lib/profil.ts';
 import type { PageLegale } from './Legal.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
@@ -11,7 +11,6 @@ export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvri
 }) {
   const [musiqueOn, setMusiqueOn] = useState(() => musique.active());
   const [vibrationsOn, setVibrationsOn] = useState(() => vibrations.actives());
-  const [aideOn, setAideOn] = useState(() => aideMise.active());
   const [mdp, setMdp] = useState('');
   const [mdp2, setMdp2] = useState('');
   const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null);
@@ -55,7 +54,6 @@ export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvri
         <h2 className="titre-pirate">Son et sensations</h2>
         <Interrupteur libelle="Musique d’ambiance" aide="Un chant de marins pendant les parties" actif={musiqueOn} basculer={basculerMusique} />
         <Interrupteur libelle="Vibrations" aide="Quand c’est ton tour et à la victoire (Android)" actif={vibrationsOn} basculer={basculerVibrations} />
-        <Interrupteur libelle="Aide à la mise" aide="Un indice : « ta main vaut environ N plis »" actif={aideOn} basculer={() => { aideMise.regler(!aideOn); setAideOn(!aideOn); }} />
         <p className="petit-texte">Les bruitages suivent le mode silencieux de ton téléphone.</p>
       </section>
 

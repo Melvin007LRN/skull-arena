@@ -66,33 +66,40 @@
   position: absolute;
   left: max(70px, calc(env(safe-area-inset-left) + 60px));
   right: max(78px, calc(env(safe-area-inset-right) + var(--rail) + 20px));
-  top: max(10px, env(safe-area-inset-top));
-  bottom: 27dvh;
+  top: max(4px, env(safe-area-inset-top));
+  bottom: 0;
 }
+/* La table : un ovale qui descend derrière la main. Contours dessinés avec des bordures
+   (et pas des ombres « étalées », que Safari sur iPhone dessine en rectangle). */
 .jeu-table {
-  position: absolute; inset: 9% 9% 0;
+  position: absolute; left: 2%; right: 2%; top: 26%; bottom: -22%;
   border-radius: 50%;
   background: #0d0906 url('/decor/fond-table.webp') center / cover;
   border: 3px solid #c99a3d;
-  box-shadow:
-    0 0 0 3px #3a2410, 0 0 0 5px #e3b04b, 0 0 26px 6px #e3b04b66,
-    inset 0 0 50px 14px #000d, 0 18px 40px #000e;
+  filter: drop-shadow(0 0 14px #e3b04b55) drop-shadow(0 14px 24px #000c);
   transition: transform 0.2s;
 }
+.jeu-table::before { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 6px solid #3a2410; pointer-events: none; }
+.jeu-table::after { content: ''; position: absolute; inset: -11px; border-radius: 50%; border: 2px solid #e3b04b; pointer-events: none; }
 .jeu-table-boussole {
   position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, #e3b04b14 0, transparent 34%);
+  background: radial-gradient(ellipse at 50% 42%, #e3b04b14 0, transparent 30%, transparent 62%, #000c 100%);
 }
 .jeu-table.effet-skull { animation: eclatOr 1.6s ease-out; }
-.jeu-table.effet-kraken { animation: secousse 0.9s ease-in-out; box-shadow: 0 0 0 5px #8a3fd1, 0 0 50px 14px #8a3fd1aa, inset 0 0 60px 20px #2a0a3a; }
-.jeu-table.effet-baleine { animation: vague 1.4s ease-in-out; box-shadow: 0 0 0 5px #9fd3ff, 0 0 50px 14px #9fd3ff99, inset 0 0 60px 20px #0a2233; }
-@keyframes eclatOr { 0% { box-shadow: 0 0 0 5px #fff3c4, 0 0 90px 40px #ffd979; } 100% { } }
+.jeu-table.effet-kraken { animation: secousse 0.9s ease-in-out; filter: drop-shadow(0 0 22px #8a3fd1) drop-shadow(0 14px 24px #000c); }
+.jeu-table.effet-kraken::after { border-color: #b57bff; }
+.jeu-table.effet-baleine { animation: vague 1.4s ease-in-out; filter: drop-shadow(0 0 22px #9fd3ff) drop-shadow(0 14px 24px #000c); }
+.jeu-table.effet-baleine::after { border-color: #9fd3ff; }
+@keyframes eclatOr { 0% { filter: drop-shadow(0 0 40px #ffd979) drop-shadow(0 0 80px #ffd979); } 100% { filter: drop-shadow(0 0 14px #e3b04b55) drop-shadow(0 14px 24px #000c); } }
+/* Le pli se pose dans le repère de l'arène, au-dessus de la table */
+.zone-pli { position: absolute; inset: 0; z-index: 5; }
+.centre-pli { position: absolute; left: 50%; top: 45%; width: 1px; height: 1px; pointer-events: none; }
 @keyframes secousse { 0%, 100% { transform: none; } 20% { transform: translate(-6px, 2px) rotate(-1deg); } 40% { transform: translate(6px, -2px) rotate(1deg); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(4px, 0); } }
 @keyframes vague { 0%, 100% { transform: none; } 50% { transform: scale(1.02) translateY(-3px); } }
 
 .carte-pli {
   position: absolute; margin: 0;
-  width: clamp(54px, 22dvh, 112px);
+  width: clamp(48px, 19dvh, 104px);
   transition: left 0.9s cubic-bezier(.3,.7,.2,1), top 0.9s cubic-bezier(.3,.7,.2,1), transform 0.4s, filter 0.4s;
   animation: lancer 0.55s cubic-bezier(.16,.84,.3,1) both;
   will-change: left, top, transform;
@@ -111,7 +118,7 @@
 .etiquette-tigresse { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); padding: 1px 6px; border-radius: 6px; background: #8e1c16; font-size: 10px; font-weight: 700; color: #fff; white-space: nowrap; }
 
 .annonce-pli {
-  position: absolute; left: 50%; top: 86%; transform: translate(-50%, -50%);
+  position: absolute; left: 50%; top: 66%; transform: translate(-50%, -50%);
   z-index: 60; margin: 0; padding: 8px 16px; border-radius: 12px;
   background: #0b0805e6; border: 1px solid var(--or);
   font-family: var(--gravure); font-size: clamp(13px, 4dvh, 18px); color: var(--or-clair);
@@ -120,13 +127,13 @@
 }
 .annonce-pli strong { color: #8fe39a; margin-left: 6px; }
 .indice-table {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  position: absolute; left: 50%; top: 47%; transform: translate(-50%, -50%);
   margin: 0; font-family: var(--gravure); font-size: clamp(12px, 3.6dvh, 15px); color: #f3e6c8cc; text-shadow: 0 2px 6px #000; white-space: nowrap;
 }
-.indice-table.bas { top: 78%; }
+.indice-table.bas { top: 64%; }
 
 /* ---------- Adversaires ---------- */
-.adversaire { position: absolute; z-index: 20; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; }
+.adversaire { position: absolute; z-index: 20; transform: translateX(-50%); padding-top: 12px; display: flex; flex-direction: column; align-items: center; }
 .adv-avatar { position: relative; z-index: 2; }
 .adversaire.actif .avatar { filter: drop-shadow(0 0 10px #ffd979) drop-shadow(0 0 18px #e3b04b); animation: pulsation 1.4s ease-in-out infinite; }
 @keyframes pulsation { 50% { transform: scale(1.06); } }
@@ -146,7 +153,7 @@
   display: flex; align-items: center; gap: 4px; margin-top: -6px; z-index: 3;
   padding: 2px 10px 2px 4px; border-radius: 999px;
   background: linear-gradient(180deg, #2a1a0ef2, #120c07f2); border: 1px solid var(--or-fonce);
-  font-size: 12px; font-weight: 700; max-width: 128px;
+  font-size: 12px; font-weight: 700; max-width: 172px;
   box-shadow: 0 3px 8px #000c;
 }
 .adv-nom span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -155,7 +162,7 @@
 .adv-exclure { position: absolute; z-index: 4; top: 0; left: -6px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: #7d1a15cc; color: #fff; font-size: 10px; cursor: pointer; }
 
 /* ---------- Mon coin ---------- */
-.moi-coin { position: absolute; z-index: 30; left: max(8px, env(safe-area-inset-left)); bottom: max(8px, env(safe-area-inset-bottom)); }
+.moi-coin { position: absolute; z-index: 37; left: max(8px, env(safe-area-inset-left)); bottom: max(8px, env(safe-area-inset-bottom)); }
 .moi-coin.actif .avatar { filter: drop-shadow(0 0 10px #ffd979); }
 .moi-coin .adv-couronne { top: -12px; }
 
@@ -170,6 +177,9 @@
   pointer-events: auto; touch-action: none;
 }
 .carte-main img { width: 100%; display: block; border-radius: 8px; box-shadow: 0 8px 18px #000d; pointer-events: none; }
+.main-eventail.en-mise .carte-main { width: clamp(70px, 31dvh, 140px); }
+.main-eventail.en-mise .carte-main img { box-shadow: 0 0 0 1px #e3b04b88, 0 10px 22px #000e; }
+.carte-main { will-change: transform; }
 .main-eventail.distribuee .carte-main { animation: distribuer 0.55s cubic-bezier(.2,.8,.3,1) both; }
 @keyframes distribuer { from { opacity: 0; transform: translate(-50%, -45dvh) rotate(180deg) scale(0.4); } }
 .carte-main.jouable img { box-shadow: 0 0 0 2px #e3b04b, 0 0 14px #e3b04b88, 0 8px 18px #000d; }
@@ -357,7 +367,7 @@
 .carte-pli.maitresse img { box-shadow: 0 0 0 2px #ffd979, 0 0 18px 4px #ffd97988; }
 .carte-pli.maitresse { z-index: 40 !important; }
 .meneur-pli {
-  position: absolute; z-index: 60; left: 20%; top: 50%; transform: translate(-50%, -50%); margin: 0;
+  position: absolute; z-index: 60; left: 50%; top: 64%; transform: translate(-50%, -50%); margin: 0;
   padding: 3px 12px; border-radius: 999px; background: #120a04d9; border: 1px solid #e3b04b88;
   font-size: 12px; color: var(--or-clair); white-space: nowrap; animation: fondu 0.25s ease;
 }
@@ -448,3 +458,26 @@
   .jeu .boutons-fin .bouton-or, .jeu .boutons-fin .bouton-sombre { min-height: 40px; }
   .resume-partie li { padding: 4px 8px; }
 }
+
+/* ---------- Mise : bandeau compact (on voit sa main en grand) ---------- */
+.bandeau-mise {
+  position: absolute; z-index: 60; left: 50%; top: calc(28dvh + 18px); transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px 14px 7px; border-radius: 14px; max-width: calc(100vw - 180px);
+  background: linear-gradient(180deg, #2a1a0ef2, #120a04f2); border: 1px solid var(--or); box-shadow: 0 8px 26px #000d, 0 0 18px #e3b04b33;
+  animation: ouvrir 0.2s ease;
+}
+.bandeau-titre { font-family: var(--titre); font-weight: 400; font-size: clamp(18px, 6dvh, 24px); color: var(--or-clair); line-height: 1; }
+.bandeau-mise small { font-size: 12px; color: #f3e6c8cc; white-space: nowrap; }
+.boutons-mise.compacts { flex-wrap: nowrap; gap: 6px; }
+.boutons-mise.compacts .bouton-mise { min-width: 0; padding: 0; width: clamp(32px, 10dvh, 42px); height: clamp(32px, 10dvh, 42px); font-size: clamp(15px, 5dvh, 20px); }
+.adv-ouvre {
+  position: absolute; z-index: 4; left: -10px; bottom: 2px; padding: 1px 6px; border-radius: 6px;
+  background: linear-gradient(180deg, #ffd979, #b8832a); color: #2a1604; font-size: 10px; font-weight: 800; box-shadow: 0 2px 6px #000c;
+  animation: pulsation 1.4s ease-in-out infinite;
+}
+.moi-coin .adv-ouvre { bottom: auto; top: -6px; left: -4px; }
+
+.jeu-arene.nombreux .adv-nom { max-width: 96px; font-size: 11px; }
+.jeu-arene.nombreux .adv-objectif { font-size: 9px; padding: 0 5px; }
+.jeu-arene.nombreux .adv-dos { display: none; }

@@ -134,9 +134,3 @@ export function vibrer(ms = 60) {
   try { navigator.vibrate?.(ms); } catch { /* non disponible (iPhone) */ }
 }
 
-// Aide à la mise (indice « ta main vaut environ N plis »), activée par défaut.
-const CLE_AIDE = 'skull-aide-mise';
-export const aideMise = {
-  active(): boolean { try { return localStorage.getItem(CLE_AIDE) !== '0'; } catch { return true; } },
-  regler(v: boolean) { try { localStorage.setItem(CLE_AIDE, v ? '1' : '0'); } catch { /* stockage indisponible */ } },
-};
