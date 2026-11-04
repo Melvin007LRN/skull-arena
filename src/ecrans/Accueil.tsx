@@ -22,9 +22,9 @@ const ACCROCHES = [
   'Le Skull King n’attend que toi.',
 ];
 
-export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirLegal }: {
+export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirLegal, ouvrirAmis }: {
   profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
-  ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void;
+  ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void;
 }) {
   const [numeroUn, setNumeroUn] = useState<LigneClassement | null>(null);
   useEffect(() => { chargerClassement().then((l) => setNumeroUn(l[0] ?? null)).catch(() => {}); }, []);
@@ -66,6 +66,10 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
     {
       id: 'classement', titre: 'Classement', image: '/cartes/jaune_14.webp', cadrage: '50% 45%', action: ouvrirClassement,
       phrase: 'Les capitaines les plus redoutés des sept mers. Ta place t’attend.',
+    },
+    {
+      id: 'amis', titre: 'Mes compagnons', image: '/cartes/pirate_bendt.webp', cadrage: '50% 20%', action: ouvrirAmis,
+      phrase: 'Ajoute tes amis, vois qui est à bord et invite-les dans ton salon d’un seul geste.',
     },
     {
       id: 'profil', titre: 'Mon pirate', image: '/cartes/pirate_harry.webp', cadrage: '50% 20%', action: ouvrirProfil,

@@ -13,6 +13,8 @@ import { EcranRegles } from './ecrans/Regles.tsx';
 import { EcranReglages } from './ecrans/Reglages.tsx';
 import { EcranAdmin } from './ecrans/Admin.tsx';
 import { EcranLegal, type PageLegale } from './ecrans/Legal.tsx';
+import { EcranAmis } from './ecrans/Amis.tsx';
+import { demarrerPresence, useInvitations } from './lib/amis.ts';
 import { appel, salonEnCours } from './lib/jeu.ts';
 
 type Ecran =
@@ -22,6 +24,7 @@ type Ecran =
   | { nom: 'regles' }
   | { nom: 'reglages' }
   | { nom: 'admin' }
+  | { nom: 'amis' }
   | { nom: 'legal'; page: PageLegale; retour: Ecran }
   | { nom: 'lobby'; mode: 'jouer' | 'code' | 'entrainement' }
   | { nom: 'salon'; id: string };
@@ -84,6 +87,10 @@ export function App() {
   }, [profil, repriseFaite]);
 
   const versAccueil = useCallback(() => setEcran(ACCUEIL), []);
+
+  // Présence en ligne (pour les amis) dès qu'on est connecté.
+  const moiId = profil && !profil.banni ? profil.id : null;
+  useEffect(() => (moiId ? demarrerPresence(moiId) : undefined), [moiId]);
   // En revenant d'une partie, on recharge le profil (XP, statistiques, badges).
   const sortirDuSalon = useCallback(() => { setEcran(ACCUEIL); recharger(); }, [recharger]);
 
@@ -98,6 +105,11 @@ export function App() {
   if (profil.banni) {
     return <Message texte="Ton compte a été banni de Skull Arena." action="Se déconnecter" surAction={() => supabase.auth.signOut()} />;
   }
+  const contenu = rendreEcran();
+  return <>{contenu}{ecran.nom !== 'salon' && <ToastInvitation moi={profil.id} entrer={(id) => setEcran({ nom: 'salon', id })} />}</>;
+
+  function rendreEcran() {
+  if (!profil) return null;
   if (ecran.nom === 'profil') return <EcranProfil profil={profil} retour={versAccueil} recharger={recharger} />;
   if (ecran.nom === 'lobby') {
     return <Lobby mode={ecran.mode} retour={versAccueil} entrer={(id) => setEcran({ nom: 'salon', id })} />;
@@ -105,6 +117,7 @@ export function App() {
   if (ecran.nom === 'salon') return <EcranSalon key={ecran.id} salonId={ecran.id} moi={profil.id} sortir={sortirDuSalon} />;
   if (ecran.nom === 'classement') return <EcranClassement profil={profil} retour={versAccueil} />;
   if (ecran.nom === 'regles') return <EcranRegles retour={versAccueil} />;
+  if (ecran.nom === 'amis') return <EcranAmis moi={profil.id} retour={versAccueil} />;
   if (ecran.nom === 'admin') return <EcranAdmin profil={profil} retour={() => setEcran({ nom: 'reglages' })} />;
   if (ecran.nom === 'legal') {
     const e = ecran;
@@ -120,7 +133,36 @@ export function App() {
     <Accueil profil={profil} ouvrirProfil={() => setEcran({ nom: 'profil' })}
       ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} ouvrirClassement={() => setEcran({ nom: 'classement' })}
       ouvrirRegles={() => setEcran({ nom: 'regles' })} ouvrirReglages={() => setEcran({ nom: 'reglages' })}
-      ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: ACCUEIL })} />
+      ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: ACCUEIL })} ouvrirAmis={() => setEcran({ nom: 'amis' })} />
+  );
+  }
+}
+
+/** Invitation d'un ami : bandeau avec « Rejoindre ». */
+function ToastInvitation({ moi, entrer }: { moi: string; entrer: (salonId: string) => void }) {
+  const { invitation, fermer } = useInvitations(moi);
+  const [erreur, setErreur] = useState<string | null>(null);
+  if (!invitation) return null;
+  const rejoindre = async () => {
+    try {
+      const r = await appel<{ salon_id: string }>('rejoindre', { code: invitation.code });
+      fermer();
+      entrer(r.salon_id);
+    } catch (e) {
+      setErreur((e as Error).message);
+      setTimeout(() => { setErreur(null); fermer(); }, 3000);
+    }
+  };
+  return (
+    <div className="toast-invitation" role="alert">
+      <span>🏴‍☠️ <strong>{invitation.pseudo}</strong> t’invite à bord !</span>
+      {erreur ? <small>{erreur}</small> : (
+        <span className="toast-boutons">
+          <button type="button" className="bouton-or petit" onClick={rejoindre}>Rejoindre</button>
+          <button type="button" className="lien" onClick={fermer}>Plus tard</button>
+        </span>
+      )}
+    </div>
   );
 }
 

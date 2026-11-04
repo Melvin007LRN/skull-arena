@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { appel, partagerInvitation, type MembreSalon, type Salon } from '../lib/jeu.ts';
 import { Avatar } from '../composants/Avatar.tsx';
+import { inviterAmi, useAmis, useEnLigne } from '../lib/amis.ts';
+import { messageErreur } from '../lib/supabase.ts';
 
 export function SalleAttente({ salon, membres, moi, quitter }: {
   salon: Salon; membres: MembreSalon[]; moi: string; quitter: () => void;
@@ -11,6 +13,19 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
   const [enCours, setEnCours] = useState(false);
   const suisHote = salon.hote === moi;
   const moiMembre = membres.find((m) => m.joueur_id === moi);
+  const [panneauAmis, setPanneauAmis] = useState(false);
+  const [invites, setInvites] = useState<string[]>([]);
+  const { amis } = useAmis(moi);
+  const enLigne = useEnLigne();
+  const amisDispo = (amis ?? []).filter((a) => a.statut === 'acceptee' && !membres.some((m) => m.joueur_id === a.id))
+    .sort((a, b) => Number(enLigne.has(b.id)) - Number(enLigne.has(a.id)));
+  const inviter = async (id: string) => {
+    try {
+      await inviterAmi(id, salon.id);
+      setInvites((l) => [...l, id]);
+      setTimeout(() => setInvites((l) => l.filter((x) => x !== id)), 20000);
+    } catch (e) { setErreur(messageErreur(e)); }
+  };
   const tousPrets = membres.length >= 2 && membres.every((m) => m.joueur_id === salon.hote || m.pret);
 
   async function faire(fn: () => Promise<unknown>) {
@@ -42,8 +57,33 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
       <section className="parchemin code-salon">
         <p className="sous-titre">{salon.public ? 'Salon public' : 'Salon privé'} · code</p>
         <p className="code">{salon.code}</p>
-        <button type="button" className="bouton-sombre" onClick={partager}>Partager le lien</button>
+        <div className="boutons-fin">
+          <button type="button" className="bouton-sombre" onClick={partager}>Partager le lien</button>
+          <button type="button" className="bouton-sombre" onClick={() => setPanneauAmis((o) => !o)}>👥 Inviter un ami</button>
+        </div>
         {info && <p className="message info">{info}</p>}
+        {panneauAmis && (
+          <div className="panneau-inviter">
+            {amis === null ? <p className="petit-texte centre">Chargement…</p>
+              : amisDispo.length === 0 ? <p className="petit-texte centre">Aucun ami à inviter. Ajoute des compagnons depuis l’accueil (« Mes compagnons »).</p>
+              : (
+                <ul className="liste-amis">
+                  {amisDispo.map((a) => (
+                    <li key={a.id}>
+                      <span className="ami-avatar">
+                        <Avatar photo={a.photo_url} taille={40} />
+                        <span className={`pastille-co ${enLigne.has(a.id) ? 'en-ligne' : 'hors-ligne'}`} />
+                      </span>
+                      <span className="cl-nom"><strong>{a.pseudo}</strong><small>{enLigne.has(a.id) ? 'En ligne' : 'Hors ligne'}</small></span>
+                      <button type="button" className="bouton-or petit" disabled={!enLigne.has(a.id) || invites.includes(a.id)} onClick={() => inviter(a.id)}>
+                        {invites.includes(a.id) ? 'Invité ✓' : 'Inviter'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+          </div>
+        )}
       </section>
 
       <section className="table-attente" aria-label="Joueurs autour de la table">
