@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useSalon } from '../lib/jeu.ts';
 import { SalleAttente } from './SalleAttente.tsx';
-import { TableTest } from './TableTest.tsx';
+import { EcranJeu } from '../jeu/EcranJeu.tsx';
 
 export function EcranSalon({ salonId, moi, sortir }: { salonId: string; moi: string; sortir: () => void }) {
   const { salon, membres, partieId, suisDedans } = useSalon(salonId, moi);
@@ -25,5 +25,5 @@ export function EcranSalon({ salonId, moi, sortir }: { salonId: string; moi: str
   }
   if (salon.statut === 'attente') return <SalleAttente salon={salon} membres={membres} moi={moi} quitter={sortir} />;
   if (!partieId) return <main className="ecran ecran-centre"><p className="petit-texte">Distribution des cartes…</p></main>;
-  return <TableTest partieId={partieId} membres={membres} moi={moi} hote={salon.hote} retourAccueil={sortir} />;
+  return <EcranJeu partieId={partieId} membres={membres} moi={moi} hote={salon.hote} retourAccueil={sortir} />;
 }
