@@ -99,7 +99,8 @@ function parJoueur<T>(joueurs: string[], valeur: () => T): Record<string, T> {
 }
 
 export function creerPartie(joueurs: string[], graine: number, options: { extension?: boolean } = {}): EtatPartie {
-  if (joueurs.length < 2 || joueurs.length > 8) throw new ErreurRegle('Une partie se joue de 2 à 8 joueurs.');
+  const max = options.extension ? 9 : 8; // avec les 93 cartes de l'extension, on peut jouer à 9
+  if (joueurs.length < 2 || joueurs.length > max) throw new ErreurRegle(`Une partie se joue de 2 à ${max} joueurs.`);
   if (new Set(joueurs).size !== joueurs.length) throw new ErreurRegle('Chaque joueur doit être unique.');
   const hasard = creerHasard(graine);
   const couronne = Math.floor(hasard() * joueurs.length); // meneur tiré au sort

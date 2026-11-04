@@ -13,6 +13,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
   const [info, setInfo] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const suisHote = salon.hote === moi;
+  const places = salon.extension ? 9 : 8; // 9 places avec l'extension
   const moiMembre = membres.find((m) => m.joueur_id === moi);
   const [panneauAmis, setPanneauAmis] = useState(false);
   const { ouvrirProfil } = useSocial();
@@ -102,9 +103,9 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
 
       <section className="table-attente" aria-label="Joueurs autour de la table">
         <div className="table-ronde" />
-        {Array.from({ length: 8 }, (_, i) => {
+        {Array.from({ length: Math.max(places, membres.length) }, (_, i) => {
           const m = membres[i];
-          const angle = (i / 8) * 2 * Math.PI - Math.PI / 2;
+          const angle = (i / Math.max(places, membres.length)) * 2 * Math.PI - Math.PI / 2;
           const style = { left: `${50 + 41 * Math.cos(angle)}%`, top: `${50 + 41 * Math.sin(angle)}%` };
           if (!m) {
             return suisHote ? (
@@ -129,7 +130,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
           );
         })}
         <div className="table-centre">
-          <strong>{membres.length} / 8</strong>
+          <strong>{membres.length} / {places}</strong>
           <small>pirates à bord</small>
         </div>
       </section>
@@ -164,7 +165,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
       </section>
 
       {erreur && <p className="message erreur">{erreur}</p>}
-      {suisHote && membres.length < 8 && (
+      {suisHote && membres.length < places && (
         <button type="button" className="bouton-sombre" disabled={enCours} onClick={() => faire(() => appel('ajouter_robot', { salon_id: salon.id }))}>
           + Ajouter un robot pirate
         </button>

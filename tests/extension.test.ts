@@ -18,6 +18,16 @@ test('paquet : 93 cartes avec l’extension, 10 manches complètes à 8 joueurs'
   assert.equal(cartesParJoueur(10, 8), 9);
 });
 
+test('9 joueurs : possible seulement avec l’extension, 10 cartes à la dernière manche', () => {
+  const neuf = Array.from({ length: 9 }, (_, i) => `J${i}`);
+  assert.throws(() => creerPartie(neuf, 1));
+  let e = creerPartie(neuf, 1, { extension: true });
+  assert.equal(e.joueurs.length, 9);
+  while (e.manche < 10) { e = structuredClone(e); e.phase = 'fin_manche'; e = appliquer(e, { type: 'continuer' }); }
+  assert.equal(e.cartesParJoueur, 10);
+  assert.equal(e.nonDistribuees.length, 3);
+});
+
 test('7 et 8 : -5 / +5 au gagnant ; à égalité, la première posée gagne', () => {
   let r = resoudrePli(pli(['A', 'jaune_8x'], ['B', 'jaune_2']));
   assert.equal(r.gagnant, 'A');
@@ -236,7 +246,7 @@ function simuler(nb: number, robots: boolean) {
   const h = creerHasard(77);
   const vus = { raie: 0, davy: 0, planche: 0, salve: 0, mary: 0, second: 0 };
   for (let k = 0; k < nb; k++) {
-    const n = 2 + (k % 7);
+    const n = 2 + (k % 8); // jusqu'à 9 joueurs avec l'extension
     const joueurs = Array.from({ length: n }, (_, i) => `J${i + 1}`);
     let e = creerPartie(joueurs, 1000 + k, { extension: true });
     let garde = 0;

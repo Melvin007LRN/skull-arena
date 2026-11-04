@@ -98,7 +98,7 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
           <p className="petit-texte centre">Affronte l’équipage fantôme pour t’entraîner. Ces parties ne comptent ni pour le classement, ni pour les badges.</p>
           <p className="sous-titre">Nombre de robots adverses</p>
           <div className="boutons-mise">
-            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+            {Array.from({ length: extension ? 8 : 7 }, (_, k) => k + 1).map((n) => (
               <button key={n} type="button" className={n === nbRobots ? 'bouton-or petit' : 'bouton-sombre petit-rond'} onClick={() => setNbRobots(n)}>{n}</button>
             ))}
           </div>
@@ -109,7 +109,7 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
           </div>
           <p className="sous-titre">Cartes</p>
           <div className="boutons-mise">
-            <button type="button" className={!extension ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setExtension(false)}>Jeu de base</button>
+            <button type="button" className={!extension ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => { setExtension(false); setNbRobots((x) => Math.min(x, 7)); }}>Jeu de base</button>
             <button type="button" className={extension ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setExtension(true)}>Avec l’extension 🃏</button>
           </div>
           <button type="button" className="bouton-or bouton-jouer" disabled={enCours}
@@ -183,8 +183,8 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
                     <span>
                       <strong>Salon de {s.hotePseudo}</strong>
                       <small>
-                        <span className="places">{Array.from({ length: 8 }, (_, i) => <i key={i} className={i < s.nb ? 'pris' : ''} />)}</span>
-                        {s.nb} / 8 pirates{s.extension ? ' · 🃏 extension' : ''}
+                        <span className="places">{Array.from({ length: s.extension ? 9 : 8 }, (_, i) => <i key={i} className={i < s.nb ? 'pris' : ''} />)}</span>
+                        {s.nb} / {s.extension ? 9 : 8} pirates{s.extension ? ' · 🃏 extension' : ''}
                       </small>
                     </span>
                     <button type="button" className="bouton-or petit" onClick={() => rejoindre(s.code)} disabled={enCours || recherche !== null}>Rejoindre</button>

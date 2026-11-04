@@ -9,7 +9,7 @@ const PAGES: Page[] = [
     cartes: ['skull_king'],
     contenu: (
       <>
-        <p>De 2 à 8 pirates s’affrontent en <strong>10 manches</strong>. À chaque manche, tu annonces combien de plis tu vas remporter : c’est ta <strong>mise</strong>.</p>
+        <p>De 2 à 8 pirates (9 avec l’extension) s’affrontent en <strong>10 manches</strong>. À chaque manche, tu annonces combien de plis tu vas remporter : c’est ta <strong>mise</strong>.</p>
         <p>Vise juste ! Une mise exacte rapporte gros, une mise ratée fait perdre des points. Le pirate qui a le plus de points après la 10e manche gagne la partie.</p>
       </>
     ),
@@ -136,7 +136,7 @@ const PAGES: Page[] = [
     cartes: ['jaune_7x', 'vert_8x', 'violet_0_14', 'joker_15'],
     contenu: (
       <>
-        <p>L’hôte peut choisir de jouer <strong>avec l’extension</strong> : 19 cartes en plus.</p>
+        <p>L’hôte peut choisir de jouer <strong>avec l’extension</strong> : 19 cartes en plus, et la table passe à <strong>9 pirates</strong> (10 cartes chacun à la dernière manche).</p>
         <p><strong>7 et 8</strong> (un de chaque couleur) : cartes normales. Celui qui remporte le pli qui contient le 7 perd <strong>5 points</strong>, celui qui remporte le 8 en gagne <strong>5</strong> (si sa mise est exacte). À valeur égale, la première posée gagne.</p>
         <p><strong>0 / 14</strong> : en la posant, tu choisis si elle vaut 0 ou 14. Elle ne rapporte aucun bonus.</p>
         <p><strong>Joker 15</strong> : un 15 jaune, violet ou vert, qui se pose toujours. Si la couleur n’est pas lancée, tu la choisis ; sinon il prend la couleur demandée. Sur un pli noir, il perd contre le noir.</p>

@@ -21,7 +21,8 @@ const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SE
 
 class Refus extends Error {}
 
-const MAX_JOUEURS = 8;
+/** Places à table : 9 avec l'extension (93 cartes), 8 sinon. */
+const placesMax = (s: { extension?: boolean }) => (s.extension ? 9 : 8);
 const ALPHABET_CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const INACTIVITE_MS = 120_000; // 2 minutes sans jouer : un robot prend le relais
 const PAUSE_FIN_PLI_MS = 4_800; // le temps que les joueurs voient le pli terminé
@@ -163,7 +164,7 @@ async function insererRobot(salonId: string, place: number, dejaPris: string[]) 
 }
 
 async function entrainement(moi: string, nbRobots: number, rapide: boolean, extension: boolean) {
-  const n = Math.max(1, Math.min(7, Math.floor(nbRobots) || 3));
+  const n = Math.max(1, Math.min(extension ? 8 : 7, Math.floor(nbRobots) || 3));
   const s = await nouveauSalon(moi, false, true);
   if (extension) verifier(await db.from('salons').update({ extension: true }).eq('id', s.salon_id));
   for (let i = 0; i < n; i++) {
@@ -186,7 +187,7 @@ async function rejoindre(moi: string, codeBrut: string) {
   if (s.entrainement) throw new Refus("C'est une partie d'entraînement en solo.");
   if (s.statut === 'en_jeu') throw new Refus('La partie a déjà commencé.');
   if (s.statut === 'terminee') throw new Refus('Cette partie est terminée.');
-  if (liste.length >= MAX_JOUEURS) throw new Refus('Ce salon est complet (8 joueurs).');
+  if (liste.length >= placesMax(s)) throw new Refus(`Ce salon est complet (${placesMax(s)} joueurs).`);
   const p = await profil(moi);
   await quitterAutresSalonsEnAttente(moi, s.id);
   const place = liste.reduce((m, j) => Math.max(m, j.place), -1) + 1;
@@ -273,6 +274,7 @@ async function reglerSalon(moi: string, salonId: string, extension: boolean) {
   const s = await salon(salonId);
   if (s.hote !== moi) throw new Refus("Seul l'hôte peut choisir les règles.");
   if (s.statut !== 'attente') throw new Refus('La partie a déjà commencé.');
+  if (!extension && (await membres(salonId)).length > 8) throw new Refus('Sans l’extension, la table est limitée à 8 : retire d’abord un pirate.');
   verifier(await db.from('salons').update({ extension, maj_le: new Date().toISOString() }).eq('id', salonId));
   return { ok: true };
 }
@@ -289,7 +291,7 @@ async function ajouterRobot(moi: string, salonId: string) {
   if (s.hote !== moi) throw new Refus("Seul l'hôte peut ajouter un robot.");
   if (s.statut !== 'attente') throw new Refus('La partie a déjà commencé.');
   const liste = await membres(salonId);
-  if (liste.length >= MAX_JOUEURS) throw new Refus('La table est complète (8 joueurs).');
+  if (liste.length >= placesMax(s)) throw new Refus(`La table est complète (${placesMax(s)} joueurs).`);
   await insererRobot(salonId, liste.reduce((m, j) => Math.max(m, j.place), -1) + 1, liste.map((m) => m.pseudo));
   verifier(await db.from('salons').update({ maj_le: new Date().toISOString() }).eq('id', salonId));
   return { ok: true };

@@ -88,7 +88,7 @@ export function useSalonsPublics() {
     setSalons(
       liste
         .map((s) => ({ ...s, nb: s.salon_joueurs.length, hotePseudo: s.salon_joueurs.find((j) => j.joueur_id === s.hote)?.pseudo ?? '?' }))
-        .filter((s) => s.nb > 0 && s.nb < 8),
+        .filter((s) => s.nb > 0 && s.nb < (s.extension ? 9 : 8)),
     );
   }, []);
   useEffect(() => {
