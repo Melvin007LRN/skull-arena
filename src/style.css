@@ -771,3 +771,55 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .siege-ouvrir:disabled { cursor: default; }
 .signalement > span { display: flex; flex-direction: column; }
 .signalement small .lien { display: inline; width: auto; margin: 0; padding: 0; font-size: inherit; }
+
+/* ================= Accueil : style sombre, contours néon dorés ================= */
+:root { --neon: #ffd979; }
+.ecran-accueil .ambiance-voile { background: linear-gradient(180deg, #050302b3 0%, #050302d9 30%, #050302f2 60%, #030201 100%); }
+.ecran-accueil .ambiance-decor { filter: saturate(0.8) brightness(0.8); }
+.neon {
+  border: 1px solid #ffd979b3 !important;
+  background-color: #0a0604;
+  background-image:
+    radial-gradient(#ffffff08 1px, transparent 1.2px),
+    linear-gradient(160deg, #1c120a 0%, #0b0705 55%, #050302 100%);
+  background-size: 5px 5px, 100% 100%;
+  box-shadow: 0 0 6px #ffd97966, 0 0 22px #e3b04b2e, inset 0 0 18px #e3b04b1a, 0 12px 28px #000c;
+}
+.neon:active { box-shadow: 0 0 10px #ffd979aa, 0 0 30px #e3b04b55, inset 0 0 18px #e3b04b33; }
+
+/* Puce Boutique + solde, en haut à droite */
+.entete-logo { position: sticky; }
+.puce-boutique {
+  position: absolute; z-index: 6; right: 12px; top: max(12px, env(safe-area-inset-top));
+  display: flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px; border-radius: 999px; cursor: pointer;
+  border: 1px solid #ffd979cc; background: linear-gradient(180deg, #2a1a0af2, #0b0705f2); color: var(--or-clair);
+  box-shadow: 0 0 8px #ffd97988, 0 0 20px #e3b04b44, 0 6px 14px #000c; animation: neon-respire 3.2s ease-in-out infinite;
+}
+.puce-boutique .piece-or { width: 20px; height: 20px; }
+.puce-boutique strong { font-family: var(--titre); font-weight: 400; font-size: 20px; line-height: 1; }
+.puce-boutique small { font-size: 11px; color: #f3e6c8cc; border-left: 1px solid #e3b04b55; padding-left: 6px; }
+.entete-logo.reduit .puce-boutique { top: 10px; }
+@keyframes neon-respire { 50% { box-shadow: 0 0 14px #ffd979cc, 0 0 30px #e3b04b66, 0 6px 14px #000c; } }
+
+/* Grande affiche « Jouer » */
+.affiche-vedette.neon { min-height: 180px; animation: neon-respire 3.2s ease-in-out infinite; }
+.affiche-vedette.neon .affiche-titre { font-size: 58px; }
+
+/* Tuiles : deux par ligne */
+.grille-tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grille-tuiles > .apparition { min-width: 0; }
+.tuile {
+  position: relative; display: flex; align-items: flex-end; width: 100%; aspect-ratio: 1 / 0.92; padding: 0; overflow: hidden;
+  border-radius: 16px; text-align: left; cursor: pointer; transition: transform 0.15s ease;
+}
+.tuile:active { transform: scale(0.97); }
+.tuile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: transform 6s ease; }
+.tuile:hover img { transform: scale(1.08); }
+.tuile-degrade { position: absolute; inset: 0; background: linear-gradient(180deg, #05030200 20%, #050302b3 62%, #050302f2 100%); }
+.tuile-texte { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px 12px; min-width: 0; }
+.tuile-texte strong { font-family: var(--titre); font-weight: 400; font-size: 26px; line-height: 1; color: var(--or-clair); text-shadow: 0 2px 0 #000, 0 0 14px #ffd97966; }
+.tuile-texte small { font-size: 12px; color: #f3e6c8cc; text-shadow: 0 1px 3px #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tuile-pastille { position: absolute; z-index: 2; top: 8px; right: 8px; margin: 0; }
+.amis-accueil.neon, .defis-jour.neon { border-radius: 16px; }
+.lien-reglages.neon { border-radius: 999px; }
+.carte-joueur.neon { border-radius: 16px; }
