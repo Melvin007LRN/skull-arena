@@ -152,7 +152,7 @@ export function App() {
 
   function rendreEcran() {
   if (!profil) return null;
-  if (ecran.nom === 'profil') return <EcranProfil profil={profil} retour={versAccueil} recharger={recharger} />;
+  if (ecran.nom === 'profil') return <EcranProfil profil={profil} retour={versAccueil} recharger={recharger} ouvrirBoutique={() => setEcran({ nom: 'boutique' })} />;
   if (ecran.nom === 'lobby') {
     return <Lobby mode={ecran.mode} retour={versAccueil} entrer={(id) => setEcran({ nom: 'salon', id })} />;
   }
