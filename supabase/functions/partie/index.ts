@@ -70,6 +70,8 @@ async function traiter(moi: string, c: any): Promise<unknown> {
   switch (c?.action) {
     case 'creer_salon': return creerSalon(moi, Boolean(c.public));
     case 'entrainement': return entrainement(moi, Number(c.robots ?? 3), c.vitesse === 'rapide', Boolean(c.extension));
+    case 'chercher': return chercher(moi, Boolean(c.nouvelle));
+    case 'annuler_recherche': return annulerRecherche(moi);
     case 'regler_salon': return reglerSalon(moi, String(c.salon_id), Boolean(c.extension));
     case 'rejoindre': return rejoindre(moi, String(c.code ?? ''));
     case 'quitter': return quitter(moi, String(c.salon_id));
@@ -227,6 +229,43 @@ async function rejouer(moi: string, salonId: string) {
     await lancer(moi, salonId, Boolean(ligne?.extra?.rapide));
   }
   return { salon_id: salonId };
+}
+
+/**
+ * Partie rapide : le joueur entre dans la file (nouvelle = true), puis rappelle toutes les 3 secondes.
+ * À chaque appel on tente de former une table (4 joueurs, ou 2+ après 30 s d'attente) et on la lance aussitôt.
+ */
+async function chercher(moi: string, nouvelle: boolean) {
+  await profil(moi); // refuse les comptes bannis
+  const maintenant = new Date().toISOString();
+  if (nouvelle) {
+    await quitterAutresSalonsEnAttente(moi);
+    verifier(await db.from('file_attente').upsert({ joueur: moi, depuis: maintenant, maj_le: maintenant, actif: true, salon_id: null }));
+  } else {
+    const ligne = verifier(await db.from('file_attente').select('*').eq('joueur', moi).maybeSingle());
+    if (!ligne) return { statut: 'annule' };
+    if (ligne.salon_id) return { statut: 'trouve', salon_id: ligne.salon_id };
+    if (!ligne.actif) return { statut: 'annule' };
+    verifier(await db.from('file_attente').update({ maj_le: maintenant }).eq('joueur', moi));
+  }
+  const nouveau = verifier(await db.rpc('matcher_file')) as string | null;
+  if (nouveau) {
+    const s = await salon(nouveau);
+    try {
+      await lancer(s.hote, nouveau);
+    } catch (e) {
+      console.error('matchmaking', e);
+    }
+  }
+  const moiDansFile = verifier(await db.from('file_attente').select('depuis, salon_id').eq('joueur', moi).maybeSingle());
+  if (moiDansFile?.salon_id) return { statut: 'trouve', salon_id: moiDansFile.salon_id };
+  const nb = verifier(await db.rpc('nb_file')) as number;
+  return { statut: 'attente', nb, depuis: moiDansFile?.depuis ?? maintenant };
+}
+
+async function annulerRecherche(moi: string) {
+  verifier(await db.from('file_attente').update({ actif: false }).eq('joueur', moi).is('salon_id', null));
+  return { ok: true };
 }
 
 /** L'hôte choisit de jouer avec ou sans l'extension (avant le lancement). */

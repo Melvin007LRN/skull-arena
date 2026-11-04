@@ -831,3 +831,52 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .puce-boutique { position: fixed !important; z-index: 20 !important; right: max(12px, env(safe-area-inset-right)) !important; top: max(12px, env(safe-area-inset-top)) !important; }
 .notif-cloche { width: 52px; height: 52px; flex: none; display: grid; place-items: center; font-size: 30px; border-radius: 12px; background: #120a04; border: 1px solid #e3b04b55; }
 .erreur-notif { color: #ffaaa0 !important; }
+
+/* ================= Page « Jouer » : partie rapide, salons ================= */
+.ecran-lobby { gap: 14px; }
+.en-ligne-bandeau {
+  align-self: center; display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 14px; border-radius: 999px;
+  background: #0b0705e6; border: 1px solid #45d16866; color: #f3e6c8; font-size: 14px; box-shadow: 0 0 12px #45d16833;
+}
+.en-ligne-bandeau .pastille-co { position: static; animation: pulse-vert 2s ease-in-out infinite; }
+.en-ligne-bandeau strong { color: #7ff09a; font-size: 16px; }
+@keyframes pulse-vert { 50% { box-shadow: 0 0 12px #45d168, 0 0 2px #45d168; } }
+.tuile-rapide { aspect-ratio: auto; min-height: 210px; }
+.tuile-rapide .tuile-texte strong { font-size: 34px; }
+.tuile-rapide .tuile-texte small, .tuile-mode .tuile-texte small { white-space: normal; overflow: visible; line-height: 1.3; }
+.tuile-mode { aspect-ratio: auto; min-height: 200px; }
+.tuile-mode .tuile-texte strong { font-size: 24px; }
+.tuile:disabled { opacity: 0.55; cursor: default; }
+.etiquette-mode {
+  align-self: flex-start; margin-bottom: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #1a1205; background: linear-gradient(180deg, #ffe39a, #e3b04b); box-shadow: 0 0 8px #ffd97988;
+}
+.puces-mode { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.puces-mode em { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #000a; border: 1px solid #e3b04b66; color: #f3e6c8; }
+.salons-ouverts { border-radius: 16px; }
+.liste-salons .places { display: inline-flex; gap: 3px; margin-right: 8px; vertical-align: middle; }
+.liste-salons .places i { width: 7px; height: 7px; border-radius: 50%; background: #e3b04b33; }
+.liste-salons .places i.pris { background: #ffd979; box-shadow: 0 0 4px #ffd979; }
+
+/* Recherche en cours */
+.recherche { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 16px 18px; border-radius: 18px; text-align: center; }
+.recherche-boussole {
+  position: relative; width: 96px; height: 96px; border-radius: 50%;
+  border: 2px solid #ffd979; box-shadow: 0 0 14px #ffd97988, inset 0 0 18px #e3b04b44;
+  background: radial-gradient(circle, #1c120a 0 55%, #0b0705 56%), repeating-conic-gradient(#ffd97955 0 2deg, transparent 2deg 30deg);
+}
+.recherche-boussole .aiguille { position: absolute; left: 50%; top: 50%; width: 6px; height: 76px; margin: -38px 0 0 -3px; animation: boussole 2.4s cubic-bezier(.45,.05,.55,.95) infinite; }
+.recherche-boussole .aiguille::before, .recherche-boussole .aiguille::after { content: ''; position: absolute; left: 0; width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; }
+.recherche-boussole .aiguille::before { top: 0; border-bottom: 38px solid #e2483d; }
+.recherche-boussole .aiguille::after { bottom: 0; border-top: 38px solid #f3e6c8; }
+@keyframes boussole { 0% { transform: rotate(0); } 40% { transform: rotate(200deg); } 60% { transform: rotate(170deg); } 100% { transform: rotate(360deg); } }
+.recherche-titre { font-family: var(--titre); font-weight: 400; font-size: 26px; color: var(--or-clair); text-shadow: 0 0 12px #ffd97966; }
+.recherche-chrono { font-family: var(--gravure, serif); font-size: 30px; color: #fff3c4; letter-spacing: 0.06em; }
+.recherche-sieges { display: flex; gap: 10px; }
+.recherche-sieges span {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; font-size: 22px;
+  border: 2px dashed #e3b04b66; color: #1a1205; transition: all 0.3s ease;
+}
+.recherche-sieges span.trouve { border: 2px solid #ffd979; background: radial-gradient(circle, #ffe39a, #c8902e); box-shadow: 0 0 12px #ffd979aa; animation: siege-pop 0.4s ease; }
+@keyframes siege-pop { 0% { transform: scale(0.5); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.recherche small { color: #f3e6c8cc; font-size: 13px; }
