@@ -481,3 +481,72 @@
 .jeu-arene.nombreux .adv-nom { max-width: 96px; font-size: 11px; }
 .jeu-arene.nombreux .adv-objectif { font-size: 9px; padding: 0 5px; }
 .jeu-arene.nombreux .adv-dos { display: none; }
+
+/* ================= Grandes animations ================= */
+.grande-anim { position: absolute; inset: 0; z-index: 120; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; animation: ga-sortie 1.7s ease forwards; }
+@keyframes ga-sortie { 0% { opacity: 0; } 8% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+.ga-fond { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, var(--ga-c1) 0%, var(--ga-c2) 45%, #000e 100%); }
+.ga-scene { position: relative; width: 100%; height: 62dvh; display: flex; align-items: center; justify-content: center; }
+.ga-carte {
+  position: relative; z-index: 3; height: 58dvh; border-radius: 14px;
+  box-shadow: 0 0 0 3px var(--ga-bord), 0 0 60px 14px var(--ga-lueur), 0 20px 40px #000;
+  animation: ga-entree 1.7s cubic-bezier(.2,.9,.2,1) forwards;
+}
+@keyframes ga-entree {
+  0%, 24% { transform: scale(0.2) rotate(-25deg) translateY(30dvh); opacity: 0; }
+  40% { transform: scale(1.14) rotate(4deg); opacity: 1; }
+  48% { transform: scale(1) rotate(0deg); }
+  85% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1.12); opacity: 0.9; }
+}
+.ga-victime {
+  position: absolute; z-index: 2; height: 44dvh; border-radius: 10px; box-shadow: 0 8px 20px #000c; opacity: 0;
+  left: 50%; top: 50%;
+  --ecart: calc((var(--i) - (var(--n) - 1) / 2) * 24dvh);
+  --cote: calc(var(--i) * 2 - var(--n) + 1 + 0.5);
+  animation: ga-victime 1.7s ease-in forwards;
+}
+@keyframes ga-victime {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateX(var(--ecart)) scale(0.6); }
+  10%, 30% { opacity: 1; transform: translate(-50%, -50%) translateX(var(--ecart)) scale(1); filter: none; }
+  48% { opacity: 1; transform: translate(-50%, -50%) translateX(calc(var(--ecart) * 2.2 + var(--cote) * 18dvh)) rotate(calc(var(--cote) * 35deg)) scale(0.8); filter: brightness(1.6); }
+  70%, 100% { opacity: 0; transform: translate(-50%, -50%) translateX(calc(var(--ecart) * 3 + var(--cote) * 40dvh)) rotate(calc(var(--cote) * 160deg)) scale(0.3); filter: blur(5px) brightness(2); }
+}
+.ga-texte { position: relative; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: -2dvh; animation: ga-texte 1.7s ease forwards; }
+.ga-texte strong { font-family: var(--titre); font-weight: 400; font-size: clamp(38px, 15dvh, 80px); line-height: 1; color: var(--ga-titre); text-shadow: 0 0 26px var(--ga-lueur), 0 4px 0 #000; }
+.ga-texte span { font-size: clamp(13px, 4.4dvh, 18px); color: #fff; text-shadow: 0 2px 6px #000; }
+@keyframes ga-texte { 0%, 36% { opacity: 0; transform: scale(1.8); } 48% { opacity: 1; transform: scale(1); } 100% { opacity: 1; } }
+.ga-passer { position: absolute; z-index: 4; bottom: 8px; font-size: 10px; color: #ffffff88; }
+.ga-particules span { position: absolute; z-index: 1; width: calc(10px * var(--s)); height: calc(10px * var(--s)); border-radius: 50%; background: var(--ga-part); box-shadow: 0 0 12px var(--ga-part); opacity: 0; animation: ga-part ease-out infinite; }
+@keyframes ga-part { 0% { opacity: 0; transform: scale(0.2) translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4) translateY(-18dvh); } }
+
+/* Régicide : Sirène contre Skull King — turquoise et rose */
+.anim-regicide { --ga-c1: #3ff2e055; --ga-c2: #0a2a3acc; --ga-bord: #7ff7ea; --ga-lueur: #3ff2e0aa; --ga-titre: #b8fff6; --ga-part: #ff9de2; }
+/* Le Roi frappe : Skull King contre Pirates — or et feu */
+.anim-roi { --ga-c1: #ffb13b66; --ga-c2: #3a1004cc; --ga-bord: #ffd979; --ga-lueur: #ff8a1caa; --ga-titre: #ffd979; --ga-part: #ff7a1c; }
+.anim-roi .ga-carte { animation-name: ga-entree, ga-tremble; animation-duration: 1.7s, 0.12s; animation-iteration-count: 1, 6; animation-delay: 0s, 0.4s; }
+@keyframes ga-tremble { 50% { translate: 3px -2px; } }
+/* À l'abordage : Pirate contre Sirène — or et bleu */
+.anim-abordage { --ga-c1: #e3b04b55; --ga-c2: #0a1a3acc; --ga-bord: #ffd979; --ga-lueur: #5fb4ffaa; --ga-titre: #ffe7a3; --ga-part: #ffd979; }
+/* Kraken : violet, encre, l'écran tremble */
+.anim-kraken { --ga-c1: #8a3fd188; --ga-c2: #12041fdd; --ga-bord: #b57bff; --ga-lueur: #8a3fd1; --ga-titre: #d7b5ff; --ga-part: #2a0a3a; }
+.anim-kraken { animation-name: ga-sortie, ga-secousse; animation-duration: 1.7s, 0.1s; animation-iteration-count: 1, 10; }
+@keyframes ga-secousse { 25% { translate: -6px 3px; } 75% { translate: 6px -3px; } }
+.anim-kraken .ga-particules span { background: #1a0626; box-shadow: 0 0 18px #8a3fd1; width: calc(26px * var(--s)); height: calc(26px * var(--s)); }
+.anim-kraken .ga-victime { animation-name: ga-englouti; }
+@keyframes ga-englouti {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateX(var(--ecart)) scale(0.7); }
+  10%, 30% { opacity: 1; transform: translate(-50%, -50%) translateX(var(--ecart)); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translateX(calc(var(--ecart) * 0.3)) translateY(34dvh) scale(0.2) rotate(-200deg); filter: hue-rotate(240deg) brightness(0.4); }
+}
+/* Baleine blanche : bleu, une vague balaie l'écran */
+.anim-baleine { --ga-c1: #9fd3ff66; --ga-c2: #04182acc; --ga-bord: #e6f6ff; --ga-lueur: #9fd3ffaa; --ga-titre: #e6f6ff; --ga-part: #cfeeff; }
+.anim-baleine .ga-fond::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, #cfeeff55 45%, #ffffff88 50%, #cfeeff55 55%, transparent 70%); animation: ga-vague 1.2s ease-in-out 0.15s both; }
+@keyframes ga-vague { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.anim-baleine .ga-particules span { border-radius: 50%; background: transparent; border: 2px solid #cfeeffcc; box-shadow: none; }
+.anim-baleine .ga-victime { animation-name: ga-emporte; }
+@keyframes ga-emporte {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateX(var(--ecart)); }
+  10%, 32% { opacity: 1; transform: translate(-50%, -50%) translateX(var(--ecart)); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translateX(90vw) rotate(40deg); }
+}

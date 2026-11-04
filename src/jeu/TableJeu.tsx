@@ -7,7 +7,7 @@ import type { VuePrivee } from '../engine/vues.ts';
 import { carteParId, NOMS_PIRATES, COULEURS } from '../engine/cards.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { debloquerSon, musique, son, vibrer } from '../lib/sons.ts';
-import { resoudrePli } from '../engine/pli.ts';
+import { resoudrePli, role } from '../engine/pli.ts';
 import { OBJETS } from '../lib/boutique.ts';
 
 export const REVELATION_MS = 2500;
@@ -133,7 +133,7 @@ export function TableJeu(p: PropsTable) {
   const [panneauObjets, setPanneauObjets] = useState(false);
   const [objetChoisi, setObjetChoisi] = useState<string | null>(null);
   const [ongletFin, setOngletFin] = useState<'podium' | 'resume'>('podium');
-  const [coupRoi, setCoupRoi] = useState<{ titre: string; texte: string } | null>(null);
+  const [grandeAnim, setGrandeAnim] = useState<GrandEvenement | null>(null);
   const [volsDistribution, setVolsDistribution] = useState<Array<{ k: string; x0: number; y0: number; x1: number; y1: number; retard: number }>>([]);
   const racine = useRef<HTMLDivElement>(null);
   const mancheVue = useRef(0);
@@ -198,25 +198,22 @@ export function TableJeu(p: PropsTable) {
     pliVu.current = clePli;
     setEtapePli('revelation');
     const r = vue.dernierPli?.resultat;
+    const evt = vue.dernierPli ? detecterEvenement(vue.dernierPli.cartes, vue.dernierPli.resultat, pseudo) : null;
     const t0 = setTimeout(() => {
-      if (r?.effet === 'kraken') { setEffet('kraken'); son.kraken(); }
-      else if (r?.effet === 'baleine') { setEffet('baleine'); son.baleine(); }
+      if (r?.effet === 'kraken') setEffet('kraken');
+      else if (r?.effet === 'baleine') setEffet('baleine');
       else if (r?.gagnant && vue.dernierPli && r.indexGagnant !== null &&
-        carteParId(vue.dernierPli.cartes[r.indexGagnant].carteId).type === 'skull_king') { setEffet('skull'); son.skull(); }
+        carteParId(vue.dernierPli.cartes[r.indexGagnant].carteId).type === 'skull_king') setEffet('skull');
+      // Grosse animation pour les grands moments (dans la pause du pli : le jeu attend qu'elle finisse)
+      if (evt) { setGrandeAnim(evt); son[evt.son](); vibrer(140); }
+      else if (r?.gagnant && vue.dernierPli && r.indexGagnant !== null &&
+        carteParId(vue.dernierPli.cartes[r.indexGagnant].carteId).type === 'skull_king') son.skull();
       else son.pli();
     }, tRevelation - 200);
-    // Coup du roi : une annonce plein écran pour les gros exploits.
-    let coup: { titre: string; texte: string } | null = null;
-    if (r?.gagnant && r.effet === 'normal' && r.indexGagnant !== null && vue.dernierPli) {
-      const g = carteParId(vue.dernierPli.cartes[r.indexGagnant].carteId).type;
-      const nom = pseudo(r.gagnant);
-      if (g === 'sirene' && r.bonus >= 40) coup = { titre: 'Régicide !', texte: `${nom} capture le Skull King avec une Sirène` };
-      else if (g === 'skull_king' && r.bonus >= 30) coup = { titre: 'Chasse au pirate !', texte: `${nom} et le Skull King capturent ${r.bonus / 30} pirate${r.bonus >= 60 ? 's' : ''}` };
-      else if (r.bonus >= 30) coup = { titre: 'Butin royal !', texte: `${nom} rafle +${r.bonus} de bonus` };
-    }
-    const t1 = setTimeout(() => { setEtapePli('gagnant'); if (coup) { setCoupRoi(coup); son.exploit(); vibrer(120); } }, tRevelation);
-    const t2 = setTimeout(() => { setEtapePli('aucune'); setEffet(null); setCoupRoi(null); }, tRevelation + tGagnant);
-    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); setEtapePli('aucune'); setEffet(null); setCoupRoi(null); };
+    const t1 = setTimeout(() => setEtapePli('gagnant'), tRevelation);
+    const t2 = setTimeout(() => { setEtapePli('aucune'); setEffet(null); }, tRevelation + tGagnant);
+    const t3 = setTimeout(() => setGrandeAnim(null), tRevelation - 200 + DUREE_GRANDE_ANIM);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); setEtapePli('aucune'); setEffet(null); setGrandeAnim(null); };
   }, [clePli]);
 
   const etape = p.etapeForcee ?? etapePli;
@@ -879,13 +876,8 @@ export function TableJeu(p: PropsTable) {
         </div>
       )}
 
-      {/* Coup du roi */}
-      {coupRoi && (
-        <div className="coup-roi" aria-live="polite">
-          <strong>{coupRoi.titre}</strong>
-          <span>{coupRoi.texte}</span>
-        </div>
-      )}
+      {/* Grands moments : animation plein écran (un toucher pour passer) */}
+      {grandeAnim && <GrandeAnimation evt={grandeAnim} passer={() => setGrandeAnim(null)} />}
 
       {/* Distribution des cartes */}
       {volsDistribution.length > 0 && (
@@ -995,6 +987,77 @@ function ResumePartie({ vue, pseudo }: { vue: VueJeu; pseudo: (id: string) => st
         {items.map(([i, t, d]) => <li key={t}><span className="resume-icone">{i}</span><span><strong>{t}</strong><small>{d}</small></span></li>)}
       </ul>
       <button type="button" className="lien" onClick={partager}>📤 Partager le résumé</button>
+    </div>
+  );
+}
+
+const DUREE_GRANDE_ANIM = 1700;
+
+type TypeEvenement = 'regicide' | 'roi' | 'abordage' | 'kraken' | 'baleine';
+interface GrandEvenement { type: TypeEvenement; titre: string; texte: string; carte: string; victimes: string[]; son: 'regicide' | 'roiFrappe' | 'abordageFort' | 'krakenFort' | 'baleineForte' }
+
+/** Repère les grands moments d'un pli terminé. */
+function detecterEvenement(
+  cartes: Array<{ joueur: string; carteId: string; tigresse?: 'pirate' | 'fuite' }>,
+  r: { effet: string; gagnant: string | null; indexGagnant: number | null; bonus: number },
+  pseudo: (id: string) => string,
+): GrandEvenement | null {
+  const ids = cartes.map((c) => c.carteId);
+  if (r.effet === 'kraken') {
+    return { type: 'kraken', titre: 'Le Kraken !', texte: 'Le pli est englouti par les abysses', carte: 'kraken', victimes: ids.filter((i) => i !== 'kraken'), son: 'krakenFort' };
+  }
+  if (r.effet === 'baleine') {
+    const g = r.gagnant && r.indexGagnant !== null ? cartes[r.indexGagnant] : null;
+    return {
+      type: 'baleine', titre: 'La Baleine blanche !', carte: 'baleine', victimes: ids.filter((i) => i !== 'baleine'), son: 'baleineForte',
+      texte: g ? `${pseudo(g.joueur)} l’emporte avec le ${(carteParId(g.carteId) as { valeur?: number }).valeur ?? ''}` : 'Le pli est dispersé par les flots',
+    };
+  }
+  if (!r.gagnant || r.indexGagnant === null) return null;
+  const gagnante = cartes[r.indexGagnant];
+  const type = carteParId(gagnante.carteId).type;
+  const nom = pseudo(r.gagnant);
+  const de = (t: string) => cartes.filter((c) => c !== gagnante && role(c) === t).map((c) => c.carteId);
+  if (type === 'sirene') {
+    const rois = de('skull_king');
+    if (rois.length) return { type: 'regicide', titre: 'Régicide !', texte: `${nom} capture le Skull King avec une Sirène · +40`, carte: gagnante.carteId, victimes: rois, son: 'regicide' };
+  }
+  if (type === 'skull_king') {
+    const pirates = de('pirate');
+    if (pirates.length) return { type: 'roi', titre: 'Le Roi frappe !', texte: `${nom} capture ${pirates.length} pirate${pirates.length > 1 ? 's' : ''} · +${30 * pirates.length}`, carte: gagnante.carteId, victimes: pirates, son: 'roiFrappe' };
+  }
+  if (role(gagnante) === 'pirate') {
+    const sirenes = de('sirene');
+    if (sirenes.length) return { type: 'abordage', titre: 'À l’abordage !', texte: `${nom} capture ${sirenes.length > 1 ? 'les Sirènes' : 'la Sirène'} · +${20 * sirenes.length}`, carte: gagnante.carteId, victimes: sirenes, son: 'abordageFort' };
+  }
+  return null;
+}
+
+/** L'animation plein écran : la carte gagnante en grand, les victimes emportées, des particules. */
+export function GrandeAnimation({ evt, passer }: { evt: GrandEvenement; passer: () => void }) {
+  const particules = useMemo(() => Array.from({ length: 26 }, (_, k) => ({
+    k, x: Math.random() * 100, y: Math.random() * 100, r: Math.random() * 0.6, t: 0.6 + Math.random() * 0.9, s: 0.6 + Math.random() * 1.1,
+  })), []);
+  return (
+    <div className={`grande-anim anim-${evt.type}`} onClick={passer} role="alert">
+      <div className="ga-fond" />
+      <div className="ga-particules" aria-hidden="true">
+        {particules.map((p) => (
+          <span key={p.k} style={{ left: `${p.x}%`, top: `${p.y}%`, animationDelay: `${p.r}s`, animationDuration: `${p.t}s`, ['--s' as string]: p.s }} />
+        ))}
+      </div>
+      <div className="ga-scene">
+        {evt.victimes.slice(0, 6).map((v, i) => (
+          <img key={v} className="ga-victime" src={`/cartes/${v}.webp`} alt=""
+            style={{ ['--i' as string]: i, ['--n' as string]: Math.min(evt.victimes.length, 6) }} />
+        ))}
+        <img className="ga-carte" src={`/cartes/${evt.carte}.webp`} alt="" />
+      </div>
+      <div className="ga-texte">
+        <strong>{evt.titre}</strong>
+        <span>{evt.texte}</span>
+      </div>
+      <small className="ga-passer">toucher pour passer</small>
     </div>
   );
 }

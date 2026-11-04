@@ -65,6 +65,12 @@ export const son = {
   exploit: () => { note(262, 0, 0.12, 0.1, 'square'); note(392, 0.1, 0.12, 0.1, 'square'); note(523, 0.2, 0.5, 0.12, 'triangle'); bruit(0.3, 0.08); },
   /** Objet qui atterrit sur un joueur */
   impact: () => { bruit(0.18, 0.2); note(180, 0, 0.15, 0.08, 'square'); },
+  /** Grandes animations */
+  regicide: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => note(f, i * 0.07, 0.5, 0.07, 'sine')); note(110, 0.35, 0.8, 0.14, 'sawtooth'); bruit(0.4, 0.1); },
+  roiFrappe: () => { note(98, 0, 0.7, 0.2, 'sawtooth'); note(73, 0.05, 0.9, 0.16, 'square'); bruit(0.5, 0.2); note(392, 0.3, 0.3, 0.08, 'triangle'); note(523, 0.42, 0.5, 0.08, 'triangle'); },
+  abordageFort: () => { bruit(0.35, 0.22); [392, 523, 659, 784].forEach((f, i) => note(f, 0.1 + i * 0.1, 0.22, 0.1, 'square')); },
+  krakenFort: () => { note(55, 0, 1.4, 0.24, 'sawtooth'); note(41, 0.1, 1.5, 0.2, 'square'); bruit(1.1, 0.16); },
+  baleineForte: () => { note(147, 0, 1.4, 0.14, 'sine'); note(110, 0.25, 1.5, 0.14, 'sine'); note(220, 0.5, 1.1, 0.06, 'triangle'); bruit(0.9, 0.08); },
   /** Petit tintement de pièce */
   piece: () => { note(1568, 0, 0.08, 0.05, 'triangle'); note(2093, 0.05, 0.12, 0.04, 'triangle'); },
 };
