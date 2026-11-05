@@ -10,14 +10,15 @@ import {
 import { CADRES_GAGNES, chargerBoutique, chargerCadresPossedes, equiperCadre, type Article } from '../lib/boutique.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { Louidors } from './Boutique.tsx';
+import { Icone } from '../composants/Icone.tsx';
 
 type Onglet = 'profil' | 'cadres' | 'badges' | 'stats' | 'historique';
 const ONGLETS: Array<{ id: Onglet; icone: string; nom: string }> = [
-  { id: 'profil', icone: '☠', nom: 'Profil' },
-  { id: 'cadres', icone: '🖼', nom: 'Cadres' },
-  { id: 'badges', icone: '🛡', nom: 'Badges' },
-  { id: 'stats', icone: '📊', nom: 'Stats' },
-  { id: 'historique', icone: '🕰', nom: 'Historique' },
+  { id: 'profil', icone: 'tete', nom: 'Profil' },
+  { id: 'cadres', icone: 'cadre', nom: 'Cadres' },
+  { id: 'badges', icone: 'bouclier', nom: 'Badges' },
+  { id: 'stats', icone: 'stats', nom: 'Stats' },
+  { id: 'historique', icone: 'sablier', nom: 'Historique' },
 ];
 
 /** Emblème de chaque grade. */
@@ -94,10 +95,10 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
 
       {/* Chiffres clés */}
       <div className="chiffres-cles">
-        <Chiffre icone="🏆" valeur={profil.victoires} libelle="Victoires" />
-        <Chiffre icone="⚔️" valeur={profil.parties_jouees} libelle="Parties" />
-        <Chiffre icone="🎯" valeur={tauxVictoire === null ? '—' : `${tauxVictoire} %`} libelle="Taux de victoire" />
-        <Chiffre icone="🔥" valeur={profil.meilleur_score ?? '—'} libelle="Record" />
+        <Chiffre icone="trophee" valeur={profil.victoires} libelle="Victoires" />
+        <Chiffre icone="epees" valeur={profil.parties_jouees} libelle="Parties" />
+        <Chiffre icone="cible" valeur={tauxVictoire === null ? '—' : `${tauxVictoire} %`} libelle="Taux de victoire" />
+        <Chiffre icone="feu" valeur={profil.meilleur_score ?? '—'} libelle="Record" />
       </div>
 
       {erreur && <p className="message erreur">{erreur}</p>}
@@ -107,7 +108,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
       <nav className="profil-onglets" aria-label="Sections du profil">
         {ONGLETS.map((o) => (
           <button key={o.id} type="button" className={onglet === o.id ? 'actif' : ''} onClick={() => setOnglet(o.id)}>
-            <span>{o.icone}</span><small>{o.nom}</small>
+            <Icone nom={o.icone} taille={22} /><small>{o.nom}</small>
           </button>
         ))}
       </nav>
@@ -175,7 +176,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
 function Chiffre({ icone, valeur, libelle }: { icone: string; valeur: number | string; libelle: string }) {
   return (
     <div className="chiffre neon">
-      <span className="chiffre-icone">{icone}</span>
+      <Icone nom={icone} taille={22} className="chiffre-icone" />
       <strong>{valeur}</strong>
       <small>{libelle}</small>
     </div>

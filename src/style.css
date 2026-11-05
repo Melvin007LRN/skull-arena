@@ -962,3 +962,114 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
 .notif-etapes em { font-style: normal; }
 .fenetre-notif .lien { align-self: center; }
 @media (prefers-reduced-motion: reduce) { .notif-grosse-cloche { animation: none; } }
+
+/* =====================================================================
+   THÈME « COFFRE AU TRÉSOR » : cuir sombre, filigrane doré, icônes maison
+   Polices : Cinzel Decorative (titres) · Cinzel (étiquettes, chiffres) · Inter (texte)
+   ===================================================================== */
+:root {
+  --titre: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
+  --gravure: 'Cinzel', Georgia, serif;
+  --corps: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --coins-dores: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(0 0)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") top 4px left 4px / 30px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(30 0) scale(-1 1)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") top 4px right 4px / 30px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(0 30) scale(1 -1)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") bottom 4px left 4px / 30px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(30 30) scale(-1 -1)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") bottom 4px right 4px / 30px no-repeat;
+  --grain-cuir: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.22 0 0 0 0 0.1 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  --rubis: #d6453b; --emeraude: #3fbf6a;
+}
+body { font-family: var(--corps); }
+
+/* Titres gravés en or */
+.titre-pirate {
+  font-family: var(--titre); font-weight: 700; font-size: 24px; letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff1c2, #e3b04b 55%, #a8741e); -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: none; filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 10px #ffd97944);
+}
+.titre-pirate.grand { font-size: 29px; line-height: 1.15; }
+
+/* Le panneau unique : cuir sombre, grain, double liseré et coins en filigrane */
+.parchemin, .neon {
+  background:
+    var(--coins-dores),
+    radial-gradient(120% 80% at 50% -10%, #ffd97914, transparent 55%),
+    var(--grain-cuir),
+    linear-gradient(165deg, #2a1a0f, #150c06 55%, #0a0603) !important;
+  border: 1px solid #c8902e99 !important;
+  box-shadow: inset 0 0 0 3px #0a0603, inset 0 0 0 4px #e3b04b33, 0 0 14px #ffd97922, 0 14px 30px #000d !important;
+}
+.parchemin::before { display: none; }
+.neon:active { box-shadow: inset 0 0 0 3px #0a0603, inset 0 0 0 4px #e3b04b66, 0 0 22px #ffd97955 !important; }
+
+/* Boutons en relief, or métallique */
+.bouton-or {
+  font-family: var(--gravure); font-weight: 700; letter-spacing: 0.1em; color: #3a2405; text-shadow: 0 1px 0 #fff3c488;
+  background: linear-gradient(180deg, #fff1c2 0%, #ffd979 18%, #e3b04b 52%, #b07a1f 53%, #e3b04b 100%);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -3px 0 #8a5a12, 0 0 14px #ffd97955, 0 8px 16px #000c;
+}
+.bouton-or .icone { stroke: #3a2405; filter: none; }
+.bouton-jouer { font-family: var(--titre); font-size: 21px; letter-spacing: 0.04em; }
+.bouton-sombre { background: linear-gradient(180deg, #2a1a0f, #0b0705); border-color: #c8902e88; box-shadow: inset 0 1px 0 #ffd97922, 0 6px 14px #000a; }
+
+/* Icônes et médaillons */
+.icone { flex: none; vertical-align: middle; filter: drop-shadow(0 0 3px #ffd97955); }
+.medaillon {
+  display: inline-grid; place-items: center; flex: none; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3a2614, #0d0805 70%); border: 1px solid #e3b04b;
+  box-shadow: 0 0 10px #ffd97955, inset 0 0 8px #000;
+}
+.medaillon.fait { border-color: var(--emeraude); box-shadow: 0 0 10px #3fbf6a66, inset 0 0 8px #000; }
+
+/* Accueil : ambiance vivante */
+.ambiance-lanterne { position: absolute; top: -80px; left: 50%; width: 560px; height: 460px; margin-left: -280px; background: radial-gradient(circle, #ffb34730, transparent 60%); animation: lanterne 3.2s ease-in-out infinite; }
+.ambiance-brume { position: absolute; left: -40%; width: 180%; height: 230px; border-radius: 50%; background: radial-gradient(ellipse at center, #e8d9b81a, transparent 65%); filter: blur(8px); animation: brume 26s linear infinite alternate; }
+.ambiance-brume.b1 { top: 18%; }
+.ambiance-brume.b2 { top: 52%; animation-duration: 38s; animation-direction: alternate-reverse; opacity: 0.7; }
+@keyframes lanterne { 0%, 100% { opacity: 0.9; } 30% { opacity: 0.6; } 55% { opacity: 1; } 72% { opacity: 0.7; } }
+@keyframes brume { from { transform: translateX(-8%); } to { transform: translateX(18%); } }
+@media (prefers-reduced-motion: reduce) { .ambiance-lanterne, .ambiance-brume { animation: none; } }
+
+/* Accueil : carte du joueur, bourse */
+.carte-joueur-texte strong { font-weight: 700; font-size: 22px; background: linear-gradient(180deg, #fff1c2, #e3b04b 60%, #a8741e); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 0 #000); }
+.puce-boutique strong { font-family: var(--gravure); font-weight: 700; font-size: 17px; }
+
+/* Accueil : grande affiche « Jouer » en pleine image */
+.affiche-vedette.neon { min-height: 250px; flex-direction: column; justify-content: flex-end; align-items: stretch; padding: 0; }
+.affiche-vedette .affiche-image { width: calc(100% - 8px) !important; left: 4px; top: 4px; height: calc(100% - 8px); border-radius: 12px; object-position: 50% 20%; }
+.affiche-vedette .affiche-degrade { inset: 4px; border-radius: 12px; background: linear-gradient(180deg, transparent 22%, #0a0603c4 60%, #0a0603 100%); }
+.affiche-vedette .affiche-texte { position: relative; z-index: 1; width: 100%; max-width: none; padding: 16px; gap: 6px; }
+.affiche-vedette.neon .affiche-titre { font-family: var(--titre); font-weight: 700; font-size: 48px; line-height: 1; }
+.affiche-vedette .affiche-phrase { font-family: var(--corps); font-size: 13px; }
+.affiche-bouton { margin-top: 8px; min-height: 50px; font-size: 17px; pointer-events: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.affiche-en-ligne { position: absolute; z-index: 2; top: 12px; left: 12px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #000b; border: 1px solid #3fbf6a88; font-size: 12px; color: #f3e6c8; }
+.affiche-en-ligne i { width: 8px; height: 8px; border-radius: 50%; background: var(--emeraude); box-shadow: 0 0 6px var(--emeraude); }
+.affiche-vedette::after { border-radius: 12px; }
+
+/* Tuiles : image encadrée, médaillon d'icône, titre gravé */
+.tuile img { inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); border-radius: 12px; }
+.tuile-degrade { inset: 4px; border-radius: 12px; }
+.tuile-medaillon { position: absolute; z-index: 2; top: 10px; left: 10px; }
+.tuile-texte strong { font-family: var(--titre); font-weight: 700; font-size: 16px; line-height: 1.15; color: #fff1c2; }
+.tuile-mode .tuile-texte strong { font-size: 19px; }
+.tuile-rapide .tuile-texte strong { font-size: 25px; }
+
+/* Accueil : équipage et défis */
+.amis-accueil-titre, .defis-titre { font-family: var(--titre); font-weight: 700; font-size: 18px; }
+.titre-bloc, .defis-titre { display: flex; align-items: center; gap: 10px; }
+.defis-titre { justify-content: flex-start; text-align: left; }
+.defis-jour li { background: #0000005c; border-color: #e3b04b26; }
+.defis-jour li.reussi { opacity: 1; border-color: #3fbf6a66; }
+.defi-gain { font-family: var(--gravure); font-weight: 700; color: var(--or-clair); white-space: nowrap; }
+.defis-jour li.reussi .defi-gain { color: var(--emeraude); }
+.lien-reglages { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--gravure); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Profil */
+.heros-pseudo { font-weight: 700; font-size: 30px; background: linear-gradient(180deg, #fff1c2, #e3b04b 60%, #a8741e); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 2px 0 #000); }
+.heros-grade { font-family: var(--gravure); font-weight: 700; font-size: 16px; }
+.hexa, .chiffre strong, .stat-valeur, .heros-xp-ligne strong, .jauge span, .recherche-chrono { font-family: var(--gravure); font-weight: 700; }
+.chiffre strong { font-size: 20px; }
+.stat-valeur { font-size: 24px; }
+.profil-onglets button.actif .icone { stroke: #3a2405; filter: none; }
+.profil-barre .titre-pirate { font-size: 22px; margin: 0; }
+.recherche-titre { font-weight: 700; font-size: 21px; }
+.ligne-compte strong { font-family: var(--gravure); font-weight: 700; font-size: 19px; }
+.liste-salons strong { font-family: var(--gravure); font-weight: 700; font-size: 18px; }
+
+.lien-reglages.neon { padding-left: 44px; padding-right: 44px; }

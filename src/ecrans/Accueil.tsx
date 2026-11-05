@@ -8,6 +8,7 @@ import { Avatar } from '../composants/Avatar.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
 import { ActiverNotifications } from '../composants/ActiverNotifications.tsx';
 import { FenetreNotifications } from '../composants/FenetreNotifications.tsx';
+import { Icone, Medaillon } from '../composants/Icone.tsx';
 import { useAmis, useEnLigne } from '../lib/amis.ts';
 import { totalNonLus, useNonLus, useSocial } from '../lib/social.ts';
 
@@ -19,7 +20,14 @@ interface Entree {
   cadrage?: string; // object-position de l'illustration
   vedette?: boolean;
   action?: () => void;
+  icone?: string;
 }
+
+/** Icône de chaque défi du jour. */
+const ICONES_DEFIS: Record<string, string> = {
+  mise_zero: 'ancre', mise_haute: 'cible', six_mises: 'boussole', victoire: 'trophee', podium: 'couronne',
+  quatorze_noir: 'pavillon', regicide: 'couronne', chasseur: 'tete', bonus_50: 'coffre', deux_cents: 'feu',
+};
 
 const ACCROCHES = [
   'Mise juste. Pille tout. Règne sur l’Arena.',
@@ -62,16 +70,16 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
   const n = niveau(profil.xp);
   const jouer: Entree = {
     id: 'jouer', titre: 'Jouer', vedette: true, image: '/cartes/skull_king.webp', cadrage: '50% 22%', action: () => ouvrirLobby('jouer'),
-    phrase: 'Lève l’ancre et défie jusqu’à 7 pirates en ligne. Que le meilleur menteur gagne.',
+    phrase: 'Lève l’ancre et défie jusqu’à 8 pirates en ligne. Que le meilleur menteur gagne.',
   };
   // Deux tuiles par ligne, dans cet ordre précis.
   const tuiles: Entree[] = [
-    { id: 'code', titre: 'Rejoindre', image: '/cartes/pirate_rosie.webp', cadrage: '50% 18%', action: () => ouvrirLobby('code'), phrase: 'Entre le code d’un ami' },
-    { id: 'profil', titre: 'Mon pirate', image: '/cartes/pirate_harry.webp', cadrage: '50% 20%', action: ouvrirProfil, phrase: 'Ta légende, tes trophées' },
-    { id: 'amis', titre: 'Compagnons', image: '/cartes/pirate_bendt.webp', cadrage: '50% 20%', action: ouvrirAmis, phrase: 'Amis et messages' },
-    { id: 'classement', titre: 'Classement', image: '/cartes/jaune_14.webp', cadrage: '50% 45%', action: ouvrirClassement, phrase: 'Saison et légendes' },
-    { id: 'entrainement', titre: 'Entraînement', image: '/cartes/noir_7.webp', cadrage: '50% 30%', action: () => ouvrirLobby('entrainement'), phrase: 'Contre les robots' },
-    { id: 'regles', titre: 'Le grimoire', image: '/cartes/sirene_1.webp', cadrage: '50% 25%', action: ouvrirRegles, phrase: 'Toutes les règles' },
+    { id: 'code', titre: 'Rejoindre', image: '/cartes/pirate_rosie.webp', cadrage: '50% 18%', action: () => ouvrirLobby('code'), phrase: 'Entre le code d’un ami', icone: 'longue-vue' },
+    { id: 'profil', titre: 'Mon pirate', image: '/cartes/pirate_harry.webp', cadrage: '50% 20%', action: ouvrirProfil, phrase: 'Ta légende, tes trophées', icone: 'tete' },
+    { id: 'amis', titre: 'Compagnons', image: '/cartes/pirate_bendt.webp', cadrage: '50% 20%', action: ouvrirAmis, phrase: 'Amis et messages', icone: 'pavillon' },
+    { id: 'classement', titre: 'Classement', image: '/cartes/jaune_14.webp', cadrage: '50% 45%', action: ouvrirClassement, phrase: 'Saison et légendes', icone: 'couronne' },
+    { id: 'entrainement', titre: 'Entraînement', image: '/cartes/noir_7.webp', cadrage: '50% 30%', action: () => ouvrirLobby('entrainement'), phrase: 'Contre les robots', icone: 'cible' },
+    { id: 'regles', titre: 'Le grimoire', image: '/cartes/sirene_1.webp', cadrage: '50% 25%', action: ouvrirRegles, phrase: 'Toutes les règles', icone: 'grimoire' },
   ];
 
 
@@ -80,6 +88,9 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       <div className="ambiance" aria-hidden="true">
         <div className="ambiance-decor" />
         <div className="ambiance-voile" />
+        <div className="ambiance-lanterne" />
+        <div className="ambiance-brume b1" />
+        <div className="ambiance-brume b2" />
         <Braises />
       </div>
 
@@ -116,11 +127,12 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         <button type="button" className="affiche affiche-vedette neon" onClick={jouer.action}>
           <img className="affiche-image" src={jouer.image} alt="" style={{ objectPosition: jouer.cadrage }} />
           <span className="affiche-degrade" />
+          {enLigne.size > 0 && <span className="affiche-en-ligne"><i />{enLigne.size} pirate{enLigne.size > 1 ? 's' : ''} en ligne</span>}
           <span className="affiche-texte">
             <span className="affiche-titre">{jouer.titre}</span>
             <span className="affiche-phrase">{jouer.phrase}</span>
+            <span className="bouton-or affiche-bouton"><Icone nom="epees" taille={20} />À l’abordage</span>
           </span>
-          <span className="affiche-fleche">›</span>
         </button>
       </Apparition>
 
@@ -130,6 +142,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
             <button type="button" className="tuile neon" onClick={e.action}>
               <img src={e.image} alt="" loading="lazy" style={{ objectPosition: e.cadrage }} />
               <span className="tuile-degrade" />
+              {e.icone && <Medaillon nom={e.icone} taille={36} className="tuile-medaillon" />}
               <span className="tuile-texte">
                 <strong>{e.titre}</strong>
                 <small>{e.phrase}</small>
@@ -143,7 +156,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       <Apparition>
         <section className="amis-accueil neon">
           <div className="amis-accueil-titre">
-            <span>👥 Mon équipage <small>{nbEnLigne > 0 ? `· ${nbEnLigne} en ligne` : ''}</small></span>
+            <span className="titre-bloc"><Medaillon nom="equipage" taille={34} /> Mon équipage <small>{nbEnLigne > 0 ? `· ${nbEnLigne} en ligne` : ''}</small></span>
             <button type="button" className="lien" onClick={ouvrirAmis}>
               Tout voir{demandesRecues + totalNonLus(nonLus) > 0 && <b className="pastille-nombre">{demandesRecues + totalNonLus(nonLus)}</b>}
             </button>
@@ -171,13 +184,13 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       {defis.length > 0 && (
         <Apparition>
           <section className="defis-jour neon">
-            <p className="defis-titre">⚓ Défis du jour</p>
+            <p className="defis-titre"><Medaillon nom="boussole" taille={34} /> Défis du jour</p>
             <ul>
               {defis.map((d) => (
                 <li key={d.id} className={d.reussi ? 'reussi' : ''}>
-                  <span className="defi-icone">{d.reussi ? '✅' : DEFIS[d.id]?.icone}</span>
+                  <Medaillon nom={d.reussi ? 'trophee' : ICONES_DEFIS[d.id] ?? 'ancre'} taille={34} className={`defi-medaillon ${d.reussi ? 'fait' : ''}`} />
                   <span className="defi-texte">{DEFIS[d.id]?.texte ?? d.id}</span>
-                  <span className="defi-gain">{d.reussi ? 'Réussi' : '+20 XP · +15'}</span>
+                  <span className="defi-gain">{d.reussi ? '✓ Réussi' : '+20 XP · +15'}</span>
                 </li>
               ))}
             </ul>
@@ -203,7 +216,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
 
       <Apparition>
         <button type="button" className="lien-reglages neon" onClick={ouvrirReglages}>
-          ⚙ Réglages du navire
+          <Icone nom="gouvernail" taille={20} /> Réglages du navire
         </button>
       </Apparition>
 
