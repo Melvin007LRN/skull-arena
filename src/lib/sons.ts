@@ -44,6 +44,33 @@ function bruit(duree: number, volume = 0.18) {
   src.start();
 }
 
+/** Son qui glisse d'une fréquence à l'autre, filtré dans les graves (grondements de bête). */
+function glisse(de: number, a: number, debut: number, duree: number, volume = 0.2, type: OscillatorType = 'sawtooth', coupure = 600) {
+  if (!ctx) return;
+  const t = ctx.currentTime + debut;
+  const osc = ctx.createOscillator();
+  const filtre = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(de, t);
+  osc.frequency.exponentialRampToValueAtTime(a, t + duree);
+  filtre.type = 'lowpass';
+  filtre.frequency.value = coupure;
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(volume, t + duree * 0.25);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + duree);
+  osc.connect(filtre).connect(gain).connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + duree + 0.05);
+}
+
+/** Bandes-son des grandes bêtes (4 s). */
+export const sonBete = {
+  kraken: () => { glisse(70, 32, 0, 1.2, 0.18); glisse(110, 38, 0.85, 2.2, 0.26, 'sawtooth', 420); glisse(55, 30, 0.9, 2.4, 0.2, 'square', 260); bruit(1.6, 0.12); note(41, 2.2, 1.6, 0.16, 'sine'); },
+  baleine: () => { glisse(180, 120, 0, 1.4, 0.12, 'sine', 900); glisse(90, 160, 0.8, 1.6, 0.16, 'triangle', 700); bruit(1.8, 0.16); glisse(240, 150, 1.6, 1.8, 0.09, 'sine', 1200); note(73, 0.85, 2.4, 0.16, 'sine'); },
+  raie: () => { glisse(400, 900, 0, 1.2, 0.06, 'sine', 2400); glisse(160, 90, 0.7, 2, 0.14, 'triangle', 800); bruit(1.2, 0.08); glisse(700, 300, 2, 1.4, 0.06, 'sine', 2000); },
+};
+
 export const son = {
   carte: () => bruit(0.09),
   pli: () => { note(660, 0, 0.18); note(880, 0.09, 0.25); },

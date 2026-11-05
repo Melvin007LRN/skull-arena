@@ -1,17 +1,19 @@
 // Écran de jeu final (paysage) : décor, table ronde dorée, adversaires en arc, main en éventail,
 // glisser vers l'arène, fenêtres parchemin, animations et phrases rapides.
 // Ce composant ne parle pas au serveur : il reçoit la partie et renvoie les intentions du joueur.
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE, type ReactNode, type RefObject } from 'react';
 import type { VueJeu, MembreSalon } from '../lib/jeu.ts';
 import type { VuePrivee } from '../engine/vues.ts';
 import { carteParId, NOMS_PIRATES, COULEURS, type Couleur } from '../engine/cards.ts';
 import { Avatar } from '../composants/Avatar.tsx';
-import { debloquerSon, musique, son, vibrer } from '../lib/sons.ts';
+import { debloquerSon, musique, son, sonBete, vibrer } from '../lib/sons.ts';
 import { couleurImposeeJoker, COULEURS_JOKER, resoudrePli, role, type CarteJouee } from '../engine/pli.ts';
 import { OBJETS } from '../lib/boutique.ts';
 import { useBloques, useSocial } from '../lib/social.ts';
 
 export const REVELATION_MS = 2500;
+/** Le navigateur sait-il positionner en unités de conteneur (iOS 16+) ? Sinon on garde l'ancien placement. */
+const UNITES_CONTENEUR = typeof CSS !== 'undefined' && CSS.supports?.('width: 1cqw') === true;
 export const GAGNANT_MS = 2000;
 // Entraînement en vitesse rapide : le serveur attend 3,1 s après un pli.
 const REVELATION_RAPIDE_MS = 1500;
@@ -220,6 +222,15 @@ export function TableJeu(p: PropsTable) {
     setEtapePli('revelation');
     const r = vue.dernierPli?.resultat;
     const evt = vue.dernierPli ? detecterEvenement(vue.dernierPli.cartes, vue.dernierPli.resultat, pseudo) : null;
+    // Kraken, Baleine, Raie : la bête prend tout l'écran pendant 4 s, puis on montre directement le résultat du pli.
+    const bete = evt ? beteDe(evt) : null;
+    if (evt && bete) {
+      const debut = 350;
+      const b0 = setTimeout(() => { setEffet(r?.effet === 'kraken' ? 'kraken' : 'baleine'); setGrandeAnim(evt); sonBete[bete](); vibrer(220); }, debut);
+      const b1 = setTimeout(() => { setGrandeAnim(null); setEtapePli('gagnant'); }, debut + DUREE_BETE);
+      const b2 = setTimeout(() => { setEtapePli('aucune'); setEffet(null); }, debut + DUREE_BETE + 550);
+      return () => { clearTimeout(b0); clearTimeout(b1); clearTimeout(b2); setEtapePli('aucune'); setEffet(null); setGrandeAnim(null); };
+    }
     const t0 = setTimeout(() => {
       if (r?.effet === 'kraken') setEffet('kraken');
       else if (r?.effet === 'baleine') setEffet('baleine');
@@ -344,9 +355,17 @@ export function TableJeu(p: PropsTable) {
       x = x + (cible.x - x) * 0.25;
       y = y + (cible.y + 12 - y) * 0.15;
     }
+    // Position par transform (unités de conteneur) : le navigateur anime sur le GPU, sans recalcul de mise en page.
+    if (!UNITES_CONTENEUR) {
+      return {
+        left: `${x}%`, top: `${y}%`, transform: `translate(-50%, -50%) rotate(${rot}deg)`, zIndex: 10 + index,
+        ['--depart-x' as string]: `${depart.x}%`, ['--depart-y' as string]: `${depart.y}%`, ['--rot' as string]: `${rot}deg`,
+      };
+    }
     return {
-      left: `${x}%`, top: `${y}%`, transform: `translate(-50%, -50%) rotate(${rot}deg)`, zIndex: 10 + index,
-      ['--depart-x' as string]: `${depart.x}%`, ['--depart-y' as string]: `${depart.y}%`, ['--rot' as string]: `${rot}deg`,
+      zIndex: 10 + index,
+      ['--x' as string]: x, ['--y' as string]: y, ['--r' as string]: `${rot}deg`,
+      ['--x0' as string]: depart.x, ['--y0' as string]: depart.y,
     };
   }
 
@@ -498,7 +517,7 @@ export function TableJeu(p: PropsTable) {
         <div className="zone-pli" onClick={(e) => { if (e.target === e.currentTarget && !pliAffiche && vue.dernierPli) setVoirDernierPli(true); }}>
           <span className="centre-pli" aria-hidden="true" />
           {pliMontre.map((c, i) => (
-            <figure key={`${vue.manche}-${c.carteId}`} className={`carte-pli ${resultat && resultat.indexGagnant === i ? 'gagnante' : ''} ${resultat && resultat.indexGagnant !== i ? 'perdante' : ''} ${maitresse?.indexGagnant === i ? 'maitresse' : ''}`}
+            <figure key={`${vue.manche}-${c.carteId}`} className={`carte-pli ${UNITES_CONTENEUR ? 'cq' : ''} ${resultat && resultat.indexGagnant === i ? 'gagnante' : ''} ${resultat && resultat.indexGagnant !== i ? 'perdante' : ''} ${maitresse?.indexGagnant === i ? 'maitresse' : ''}`}
               style={styleCartePli(c.joueur, i)} onClick={() => (!pliAffiche && vue.dernierPli && vue.pliEnCours.length === 0 ? setVoirDernierPli(true) : setZoom(c.carteId))}>
               <img src={`/cartes/${c.carteId}.webp`} alt="" draggable={false} />
               {c.tigresse && <span className="etiquette-tigresse">{c.tigresse === 'pirate' ? 'Pirate' : 'Fuite'}</span>}
@@ -598,11 +617,13 @@ export function TableJeu(p: PropsTable) {
           const interdite = aMoi && !jouable;
           const levee = selection === id || defausse.includes(id);
           const g = glisse?.id === id ? glisse : null;
+          const decalage = (i - centre) * ecart;
+          // Tout passe par transform : quand une carte part, les autres se resserrent en douceur.
           const style: CSSProperties = {
-            left: `calc(50% + ${(i - centre) * ecart}px)`,
+            left: '50%',
             transform: g
-              ? 'translate(calc(-50% + var(--dx, 0px)), calc(var(--dy, 0px) - 30px)) rotate(0deg) scale(1.08)'
-              : `translate(-50%, ${levee ? -34 : Math.abs(i - centre) * 3}px) rotate(${angle}deg)`,
+              ? `translate(calc(-50% + ${decalage}px + var(--dx, 0px)), calc(var(--dy, 0px) - 30px)) rotate(0deg) scale(1.08)`
+              : `translate(calc(-50% + ${decalage}px), ${levee ? -34 : Math.abs(i - centre) * 3}px) rotate(${angle}deg)`,
             zIndex: g ? 100 : levee ? 60 : i,
             animationDelay: `${i * 70}ms`,
           };
@@ -938,7 +959,9 @@ export function TableJeu(p: PropsTable) {
       )}
 
       {/* Grands moments : animation plein écran (un toucher pour passer) */}
-      {grandeAnim && <GrandeAnimation evt={grandeAnim} passer={() => setGrandeAnim(null)} />}
+      {grandeAnim && (beteDe(grandeAnim)
+        ? <BeteAnimation evt={grandeAnim} passer={() => setGrandeAnim(null)} />
+        : <GrandeAnimation evt={grandeAnim} passer={() => setGrandeAnim(null)} />)}
 
       {/* Distribution des cartes */}
       {volsDistribution.length > 0 && (
@@ -1139,6 +1162,122 @@ export function GrandeAnimation({ evt, passer }: { evt: GrandEvenement; passer: 
       </div>
       <div className="ga-texte">
         <strong>{evt.titre}</strong>
+        <span>{evt.texte}</span>
+      </div>
+      <small className="ga-passer">toucher pour passer</small>
+    </div>
+  );
+}
+
+// ================= Les bêtes : Kraken, Baleine blanche, Raie tachetée (plein écran, 4 s) =================
+export const DUREE_BETE = 4000;
+type Bete = 'kraken' | 'baleine' | 'raie';
+export function beteDe(evt: { type: string; classe?: string }): Bete | null {
+  if (evt.classe === 'raie') return 'raie';
+  if (evt.classe) return null; // Davy Jones, Planche : animation classique
+  return evt.type === 'kraken' ? 'kraken' : evt.type === 'baleine' ? 'baleine' : null;
+}
+const NOMS_BETES: Record<Bete, { sur: string; nom: string }> = {
+  kraken: { sur: 'Des abysses surgit', nom: 'Le Kraken' },
+  baleine: { sur: 'Les flots se déchirent', nom: 'La Baleine blanche' },
+  raie: { sur: 'Une ombre sous la coque', nom: 'La Raie tachetée' },
+};
+/** Tentacules : position du pied (en % de l'écran), angle, longueur, retard. */
+const TENTACULES = [
+  { x: 4, y: 106, r: 26, h: 58, d: 0.1 }, { x: 96, y: 106, r: -26, h: 60, d: 0.22 },
+  { x: -4, y: 72, r: 58, h: 46, d: 0.4 }, { x: 104, y: 76, r: -60, h: 46, d: 0.32 },
+  { x: 32, y: 112, r: 6, h: 44, d: 0.55 },
+];
+const VENTOUSES = [[74, 362, 8], [67, 322, 7.5], [62, 284, 7], [59, 248, 6.5], [58, 214, 6], [58, 182, 5.5], [60, 152, 5], [63, 124, 4.4], [67, 98, 3.8], [71, 76, 3.2], [74, 58, 2.6]];
+
+function Tentacule() {
+  const id = useId().replace(/:/g, '');
+  return (
+    <svg viewBox="0 0 100 400" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={`p${id}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#2b0710" /><stop offset=".35" stopColor="#7a2232" /><stop offset=".6" stopColor="#a8404a" /><stop offset="1" stopColor="#4a0f1a" />
+        </linearGradient>
+      </defs>
+      <path className="tt-peau" fill={`url(#p${id})`} d="M0 400C-4 318 22 268 22 200C22 138 40 90 62 56C74 38 84 26 76 12C90 18 94 38 84 58C68 90 56 140 58 200C60 268 88 318 96 400Z" />
+      <path className="tt-reflet" d="M38 396C34 330 34 280 36 214C38 156 48 108 66 72" />
+      {VENTOUSES.map(([x, y, r]) => (
+        <g key={y}><ellipse className="tt-ventouse" cx={x} cy={y} rx={r} ry={r * 0.8} /><ellipse className="tt-ventouse-creux" cx={x} cy={y} rx={r * 0.42} ry={r * 0.34} /></g>
+      ))}
+    </svg>
+  );
+}
+
+export function BeteAnimation({ evt, passer }: { evt: GrandEvenement; passer: () => void }) {
+  const bete = beteDe(evt) ?? 'kraken';
+  const nom = NOMS_BETES[bete];
+  const hasard = useMemo(() => {
+    const r = (a: number, b: number) => a + Math.random() * (b - a);
+    return {
+      bulles: Array.from({ length: 26 }, (_, k) => ({ k, x: r(0, 100), t: r(1.8, 3.6), d: r(0, 1.6), s: r(0.4, 1.4) })),
+      gouttes: Array.from({ length: 34 }, (_, k) => {
+        const a = r(-150, -30) * Math.PI / 180, v = r(28, 62);
+        return { k, tx: Math.cos(a) * v * 1.2, ty: Math.sin(a) * v, d: r(0.55, 0.9), s: r(0.5, 1.6) };
+      }),
+      sillage: Array.from({ length: 12 }, (_, k) => ({ k, y: r(8, 92), d: r(0, 2.2), t: r(0.5, 1), l: r(20, 55) })),
+    };
+  }, []);
+  const victimes = evt.victimes.slice(0, 8);
+  useEffect(() => {
+    const t = setTimeout(() => vibrer(320), 900);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className={`bete bete-${bete}`} onClick={passer} role="alert" aria-label={`${nom.nom} — ${evt.texte}`}>
+      <div className="bete-fond" />
+      <div className="bete-secousse">
+        <div className="bete-rayons" />
+        <div className="bete-entree">
+          <img className="bete-art" src={`/decor/bete-${bete}.webp`} alt="" decoding="async" />
+        </div>
+        {bete === 'kraken' && (
+          <div className="bete-tentacules" aria-hidden="true">
+            {TENTACULES.map((t, i) => (
+              <div key={i} className="tentacule" style={{ left: `${t.x}%`, top: `${t.y}%`, height: `${t.h}vh`, rotate: `${t.r}deg`, ['--d' as string]: `${t.d}s` }}>
+                <div className="tentacule-corps"><Tentacule /></div>
+              </div>
+            ))}
+          </div>
+        )}
+        {bete === 'baleine' && (
+          <div className="bete-ocean" aria-hidden="true">
+            <div className="bete-vague v1" /><div className="bete-vague v2" /><div className="bete-vague v3" />
+            <div className="bete-gerbe">
+              {hasard.gouttes.map((g) => (
+                <span key={g.k} style={{ ['--tx' as string]: `${g.tx}vw`, ['--ty' as string]: `${g.ty}vh`, ['--d' as string]: `${g.d}s`, ['--s' as string]: g.s }} />
+              ))}
+            </div>
+          </div>
+        )}
+        {bete === 'raie' && (
+          <div className="bete-sillage" aria-hidden="true">
+            {hasard.sillage.map((l) => (
+              <span key={l.k} style={{ top: `${l.y}%`, width: `${l.l}vw`, animationDelay: `${l.d}s`, animationDuration: `${l.t}s` }} />
+            ))}
+          </div>
+        )}
+        <div className="bete-victimes" aria-hidden="true">
+          {victimes.map((v, i) => (
+            <img key={v} src={`/cartes/${v}.webp`} alt=""
+              style={{ ['--o' as string]: i - (victimes.length - 1) / 2, ['--i' as string]: i, ['--sens' as string]: i % 2 ? 1 : -1 }} />
+          ))}
+        </div>
+        <div className="bete-bulles" aria-hidden="true">
+          {hasard.bulles.map((b) => (
+            <span key={b.k} style={{ left: `${b.x}%`, animationDuration: `${b.t}s`, animationDelay: `${b.d}s`, ['--s' as string]: b.s }} />
+          ))}
+        </div>
+      </div>
+      <div className="bete-eclair" />
+      <div className="bete-vignette" />
+      <div className="bete-titre">
+        <small>{nom.sur}</small>
+        <strong>{nom.nom}</strong>
         <span>{evt.texte}</span>
       </div>
       <small className="ga-passer">toucher pour passer</small>

@@ -1,3 +1,7 @@
+/* Polices hébergées sur le site (préchargées dans index.html : pas de saut du texte au chargement) */
+@font-face { font-family: 'Cinzel Decorative'; src: url('/fonts/cinzel-decorative-700.woff') format('woff'); font-weight: 700 900; font-display: swap; }
+@font-face { font-family: 'Cinzel'; src: url('/fonts/cinzel.woff') format('woff'); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url('/fonts/inter.woff') format('woff'); font-weight: 100 900; font-display: swap; }
 /* Skull Arena — or et noir pirate */
 :root {
   --or: #e3b04b;
@@ -972,7 +976,7 @@ button.siege.vide { cursor: pointer; font-size: 13px; color: var(--or); border-c
   --gravure: 'Cinzel', Georgia, serif;
   --corps: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --coins-dores: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(0 0)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") top 4px left 4px / 30px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(30 0) scale(-1 1)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") top 4px right 4px / 30px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(0 30) scale(1 -1)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") bottom 4px left 4px / 30px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30' fill='none' stroke='%23e3b04b' stroke-width='1.3' stroke-linecap='round'%3E%3Cg transform='translate(30 30) scale(-1 -1)'%3E%3Cpath d='M3 22V8a5 5 0 0 1 5-5h14'/%3E%3Cpath d='M7 18c0-6 4-11 11-11'/%3E%3Cpath d='M12 12c2-2 4-2 6 0M12 12c0 2 1 4 3 5'/%3E%3Ccircle cx='7' cy='7' r='1.6' fill='%23ffd979' stroke='none'/%3E%3C/g%3E%3C/svg%3E") bottom 4px right 4px / 30px no-repeat;
-  --grain-cuir: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.22 0 0 0 0 0.1 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  --grain-cuir: url('/decor/grain-cuir.webp');
   --rubis: #d6453b; --emeraude: #3fbf6a;
 }
 body { font-family: var(--corps); }
@@ -1073,3 +1077,26 @@ body { font-family: var(--corps); }
 .liste-salons strong { font-family: var(--gravure); font-weight: 700; font-size: 18px; }
 
 .lien-reglages.neon { padding-left: 44px; padding-right: 44px; }
+
+
+/* ================= Fluidité : touchers, apparitions, transitions ================= */
+/* Pas de délai ni de zoom au double toucher sur les boutons */
+button, a, input, label, .tuile, .affiche { touch-action: manipulation; }
+/* Chaque écran apparaît en douceur */
+.ecran { animation: ecran-entree 0.32s cubic-bezier(.2,.8,.3,1) backwards; }
+@keyframes ecran-entree { from { opacity: 0; transform: translateY(10px); } }
+/* Fenêtres et voiles : fondu et léger zoom */
+.voile { animation: voile-entree 0.22s ease backwards; }
+.voile > .fenetre, .voile > section { animation: fenetre-entree 0.32s cubic-bezier(.2,.9,.3,1.15) backwards; }
+@keyframes voile-entree { from { opacity: 0; } }
+@keyframes fenetre-entree { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
+/* Retour tactile immédiat sur tout ce qui se touche */
+.bouton-or, .bouton-sombre, .bouton-danger, .bouton-mise, .tuile, .affiche, .neon, .onglets button, .profil-onglets button, .rail-rond {
+  transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.2s ease;
+}
+.bouton-or:active, .bouton-sombre:active, .bouton-danger:active, .bouton-mise:active, .rail-rond:active, .onglets button:active, .profil-onglets button:active { transform: scale(0.96); }
+.tuile:active, .affiche:active { transform: scale(0.975); }
+/* Images : apparaissent sans « pop » */
+img { -webkit-user-drag: none; }
+/* Moins d'animations si le téléphone le demande */
+@media (prefers-reduced-motion: reduce) { .ecran, .voile, .voile > .fenetre, .voile > section { animation: none; } }

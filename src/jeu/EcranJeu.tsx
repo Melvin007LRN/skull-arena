@@ -23,6 +23,18 @@ function precharger(ids: string[]) {
     img.src = `/cartes/${id}.webp`;
   }
 }
+// Les grandes illustrations des bêtes sont décodées à l'avance et gardées en mémoire : l'animation démarre sans à-coup.
+const betes: HTMLImageElement[] = [];
+function prechargerBetes() {
+  if (betes.length) return;
+  for (const n of ['kraken', 'baleine', 'raie']) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = `/decor/bete-${n}.webp`;
+    img.decode?.().catch(() => {});
+    betes.push(img);
+  }
+}
 
 export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   partieId: string; membres: MembreSalon[]; moi: string; hote: string; retourAccueil: () => void;
@@ -62,7 +74,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     if (main?.main) precharger(main.main);
   }, [main?.main]);
   useEffect(() => {
-    const t = setTimeout(() => precharger(creerPaquet(Boolean(vue?.extension)).map((c) => c.id)), 300);
+    const t = setTimeout(() => { precharger(creerPaquet(Boolean(vue?.extension)).map((c) => c.id)); prechargerBetes(); }, 300);
     return () => clearTimeout(t);
   }, [vue?.extension]);
 
