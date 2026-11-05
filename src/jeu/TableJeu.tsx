@@ -106,6 +106,8 @@ export interface PropsTable {
   inventaire?: Record<string, number>;
   lancerObjet?: (objet: string, cible: string) => Promise<boolean>;
   envoyerReaction?: (emoji: string) => void;
+  /** Record à battre : meilleur score jamais réalisé sur SKULL ARENA. */
+  record?: { pseudo: string; score: number } | null;
 }
 
 const EMOJIS = ['😂', '😱', '🔥', '👏', '😡', '🤔', '😎', '🙏'];
@@ -886,33 +888,9 @@ export function TableJeu(p: PropsTable) {
         </Fenetre>
       )}
 
-      {/* Tableau des scores complet */}
+      {/* Tableau des scores : le pirate à abattre, le record à battre, puis le classement */}
       {scoresOuverts && (
-        <div className="voile" onClick={() => setScoresOuverts(false)}>
-          <section className="parchemin fenetre fenetre-large" onClick={(e) => e.stopPropagation()}>
-            <h2 className="titre-pirate">Tableau des scores</h2>
-            <div className="defile-x">
-              <table className="scores scores-complets">
-                <thead>
-                  <tr><th>Pirate</th>{Array.from({ length: 10 }, (_, k) => <th key={k}>{k + 1}</th>)}<th>Total</th></tr>
-                </thead>
-                <tbody>
-                  {classement.map((j) => (
-                    <tr key={j} className={j === moi ? 'moi' : ''}>
-                      <td>{pseudo(j)}</td>
-                      {Array.from({ length: 10 }, (_, k) => {
-                        const r = vue.historique[k]?.find((x) => x.joueur === j);
-                        return <td key={k} className={r ? (r.total >= 0 ? 'positif' : 'negatif') : ''}>{r ? r.total : ''}</td>;
-                      })}
-                      <td><strong>{vue.scores[j]}</strong></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <button type="button" className="bouton-sombre" onClick={() => setScoresOuverts(false)}>Fermer</button>
-          </section>
-        </div>
+        <TableauScores vue={vue} moi={moi} pseudo={pseudo} photo={photo} cadre={cadre} record={p.record ?? null} fermer={() => setScoresOuverts(false)} />
       )}
 
       {confirmQuitter && (
@@ -1214,5 +1192,86 @@ function TableauManche({ vue, classement, moi, pseudo }: {
         {classement.map((j, rang) => <LigneManche key={`${vue.manche}-${j}`} j={j} rang={rang} vue={vue} moi={moi} pseudo={pseudo} />)}
       </tbody>
     </table>
+  );
+}
+
+/** Tableau des scores en partie : classement, pirate à abattre et record à battre. */
+function TableauScores({ vue, moi, pseudo, photo, cadre, record, fermer }: {
+  vue: VueJeu; moi: string; pseudo: (id: string) => string; photo: (id: string) => string | null; cadre: (id: string) => string | null;
+  record: { pseudo: string; score: number } | null; fermer: () => void;
+}) {
+  const tries = [...vue.joueurs].sort((a, b) => vue.scores[b] - vue.scores[a]);
+  const rang = (j: string) => 1 + tries.filter((k) => vue.scores[k] > vue.scores[j]).length;
+  const premier = tries[0];
+  const second = tries[1];
+  const avance = second !== undefined ? vue.scores[premier] - vue.scores[second] : 0;
+  const egalite = second !== undefined && avance === 0;
+  const meilleurDeLaTable = Math.max(...vue.joueurs.map((j) => vue.scores[j]));
+  const recordBattu = record !== null && meilleurDeLaTable > record.score;
+  const mancheJouees = vue.historique.length;
+  const medaille = (r: number) => (r === 1 ? 'or' : r === 2 ? 'argent' : r === 3 ? 'bronze' : '');
+  return (
+    <div className="voile" onClick={fermer}>
+      <section className="parchemin fenetre fenetre-large tableau-scores" onClick={(e) => e.stopPropagation()}>
+        <header className="ts-entete">
+          <h2 className="titre-pirate">Tableau des scores</h2>
+          <span>Manche {vue.manche}/10 · {mancheJouees} jouée{mancheJouees > 1 ? 's' : ''}</span>
+          <button type="button" className="fiche-fermer" onClick={fermer} aria-label="Fermer">✕</button>
+        </header>
+        <div className="ts-corps">
+          <aside className="ts-cote">
+            <div className="ts-abattre">
+              <p className="ts-etiquette">☠ Pirate à abattre</p>
+              <div className="ts-portrait">
+                <span className="ts-couronne" aria-hidden="true">👑</span>
+                <Avatar photo={photo(premier)} taille={72} cadre={cadre(premier)} />
+              </div>
+              <strong className="ts-nom">{premier === moi ? 'Toi !' : pseudo(premier)}</strong>
+              <span className="ts-score">{vue.scores[premier]} <small>pts</small></span>
+              <small className="ts-avance">
+                {egalite ? 'À égalité en tête !' : second !== undefined ? `+${avance} d’avance sur ${second === moi ? 'toi' : pseudo(second)}` : ''}
+              </small>
+            </div>
+            <div className={`ts-record ${recordBattu ? 'battu' : ''}`}>
+              <p className="ts-etiquette">🏆 Record à battre</p>
+              {record ? (
+                <>
+                  <span className="ts-score">{record.score} <small>pts</small></span>
+                  <small>par {record.pseudo}</small>
+                  <small className="ts-ecart">
+                    {recordBattu ? `🔥 ${pseudo(tries[0])} est en train de le battre !` : `Il manque ${record.score - meilleurDeLaTable} pts au meilleur de la table`}
+                  </small>
+                </>
+              ) : <small>Aucun record pour l’instant : sois le premier !</small>}
+            </div>
+          </aside>
+          <div className="ts-classement">
+            {tries.map((j) => {
+              const r = rang(j);
+              const ecart = vue.scores[j] - vue.scores[premier];
+              return (
+                <div key={j} className={`ts-ligne ${j === moi ? 'moi' : ''} ${medaille(r)}`}>
+                  <span className={`ts-rang ${medaille(r)}`}>{r}</span>
+                  <Avatar photo={photo(j)} taille={30} cadre={cadre(j)} />
+                  <span className="ts-pirate">
+                    <strong>{j === moi ? `${pseudo(j)} (toi)` : pseudo(j)}</strong>
+                    <span className="ts-manches">
+                      {Array.from({ length: 10 }, (_, k) => {
+                        const m = vue.historique[k]?.find((x) => x.joueur === j);
+                        return <i key={k} className={m ? (m.reussie ? 'reussie' : 'ratee') : ''} title={m ? `Manche ${k + 1} : ${m.total > 0 ? '+' : ''}${m.total}` : `Manche ${k + 1}`}>{m ? (m.total > 0 ? `+${m.total}` : m.total) : ''}</i>;
+                      })}
+                    </span>
+                  </span>
+                  <span className="ts-total">
+                    <strong>{vue.scores[j]}</strong>
+                    <small>{r === 1 ? 'en tête' : `${ecart}`}</small>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

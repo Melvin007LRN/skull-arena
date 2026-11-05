@@ -51,6 +51,13 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     return [...connus.current.values()];
   }, [membres]);
 
+  // Record à battre : le meilleur score jamais réalisé par un pirate.
+  const [record, setRecord] = useState<{ pseudo: string; score: number } | null>(null);
+  useEffect(() => {
+    supabase.from('profils').select('pseudo, meilleur_score').eq('banni', false).not('meilleur_score', 'is', null)
+      .order('meilleur_score', { ascending: false }).limit(1).maybeSingle()
+      .then(({ data }) => { const d = data as { pseudo: string; meilleur_score: number } | null; if (d) setRecord({ pseudo: d.pseudo, score: d.meilleur_score }); });
+  }, []);
   useEffect(() => {
     if (main?.main) precharger(main.main);
   }, [main?.main]);
@@ -216,7 +223,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     <TableJeu
       vue={vue} main={main} membres={tousMembres} moi={moi} hote={hote} gain={gain} bilan={bilan} rejouer={rejouer}
       lancers={lancers} reactions={reactions} inventaire={inventaire} lancerObjet={lancerObjet} envoyerReaction={envoyerReaction}
-      enCours={enCours} erreur={erreur} bulle={bulle} phrases={phrases} presents={presents}
+      enCours={enCours} erreur={erreur} bulle={bulle} phrases={phrases} presents={presents} record={record}
       envoyer={envoyer} envoyerPhrase={envoyerPhrase}
       quitter={async () => { try { await appel('abandonner', { partie_id: partieId }); } catch { /* déjà finie */ } sortir(); }}
       exclure={(j) => appel('exclure', { salon_id: salonId, joueur_id: j }).catch((e) => setErreur((e as Error).message))}

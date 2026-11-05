@@ -572,3 +572,44 @@
 .anim-davy { --ga-c1: #1f6b5c88; --ga-c2: #021512dd; --ga-bord: #7fe0c8; --ga-lueur: #2fb894; --ga-titre: #b8f5e4; --ga-part: #0a2b24; }
 .anim-raie { --ga-c1: #3fa6d988; --ga-c2: #021a2bdd; --ga-bord: #a8e2ff; --ga-lueur: #3fa6d9; --ga-titre: #d6f2ff; }
 .anim-planche { --ga-c1: #c0392b88; --ga-c2: #1a0503dd; --ga-bord: #ffb199; --ga-lueur: #e2483d; --ga-titre: #ffd5c8; }
+
+/* ---------- Tableau des scores : classement, pirate à abattre, record ---------- */
+.tableau-scores { width: min(820px, 100%) !important; max-height: 92dvh; padding: 12px 14px 14px; gap: 8px; }
+.ts-entete { display: flex; align-items: center; gap: 12px; }
+.ts-entete .titre-pirate { margin: 0; font-size: 20px; }
+.ts-entete > span { flex: 1; font-family: var(--gravure); font-size: 12px; color: #f3e6c8b3; }
+.ts-entete .fiche-fermer { position: static; }
+.ts-corps { display: grid; grid-template-columns: 210px 1fr; gap: 12px; min-height: 0; }
+.ts-cote { display: flex; flex-direction: column; gap: 10px; }
+.ts-etiquette { margin: 0; font-family: var(--gravure); font-weight: 700; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--or-clair); }
+.ts-abattre, .ts-record { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px; border-radius: 14px; text-align: center; }
+.ts-abattre { background: radial-gradient(circle at 50% 30%, #e2483d33, transparent 70%), #0a0603; border: 1px solid #e2483d88; box-shadow: 0 0 14px #e2483d33; }
+.ts-portrait { position: relative; margin-top: 18px; }
+.ts-portrait .avatar { filter: drop-shadow(0 0 10px #ffd97988); }
+.ts-couronne { position: absolute; z-index: 2; top: -16px; left: 50%; transform: translateX(-50%) rotate(-8deg); font-size: 22px; filter: drop-shadow(0 2px 3px #000); }
+.ts-nom { font-family: var(--titre); font-size: 17px; line-height: 1.1; color: #fff1c2; text-shadow: 0 2px 0 #000; word-break: break-word; }
+.ts-score { font-family: var(--gravure); font-weight: 700; font-size: 24px; line-height: 1; color: #fff1c2; }
+.ts-score small { font-size: 12px; color: #f3e6c8b3; }
+.ts-avance, .ts-record small { font-size: 11px; color: #f3e6c8cc; }
+.ts-record { background: #0a0603; border: 1px solid #e3b04b77; }
+.ts-record .ts-ecart { color: var(--or-clair); }
+.ts-record.battu { border-color: #ffd979; box-shadow: 0 0 16px #ffd97977; animation: pulse 1.6s ease-in-out infinite; }
+.ts-classement { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; max-height: calc(92dvh - 70px); padding-right: 2px; }
+.ts-ligne { display: grid; grid-template-columns: 26px 30px 1fr auto; align-items: center; gap: 8px; padding: 4px 10px 4px 6px; border-radius: 12px; background: #0000005c; border: 1px solid #e3b04b26; }
+.ts-ligne.moi { border-color: #ffd979aa; background: #e3b04b14; }
+.ts-ligne.or { border-color: #ffd979; box-shadow: 0 0 12px #ffd97944; }
+.ts-rang { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-family: var(--gravure); font-weight: 700; font-size: 14px; color: #f3e6c8; background: #1a110a; border: 1px solid #e3b04b55; }
+.ts-rang.or { color: #3a2405; background: radial-gradient(circle at 35% 30%, #fff1c2, #e3b04b 55%, #a8741e); border-color: #fff1c2; box-shadow: 0 0 8px #ffd979aa; }
+.ts-rang.argent { color: #1d2228; background: radial-gradient(circle at 35% 30%, #ffffff, #c0c7cf 55%, #7d8791); border-color: #eef2f6; }
+.ts-rang.bronze { color: #2a1406; background: radial-gradient(circle at 35% 30%, #f6c79a, #c47a3c 55%, #7c4416); border-color: #f6c79a; }
+.ts-pirate { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ts-pirate strong { font-size: 14px; color: #fff1c2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ts-manches { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+.ts-manches i { display: grid; place-items: center; height: 15px; border-radius: 4px; font-style: normal; font-size: 9.5px; font-weight: 600; color: #f3e6c855; background: #ffffff0a; }
+.ts-manches i.reussie { color: #c9f5d6; background: #3fbf6a33; }
+.ts-manches i.ratee { color: #ffd2cc; background: #e2483d33; }
+.ts-total { display: flex; flex-direction: column; align-items: flex-end; }
+.ts-total strong { font-family: var(--gravure); font-weight: 700; font-size: 18px; line-height: 1.1; color: #fff1c2; }
+.ts-total small { font-size: 11px; color: #f3e6c8b3; }
+.ts-ligne.or .ts-total small { color: var(--or-clair); }
+@media (max-width: 560px) { .ts-corps { grid-template-columns: 1fr; } .ts-cote { flex-direction: row; } .ts-cote > * { flex: 1; } }
