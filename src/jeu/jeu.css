@@ -1726,8 +1726,10 @@
 /* ================= Table en verre fumé : on voit le décor à travers, l'esprit table reste ================= */
 .jeu-table {
   background:
-    radial-gradient(ellipse 70% 60% at 50% 38%, rgba(255,214,120,.06), transparent 60%),
-    radial-gradient(ellipse at 50% 45%, rgba(8,11,22,.55) 0%, rgba(6,8,18,.66) 55%, rgba(3,4,9,.86) 100%) !important;
+    radial-gradient(ellipse at 50% 45%, rgba(0,0,0,.28) 0%, rgba(0,0,0,.42) 55%, rgba(0,0,0,.72) 100%) !important;
+  /* le décor vu à travers passe en noir et blanc : du verre noir, pas du bois beige */
+  -webkit-backdrop-filter: grayscale(1) brightness(.62) contrast(1.15);
+  backdrop-filter: grayscale(1) brightness(.62) contrast(1.15);
 }
 .jeu-table::before { border-color: rgba(5,7,13,.65) !important; }
 /* Bord intérieur assombri pour garder l'effet « plateau » */
@@ -1735,3 +1737,10 @@
   box-shadow: inset 0 0 0 10px rgba(0,0,0,.25); }
 /* Filet doré intérieur, comme le liseré d'un tapis de jeu */
 .jeu-table-boussole::after { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px solid rgba(255,204,51,.28); }
+/* La lueur passe sur l'anneau extérieur : un « filter » sur la table empêcherait l'effet verre noir */
+.jeu-table, .jeu-table.effet-kraken, .jeu-table.effet-baleine, .jeu-table.effet-skull { filter: none !important; }
+.jeu-table::after { filter: drop-shadow(0 0 5px #ffcc33) drop-shadow(0 0 14px #ffcc3388); }
+.jeu-table.effet-kraken::after { filter: drop-shadow(0 0 8px #b57bff) drop-shadow(0 0 22px #8a3fd1); }
+.jeu-table.effet-baleine::after { filter: drop-shadow(0 0 8px #9fd3ff) drop-shadow(0 0 22px #6fb8ff); }
+.jeu-table.effet-skull::after { animation: eclatAnneau 1.6s ease-out; }
+@keyframes eclatAnneau { 0% { filter: drop-shadow(0 0 20px #ffd979) drop-shadow(0 0 50px #ffd979); } 100% { filter: drop-shadow(0 0 5px #ffcc33) drop-shadow(0 0 14px #ffcc3388); } }
