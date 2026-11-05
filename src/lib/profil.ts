@@ -19,6 +19,7 @@ export interface Profil {
   badges: string[];
   louidors: number;
   cadre: string | null;
+  couleur_nom?: string | null;
 }
 
 export const PSEUDO_REGEX = /^[A-Za-z0-9_\-À-ÿ]{3,16}$/;

@@ -2,10 +2,10 @@
 import { supabase } from './supabase.ts';
 import { niveau, type Profil } from './profil.ts';
 
-export interface Article { id: string; type: 'objet' | 'cadre'; nom: string; icone: string; prix: number; ordre: number }
+export interface Article { id: string; type: 'objet' | 'cadre' | 'couleur'; nom: string; icone: string; prix: number; ordre: number }
 
 /** Objets lançables en partie (icône affichée pendant le vol). */
-export const OBJETS: Record<string, { icone: string; nom: string; phrase: string }> = {
+export const OBJETS: Record<string, { icone: string; nom: string; phrase: string; grand?: boolean }> = {
   mouchoirs: { icone: '🧻', nom: 'Boîte de mouchoirs', phrase: 'tend des mouchoirs à' },
   drapeau_blanc: { icone: '🏳️', nom: 'Drapeau blanc', phrase: 'agite le drapeau blanc devant' },
   tomate: { icone: '🍅', nom: 'Tomate pourrie', phrase: 'lance une tomate sur' },
@@ -16,6 +16,12 @@ export const OBJETS: Record<string, { icone: string; nom: string; phrase: string
   doigt: { icone: '🖕', nom: 'Doigt d’honneur', phrase: 'fait un doigt d’honneur à' },
   boulet: { icone: '💣', nom: 'Boulet de canon', phrase: 'tire un boulet sur' },
   couronne: { icone: '👑', nom: 'Couronne en carton', phrase: 'couronne' },
+  // Cadeaux spectaculaires : animation sur tout l'écran de la table
+  feu_artifice: { icone: '🎆', nom: 'Feu d’artifice', phrase: 'tire un feu d’artifice pour', grand: true },
+  bordee: { icone: '💥', nom: 'Bordée de canons', phrase: 'ouvre le feu sur', grand: true },
+  pluie_tresor: { icone: '💰', nom: 'Pluie de trésor', phrase: 'fait pleuvoir l’or sur', grand: true },
+  navire_fantome: { icone: '👻', nom: 'Navire fantôme', phrase: 'envoie le navire fantôme hanter', grand: true },
+  kraken_poche: { icone: '🐙', nom: 'Kraken de poche', phrase: 'lâche le Kraken sur', grand: true },
 };
 
 /** Cadres gagnés (jamais vendus) avec leur condition. */
@@ -60,4 +66,5 @@ export async function chargerCadresPossedes(): Promise<string[]> {
 
 export const acheter = (article: string, nombre = 1) => rpc<number>('acheter', { article, nombre });
 export const equiperCadre = (choix: string | null) => rpc('equiper_cadre', { choix });
+export const equiperNeon = (choix: string | null) => rpc('equiper_couleur', { choix });
 export const utiliserObjet = (article: string, partie: string, cible: string) => rpc<number>('utiliser_objet', { article, partie, cible });

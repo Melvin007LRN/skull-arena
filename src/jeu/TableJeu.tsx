@@ -9,6 +9,7 @@ import { Avatar } from '../composants/Avatar.tsx';
 import { debloquerSon, musique, son, sonBete, vibrer } from '../lib/sons.ts';
 import { couleurImposeeJoker, COULEURS_JOKER, resoudrePli, role, type CarteJouee } from '../engine/pli.ts';
 import { OBJETS } from '../lib/boutique.ts';
+import { styleNeon } from '../lib/neons.ts';
 import { useBloques, useSocial } from '../lib/social.ts';
 
 export const REVELATION_MS = 2500;
@@ -158,6 +159,7 @@ export function TableJeu(p: PropsTable) {
   const [ongletFin, setOngletFin] = useState<'podium' | 'resume'>('podium');
   const [grandeAnim, setGrandeAnim] = useState<GrandEvenement | null>(null);
   const [taille, setTaille] = useState(() => ({ l: window.innerWidth, h: window.innerHeight }));
+  const pivoteRef = useRef(false);
   useEffect(() => {
     const maj = () => setTaille({ l: window.innerWidth, h: window.innerHeight });
     window.addEventListener('resize', maj);
@@ -174,6 +176,7 @@ export function TableJeu(p: PropsTable) {
   const pseudo = (id: string) => infos.get(id)?.pseudo ?? 'Pirate';
   const photo = (id: string) => infos.get(id)?.photo_url ?? null;
   const cadre = (id: string) => infos.get(id)?.cadre ?? null;
+  const neonNom = (id: string) => styleNeon(infos.get(id)?.couleur_nom);
   const piloteParRobot = (j: string) => vue.robots?.includes(j) || vue.remplaces?.includes(j);
   const finie = vue.phase === 'fin_partie' || vue.annulee;
   const tRevelation = vue.rapide ? REVELATION_RAPIDE_MS : REVELATION_MS;
@@ -205,6 +208,10 @@ export function TableJeu(p: PropsTable) {
   // tout seul tant que le téléphone est encore couché, puis se remet droit quand on le redresse).
   const [sensRotation, setSensRotation] = useState<'rot-g' | 'rot-d'>('rot-g');
   const finPortrait = (vue.phase === 'fin_partie' || vue.annulee) && etapePli === 'aucune';
+  // Téléphone tenu droit pendant la partie : la table s'affiche d'elle-même à l'horizontale (pivotée d'un quart de tour).
+  const pivote = !finPortrait && taille.l < taille.h && taille.l <= 900;
+  pivoteRef.current = pivote;
+  const tailleTable = pivote ? { l: taille.h, h: taille.l } : taille;
   useEffect(() => {
     if (!finPortrait) return;
     const lireSens = () => {
@@ -337,16 +344,17 @@ export function TableJeu(p: PropsTable) {
   useEffect(() => {
     if (!distribution || !racine.current) return;
     const t = requestAnimationFrame(() => {
-      const base = racine.current!.getBoundingClientRect();
-      const centre = racine.current!.querySelector('.centre-pli')?.getBoundingClientRect();
-      if (!centre) return;
-      const x0 = centre.left + centre.width / 2 - base.left, y0 = centre.top + centre.height / 2 - base.top;
+      const r = racine.current!;
+      const base = { width: r.offsetWidth, height: r.offsetHeight };
+      const c = centreDans(r, r.querySelector('.centre-pli'));
+      if (!c) return;
+      const x0 = c.x, y0 = c.y;
       const nb = Math.min(vue.cartesParJoueur, 4);
       const vols: typeof volsDistribution = [];
       vue.joueurs.forEach((j, i) => {
-        const el = racine.current!.querySelector(`[data-joueur="${j}"]`)?.getBoundingClientRect();
-        const x1 = j === moi ? base.width / 2 : el ? el.left + el.width / 2 - base.left : x0;
-        const y1 = j === moi ? base.height - 40 : el ? el.top + el.height / 2 - base.top : y0;
+        const el = centreDans(r, r.querySelector(`[data-joueur="${j}"]`));
+        const x1 = j === moi ? base.width / 2 : el ? el.x : x0;
+        const y1 = j === moi ? base.height - 40 : el ? el.y : y0;
         for (let k = 0; k < nb; k++) vols.push({ k: `${distribution}-${j}-${k}`, x0, y0, x1, y1, retard: (k * vue.joueurs.length + i) * 55 });
       });
       setVolsDistribution(vols);
@@ -372,7 +380,7 @@ export function TableJeu(p: PropsTable) {
   function styleCartePli(joueur: string, index: number): CSSProperties {
     const pos = positions.get(joueur) ?? { x: 50, y: 92 };
     // Repère de l'arène : chaque carte se pose entre le centre du pli et la place du joueur.
-    const cx = 50, cy = 45;
+    const cx = 50, cy = 46.5;
     const ancreY = joueur === moi ? 100 : pos.y + 12;
     const depart = joueur === moi ? { x: 50, y: 120 } : { x: pos.x, y: pos.y + 12 };
     const dejaPose = pliMontre.slice(0, index).some((c) => c.joueur === joueur); // Dernière salve : 2e carte décalée
@@ -432,6 +440,9 @@ export function TableJeu(p: PropsTable) {
     if (ok === false) setCarteEnVol(null); // refusé : la carte revient dans la main
   }
 
+  /** Déplacement du doigt (écran) → déplacement sur la table (qui peut être pivotée d'un quart de tour). */
+  const versTable = (dx: number, dy: number): [number, number] => (pivoteRef.current ? [dy, -dx] : [dx, dy]);
+
   function surAppui(e: PE<HTMLButtonElement>, id: string) {
     debloquerSon();
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -441,7 +452,7 @@ export function TableJeu(p: PropsTable) {
   function surDeplacement(e: PE<HTMLButtonElement>) {
     const a = appui.current;
     if (!a) return;
-    const dx = e.clientX - a.x, dy = e.clientY - a.y;
+    const [dx, dy] = versTable(e.clientX - a.x, e.clientY - a.y);
     if (Math.hypot(dx, dy) > 8) clearTimeout(a.minuterie);
     if (aMoi && main.jouables.includes(a.id) && dy < -10) {
       const el = e.currentTarget as HTMLElement;
@@ -455,7 +466,7 @@ export function TableJeu(p: PropsTable) {
     appui.current = null;
     if (!a) return;
     clearTimeout(a.minuterie);
-    const dy = e.clientY - a.y, dx = e.clientX - a.x;
+    const [dx, dy] = versTable(e.clientX - a.x, e.clientY - a.y);
     setGlisse(null);
     if (modeDefausse) {
       if (Math.hypot(dx, dy) < 12) {
@@ -475,8 +486,8 @@ export function TableJeu(p: PropsTable) {
   const n = mainTriee.length;
   const enMise = vue.phase === 'mise' && decompte === 0;
   // Écart entre les cartes : jamais plus large que l'écran (toutes les cartes restent visibles, même sur un petit iPhone).
-  const largeurCarte = Math.min(enMise ? 128 : 132, Math.max(enMise ? 62 : 64, taille.h * (enMise ? 0.26 : 0.29)));
-  const ecartMax = n > 1 ? (taille.l - largeurCarte - 2 * MARGE_MAIN) / (n - 1) : 99;
+  const largeurCarte = Math.min(enMise ? 128 : 132, Math.max(enMise ? 62 : 64, tailleTable.h * (enMise ? 0.26 : 0.29)));
+  const ecartMax = n > 1 ? (tailleTable.l - largeurCarte - 2 * MARGE_MAIN) / (n - 1) : 99;
   const ecart = Math.max(18, Math.min(enMise ? 92 : 64, (enMise ? 720 : 620) / Math.max(n, 1), ecartMax));
   const angleMax = Math.min(28, n * 3.2);
 
@@ -511,7 +522,7 @@ export function TableJeu(p: PropsTable) {
 
   // ---------- Rendu ----------
   return (
-    <div className={`jeu ${tempete ? 'tempete' : ''} ${finPortrait ? `fin-portrait ${sensRotation}` : ''}`} onPointerDown={debloquerSon} ref={racine}>
+    <div className={`jeu ${tempete ? 'tempete' : ''} ${finPortrait ? `fin-portrait ${sensRotation}` : ''} ${pivote ? 'pivote' : ''}`} onPointerDown={debloquerSon} ref={racine}>
       {tempete && <div className="eclairs" aria-hidden="true" />}
       <div className="jeu-decor" />
       <div className="jeu-fumee" />
@@ -559,31 +570,6 @@ export function TableJeu(p: PropsTable) {
               {resultat && resultat.detruits?.includes(i) && <span className="etiquette-tigresse rouge">⚓ au Casier</span>}
             </figure>
           ))}
-          {resultat && (
-            <p className="annonce-pli">
-              {resultat.effet === 'kraken' ? '🐙 Le Kraken engloutit le pli !'
-                : resultat.gagnant ? <>{pseudo(resultat.gagnant)} remporte le pli{resultat.bonus ? <strong> {resultat.bonus > 0 ? '+' : ''}{resultat.bonus}</strong> : null}</>
-                : resultat.effet === 'raie' ? '🐟 La Raie tachetée disperse le pli !'
-                : resultat.effet === 'baleine' ? '🐋 La Baleine blanche disperse le pli !'
-                : 'Personne ne remporte ce pli'}
-            </p>
-          )}
-          {maitresse && (
-            <p className="meneur-pli">
-              {maitresse.effet === 'kraken' ? '🐙 Le Kraken rôde : personne ne gagnera ce pli…'
-                : maitresse.gagnant ? <>⚔ {maitresse.gagnant === moi ? 'Tu mènes' : `${pseudo(maitresse.gagnant)} mène`}{maitresse.effet === 'raie' ? ' · 🐟 la plus petite gagne' : ''}</>
-                : maitresse.effet === 'raie' ? '🐟 La Raie rôde…' : maitresse.effet === 'baleine' ? '🐋 La Baleine rôde…' : null}
-            </p>
-          )}
-          {!pliAffiche && vue.phase === 'jeu' && pliMontre.length === 0 && (
-            <p className="indice-table">
-              {aMoi ? 'À toi d’ouvrir le pli !' : `${pseudo(vue.joueurActif ?? '')} ouvre le pli…`}
-              {vue.dernierPli && <small>Touche la table pour revoir le dernier pli</small>}
-            </p>
-          )}
-          {vue.juanitaRegarde && vue.juanitaRegarde !== moi && (
-            <p className="indice-table bas">🔮 {pseudo(vue.juanitaRegarde)} consulte les cartes non distribuées…</p>
-          )}
         </div>
 
         {/* Adversaires */}
@@ -609,7 +595,7 @@ export function TableJeu(p: PropsTable) {
               </div>
               <div className="adv-nom">
                 <span className="adv-medaillon">☠</span>
-                <span>{pseudo(j)}</span>
+                <span className={neonNom(j).className} style={neonNom(j).style}>{pseudo(j)}</span>
               </div>
               {(() => { const o = objectif(j); return o ? <span className={`adv-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
               {vue.remplaces?.includes(j) && <span className="adv-robot">🤖 robot</span>}
@@ -633,6 +619,7 @@ export function TableJeu(p: PropsTable) {
       {/* Mon coin : avatar, ruban, statut */}
       <div className={`moi-coin ${aMoi ? 'actif' : ''}`} data-joueur={moi}>
         {vue.phase === 'mise' && vue.meneur === moi && <span className="adv-ouvre" title="Tu ouvres le premier pli">▶ 1er</span>}
+        <span className={`moi-nom ${neonNom(moi).className}`} style={neonNom(moi).style}>{pseudo(moi)}</span>
         <Avatar photo={photo(moi)} taille={56} cadre={cadre(moi)} />
         <span className="adv-ruban">{vue.mises ? `${vue.plisGagnes[moi]}/${miseDe(moi)}` : vue.aMise[moi] ? '✓' : '…'}</span>
         <Badges j={moi} />
@@ -670,21 +657,58 @@ export function TableJeu(p: PropsTable) {
         })}
       </section>
 
+      {/* Journal de la partie : toutes les infos au même endroit (à gauche), jamais sur les cartes */}
+      <div className="journal" aria-live="polite">
       {aMoi && !tigresse && !choixValeur && !choixJoker && (
         <p className="aide-geste">
           <span className="fleches">⌃⌃</span>
           {selection ? 'Glisse-la vers l’arène, ou touche-la encore pour la jouer' : 'Glisse ta carte vers l’arène pour la jouer'}
         </p>
       )}
+          {resultat && (
+            <p className="annonce-pli">
+              {resultat.effet === 'kraken' ? '🐙 Le Kraken engloutit le pli !'
+                : resultat.gagnant ? <>{pseudo(resultat.gagnant)} remporte le pli{resultat.bonus ? <strong> {resultat.bonus > 0 ? '+' : ''}{resultat.bonus}</strong> : null}</>
+                : resultat.effet === 'raie' ? '🐟 La Raie tachetée disperse le pli !'
+                : resultat.effet === 'baleine' ? '🐋 La Baleine blanche disperse le pli !'
+                : 'Personne ne remporte ce pli'}
+            </p>
+          )}
+          {maitresse && (
+            <p className="meneur-pli">
+              {maitresse.effet === 'kraken' ? '🐙 Le Kraken rôde : personne ne gagnera ce pli…'
+                : maitresse.gagnant ? <>⚔ {maitresse.gagnant === moi ? 'Tu mènes' : `${pseudo(maitresse.gagnant)} mène`}{maitresse.effet === 'raie' ? ' · 🐟 la plus petite gagne' : ''}</>
+                : maitresse.effet === 'raie' ? '🐟 La Raie rôde…' : maitresse.effet === 'baleine' ? '🐋 La Baleine rôde…' : null}
+            </p>
+          )}
+          {!pliAffiche && vue.phase === 'jeu' && pliMontre.length === 0 && (
+            <p className="indice-table">
+              {aMoi ? 'À toi d’ouvrir le pli !' : `${pseudo(vue.joueurActif ?? '')} ouvre le pli…`}
+              {vue.dernierPli && <small>Touche la table pour revoir le dernier pli</small>}
+            </p>
+          )}
+          {vue.juanitaRegarde && vue.juanitaRegarde !== moi && (
+            <p className="indice-table bas">🔮 {pseudo(vue.juanitaRegarde)} consulte les cartes non distribuées…</p>
+          )}
       {!aMoi && !pliAffiche && vue.phase === 'jeu' && vue.joueurActif && vue.joueurActif !== moi && pliMontre.length > 0 && (
         <p className="aide-geste discret">{vue.salve === vue.joueurActif ? `💥 ${pseudo(vue.joueurActif)} tire sa Dernière salve…` : `Au tour de ${pseudo(vue.joueurActif)}…`}</p>
       )}
+      {!pliAffiche && vue.imposee && vue.imposee.joueur !== moi && ['jeu', 'pouvoir'].includes(vue.phase) && (
+        <p className="aide-geste discret haut">🗡️ Mary Thorne : {pseudo(vue.imposee.joueur)} doit poser la carte prise par {pseudo(vue.imposee.par)}</p>
+      )}
+      {vue.phase === 'mise' && decompte === 0 && (vue.aMise[moi] || miseLocale?.manche === vue.manche) && (
+        <p className="aide-geste discret">
+          Mise {miseLocale?.manche === vue.manche ? `de ${miseLocale.mise} ` : ''}verrouillée · ▶ {vue.meneur === moi ? 'tu ouvres' : `${pseudo(vue.meneur)} ouvre`} le premier pli
+        </p>
+      )}
+      {!pliAffiche && vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
+        <p className="aide-geste discret">{vue.pouvoir.type === 'planche' ? 'Supplice de la planche' : NOMS_PIRATES[vue.pouvoir.type]} · {pseudo(vue.pouvoir.joueur)} choisit…</p>
+      )}
+      </div>
+
       {!pliAffiche && vue.phase === 'jeu' && vue.salve === moi && <p className="bandeau">💥 Dernière salve : pose ta deuxième carte !</p>}
       {!pliAffiche && main.carteImposee && main.main.includes(main.carteImposee) && (
         <p className="bandeau">🗡️ {vue.imposee ? pseudo(vue.imposee.par) : 'Mary Thorne'} t’a pris une carte : tu dois la poser à ce pli.</p>
-      )}
-      {!pliAffiche && vue.imposee && vue.imposee.joueur !== moi && ['jeu', 'pouvoir'].includes(vue.phase) && (
-        <p className="aide-geste discret haut">🗡️ Mary Thorne : {pseudo(vue.imposee.joueur)} doit poser la carte prise par {pseudo(vue.imposee.par)}</p>
       )}
 
       {/* Phrases rapides */}
@@ -768,16 +792,8 @@ export function TableJeu(p: PropsTable) {
           <small>▶ {vue.meneur === moi ? 'Tu ouvres' : `${pseudo(vue.meneur)} ouvre`} le premier pli · manche {vue.manche} · {vue.cartesParJoueur} carte{vue.cartesParJoueur > 1 ? 's' : ''}</small>
         </div>
       )}
-      {vue.phase === 'mise' && decompte === 0 && (vue.aMise[moi] || miseLocale?.manche === vue.manche) && (
-        <p className="aide-geste discret">
-          Mise {miseLocale?.manche === vue.manche ? `de ${miseLocale.mise} ` : ''}verrouillée · ▶ {vue.meneur === moi ? 'tu ouvres' : `${pseudo(vue.meneur)} ouvre`} le premier pli
-        </p>
-      )}
 
       {/* Pouvoirs */}
-      {!pliAffiche && vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
-        <p className="aide-geste discret">{vue.pouvoir.type === 'planche' ? 'Supplice de la planche' : NOMS_PIRATES[vue.pouvoir.type]} · {pseudo(vue.pouvoir.joueur)} choisit…</p>
-      )}
       {pouvoirMoi?.type === 'mary' && pouvoirEnvoye !== `${vue.manche}-${vue.numeroPli}-${vue.pouvoir?.type}` && (
         <Fenetre titre="Mary Thorne" sousTitre="À qui prends-tu une carte au hasard ? Il devra la poser au pli suivant.">
           <div className="boutons-mise">
@@ -1039,10 +1055,9 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
   pseudo: (id: string) => string;
 }) {
   const centre = (id: string) => {
-    const base = racine.current?.getBoundingClientRect();
-    const el = racine.current?.querySelector(`[data-joueur="${id}"]`)?.getBoundingClientRect();
-    if (!base || !el) return { x: (base?.width ?? 0) / 2, y: (base?.height ?? 0) / 2 };
-    return { x: el.left + el.width / 2 - base.left, y: el.top + el.height / 2 - base.top };
+    const r = racine.current;
+    const c = r ? centreDans(r, r.querySelector(`[data-joueur="${id}"]`)) : null;
+    return c ?? { x: (r?.offsetWidth ?? 0) / 2, y: (r?.offsetHeight ?? 0) / 2 };
   };
   return (
     <div className="projectiles" aria-hidden="true">
@@ -1050,11 +1065,17 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
         const a = centre(l.de), b = centre(l.a);
         const o = OBJETS[l.objet];
         if (!o) return null;
+        const legende = `${pseudo(l.de)} ${o.phrase} ${pseudo(l.a)}`;
+        if (o.grand) return <GrandCadeau key={l.id} objet={l.objet} cible={b} legende={legende} />;
+        const imp = IMPACTS[l.objet] ?? { eclats: [o.icone], mode: 'gerbe' as const };
         return (
           <div key={l.id}>
             <span className="projectile" style={{ left: a.x, top: a.y, ['--dx' as string]: `${b.x - a.x}px`, ['--dy' as string]: `${b.y - a.y}px` }}>{o.icone}</span>
+            {imp.flash && <span className="impact-flash" style={{ left: b.x, top: b.y, ['--flash' as string]: imp.flash }} />}
             <span className="impact-objet" style={{ left: b.x, top: b.y }}>{o.icone}</span>
-            <span className="legende-objet" style={{ left: b.x, top: b.y }}>{pseudo(l.de)} {o.phrase} {pseudo(l.a)}</span>
+            <Eclats x={b.x} y={b.y} emojis={imp.eclats} mode={imp.mode} />
+            {imp.texte && <span className="impact-texte" style={{ left: b.x, top: b.y }}>{imp.texte}</span>}
+            <span className="legende-objet" style={{ left: b.x, top: b.y }}>{legende}</span>
           </div>
         );
       })}
@@ -1062,6 +1083,107 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
         const a = centre(r.de);
         return <span key={r.cle} className="reaction-emoji" style={{ left: a.x, top: a.y }}>{r.emoji}</span>;
       })}
+    </div>
+  );
+}
+
+// ================= Objets lancés : effets à l'impact, et grands cadeaux sur toute la table =================
+type ModeEclats = 'gerbe' | 'pluie' | 'tourbillon' | 'explosion';
+const IMPACTS: Record<string, { eclats: string[]; mode: ModeEclats; texte?: string; flash?: string }> = {
+  mouchoirs: { eclats: ['🧻', '🤧', '💧'], mode: 'pluie', texte: 'SNIF !' },
+  drapeau_blanc: { eclats: ['🏳️', '🕊️'], mode: 'tourbillon', texte: 'JE ME RENDS !' },
+  tomate: { eclats: ['🍅', '💦', '🍅'], mode: 'gerbe', texte: 'SPLATCH !', flash: '#ff2a2a' },
+  poisson: { eclats: ['🐟', '💦', '🫧'], mode: 'gerbe', texte: 'SPLAF !', flash: '#6fd3ff' },
+  rhum: { eclats: ['🍺', '🫧', '🍻'], mode: 'gerbe', texte: 'SANTÉ !', flash: '#ffcc33' },
+  rose: { eclats: ['🌹', '🌸', '💗', '🌸'], mode: 'pluie', texte: '♥', flash: '#ff4fd8' },
+  perroquet: { eclats: ['🦜', '🪶', '🪶'], mode: 'tourbillon', texte: 'COÔÔA !' },
+  doigt: { eclats: ['🖕', '💢'], mode: 'gerbe', texte: 'HÉ !' },
+  boulet: { eclats: ['💥', '🔥', '💨', '🔥'], mode: 'explosion', texte: 'BOUM !', flash: '#ff7a1a' },
+  couronne: { eclats: ['✨', '⭐', '✨', '👑'], mode: 'tourbillon', texte: 'VIVE LE ROI !', flash: '#ffcc33' },
+};
+
+function Eclats({ x, y, emojis, mode }: { x: number; y: number; emojis: string[]; mode: ModeEclats }) {
+  const parts = useMemo(() => Array.from({ length: mode === 'explosion' ? 18 : 14 }, (_, k) => {
+    const a = Math.random() * Math.PI * 2, d = 50 + Math.random() * 90;
+    return { k, e: emojis[k % emojis.length], tx: Math.cos(a) * d, ty: Math.sin(a) * d - (mode === 'gerbe' ? 40 : 0),
+      dl: Math.random() * 0.25, s: 0.6 + Math.random() * 0.8, r: Math.random() * 720 - 360, px: (Math.random() - 0.5) * 220 };
+  }), [emojis, mode]);
+  return (
+    <>
+      {parts.map((p) => (
+        <span key={p.k} className={`eclat eclat-${mode}`} style={{ left: x, top: y, animationDelay: `${0.8 + p.dl}s`,
+          ['--tx' as string]: `${p.tx}px`, ['--ty' as string]: `${p.ty}px`, ['--s' as string]: p.s, ['--r' as string]: `${p.r}deg`, ['--px' as string]: `${p.px}px`, ['--k' as string]: p.k }}>{p.e}</span>
+      ))}
+    </>
+  );
+}
+
+/** Les cadeaux spectaculaires : 4,5 s d'animation sur toute la table, vue par tous. */
+function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: number; y: number }; legende: string }) {
+  const hasard = useMemo(() => {
+    const r = (a: number, b: number) => a + Math.random() * (b - a);
+    return {
+      bouquets: Array.from({ length: 7 }, (_, k) => ({ k, x: r(12, 88), y: r(12, 55), dl: k * 0.45 + r(0, 0.2), c: ['#ff2a4a', '#ffcc33', '#2dff7a', '#2ee6ff', '#b866ff', '#ff4fd8', '#ffffff'][k % 7] })),
+      pieces: Array.from({ length: 48 }, (_, k) => ({ k, x: r(0, 100), dl: r(0, 2.6), du: r(1.4, 2.4), s: r(0.6, 1.3), rot: r(-540, 540) })),
+      boulets: Array.from({ length: 5 }, (_, k) => ({ k, y: r(20, 80), dl: k * 0.5 })),
+      brumes: [0, 1, 2],
+    };
+  }, []);
+  return (
+    <div className={`grand-cadeau gc-${objet}`} aria-hidden="true">
+      <div className="gc-voile" />
+      {objet === 'feu_artifice' && hasard.bouquets.map((b) => (
+        <div key={b.k} className="gc-bouquet" style={{ left: `${b.x}%`, top: `${b.y}%`, ['--c' as string]: b.c, animationDelay: `${b.dl}s` }}>
+          {Array.from({ length: 20 }, (_, i) => <i key={i} style={{ ['--a' as string]: `${i * 18}deg`, animationDelay: `${b.dl}s` }} />)}
+        </div>
+      ))}
+      {objet === 'bordee' && (
+        <>
+          {hasard.boulets.map((b) => (
+            <span key={b.k} className="gc-boulet" style={{ top: `${b.y}%`, animationDelay: `${b.dl}s`, ['--cx' as string]: `${cible.x}px`, ['--cy' as string]: `${cible.y}px` }} />
+          ))}
+          {hasard.boulets.map((b) => <span key={`e${b.k}`} className="gc-explosion" style={{ left: cible.x + (b.k - 2) * 26, top: cible.y + ((b.k * 37) % 50) - 25, animationDelay: `${b.dl + 0.55}s` }}>💥</span>)}
+          <div className="gc-fumee" style={{ left: cible.x, top: cible.y }} />
+        </>
+      )}
+      {objet === 'pluie_tresor' && (
+        <>
+          {hasard.pieces.map((p) => (
+            <span key={p.k} className="gc-piece" style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s`, ['--s' as string]: p.s, ['--rot' as string]: `${p.rot}deg` }} />
+          ))}
+          <span className="gc-coffre" style={{ left: cible.x, top: cible.y }}>💰</span>
+        </>
+      )}
+      {objet === 'navire_fantome' && (
+        <>
+          {hasard.brumes.map((k) => <div key={k} className={`gc-brume b${k}`} />)}
+          <div className="gc-navire">
+            <svg viewBox="0 0 220 170" aria-hidden="true">
+              <g fill="none" stroke="#bfffe6" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round">
+                <path d="M20 118h180l-22 34H46z" fill="rgba(120,255,200,.22)" />
+                <path d="M30 118l8-14h150l10 14" fill="rgba(120,255,200,.15)" />
+                <path d="M70 104V18M118 104V8M164 104V30" />
+                <path d="M50 30q20 14 40 0v34q-20 12-40 0zM96 20q22 16 44 0v40q-22 14-44 0zM146 40q18 12 36 0v30q-18 10-36 0z" fill="rgba(160,255,215,.18)" strokeDasharray="6 5" />
+                <path d="M118 8l18 6-18 6" fill="rgba(160,255,215,.4)" />
+                <path d="M60 131h10M90 131h10M120 131h10M150 131h10" />
+                <path d="M200 118l14-10" />
+              </g>
+              <g fill="#bfffe6"><circle cx="112" cy="40" r="5" /><circle cx="124" cy="40" r="5" /></g>
+            </svg>
+            <span className="gc-navire-fantome">👻</span>
+          </div>
+          <span className="gc-hante" style={{ left: cible.x, top: cible.y }}>👻</span>
+        </>
+      )}
+      {objet === 'kraken_poche' && (
+        <div className="gc-kraken" style={{ left: cible.x, top: cible.y }}>
+          {[-70, -35, 0, 35, 70].map((r, k) => (
+            <div key={k} className="gc-tentacule" style={{ rotate: `${r}deg`, animationDelay: `${k * 0.12}s` }}><div className="tentacule-corps" style={{ animationDelay: `${k * 0.12}s` }}><Tentacule /></div></div>
+          ))}
+          <span className="gc-kraken-tete">🐙</span>
+        </div>
+      )}
+      <p className="gc-legende">{legende}</p>
     </div>
   );
 }
@@ -1108,6 +1230,14 @@ function ResumePartie({ vue, pseudo }: { vue: VueJeu; pseudo: (id: string) => st
 }
 
 const DUREE_GRANDE_ANIM = 1700;
+/** Centre d'un élément dans le repère de la table (qui peut être pivotée d'un quart de tour). */
+function centreDans(racine: HTMLElement, el: Element | null | undefined): { x: number; y: number } | null {
+  if (!el) return null;
+  const b = racine.getBoundingClientRect(), e = el.getBoundingClientRect();
+  const px = e.left + e.width / 2, py = e.top + e.height / 2;
+  if (racine.classList.contains('pivote')) return { x: py - b.top, y: b.right - px };
+  return { x: px - b.left, y: py - b.top };
+}
 /** Marge de chaque côté de la main (centrée) : la 1re carte ne passe pas sous mon avatar en bas à gauche. */
 const MARGE_MAIN = 112;
 

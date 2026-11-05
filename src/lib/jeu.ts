@@ -20,6 +20,7 @@ export interface MembreSalon {
   pseudo: string;
   photo_url: string | null;
   cadre?: string | null;
+  couleur_nom?: string | null;
   est_robot: boolean;
   pret: boolean;
   place: number;

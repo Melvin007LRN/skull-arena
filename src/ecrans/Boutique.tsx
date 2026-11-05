@@ -3,16 +3,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { messageErreur } from '../lib/supabase.ts';
 import type { Profil } from '../lib/profil.ts';
 import {
-  acheter, CADRES_GAGNES, chargerBoutique, chargerCadresPossedes, chargerInventaire, equiperCadre, GAINS_LOUIDORS, type Article,
+  acheter, CADRES_GAGNES, chargerBoutique, chargerCadresPossedes, chargerInventaire, equiperCadre, equiperNeon, GAINS_LOUIDORS, OBJETS, type Article,
 } from '../lib/boutique.ts';
 import { Avatar } from '../composants/Avatar.tsx';
+import { NEONS, styleNeon } from '../lib/neons.ts';
 
 export function Louidors({ montant, grand = false }: { montant: number; grand?: boolean }) {
   return <span className={`louidors ${grand ? 'grand' : ''}`}><span className="piece-or" aria-hidden="true" />{montant}<small> Louidors</small></span>;
 }
 
 export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; retour: () => void; recharger: () => Promise<void> }) {
-  const [onglet, setOnglet] = useState<'objets' | 'cadres' | 'coffre'>('objets');
+  const [onglet, setOnglet] = useState<'objets' | 'neons' | 'cadres' | 'coffre'>('objets');
   const [articles, setArticles] = useState<Article[]>([]);
   const [inventaire, setInventaire] = useState<Record<string, number>>({});
   const [possedes, setPossedes] = useState<string[]>([]);
@@ -40,7 +41,11 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
   }
 
   const objets = articles.filter((a) => a.type === 'objet');
-  const cadres = articles.filter((a) => a.type === 'cadre');
+  const petits = objets.filter((o) => !OBJETS[o.id]?.grand);
+  const grands = objets.filter((o) => OBJETS[o.id]?.grand);
+  const neons = articles.filter((a) => a.id.startsWith('neon_'));
+  const neonActuel = profil.couleur_nom ?? null;
+  const cadres = articles.filter((a) => a.type === 'cadre' && !a.id.startsWith('neon_'));
   const actuel = profil.cadre || 'or';
   const peutPayer = (prix: number) => profil.louidors >= prix;
 
@@ -53,6 +58,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
 
       <div className="onglets">
         <button type="button" className={onglet === 'objets' ? 'actif' : ''} onClick={() => setOnglet('objets')}>Objets</button>
+        <button type="button" className={onglet === 'neons' ? 'actif' : ''} onClick={() => setOnglet('neons')}>Néons</button>
         <button type="button" className={onglet === 'cadres' ? 'actif' : ''} onClick={() => setOnglet('cadres')}>Cadres</button>
         <button type="button" className={onglet === 'coffre' ? 'actif' : ''} onClick={() => setOnglet('coffre')}>Mon coffre</button>
       </div>
@@ -62,7 +68,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
         <section className="parchemin">
           <p className="petit-texte">À lancer sur un adversaire pendant la partie (bouton 🎁). Chaque lancer utilise un objet.</p>
           <ul className="grille-objets">
-            {objets.map((o) => (
+            {petits.map((o) => (
               <li key={o.id}>
                 <span className="objet-icone">{o.icone}</span>
                 <strong>{o.nom}</strong>
@@ -77,6 +83,52 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
             ))}
           </ul>
           <p className="petit-texte centre">Le lot de 5 : une offerte !</p>
+          <h2 className="titre-pirate">Cadeaux spectaculaires</h2>
+          <p className="petit-texte">Une grosse animation sur toute la table, vue par tous les pirates.</p>
+          <ul className="grille-objets grands">
+            {grands.map((o) => (
+              <li key={o.id} className="objet-grand">
+                <span className="objet-icone">{o.icone}</span>
+                <strong>{o.nom}</strong>
+                <small>Dans ton coffre : {inventaire[o.id] ?? 0}</small>
+                <div className="objet-achats">
+                  <button type="button" className="bouton-or petit" disabled={enCours || !peutPayer(o.prix)}
+                    onClick={() => faire(() => acheter(o.id, 1), `${o.nom} ajouté à ton coffre.`)}>×1 · {o.prix}</button>
+                  <button type="button" className="bouton-sombre petit" disabled={enCours || !peutPayer(o.prix * 4)}
+                    onClick={() => faire(() => acheter(o.id, 5), `5 × ${o.nom} ajoutés à ton coffre.`)}>×5 · {o.prix * 4}</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {onglet === 'neons' && (
+        <section className="parchemin">
+          <p className="petit-texte">La couleur de ton pseudo, vue par tous les pirates autour de la table.</p>
+          <ul className="grille-neons">
+            <li className={!neonActuel ? 'equipe' : ''}>
+              <span className="apercu-neon"><span className={styleNeon(null).className}>{profil.pseudo}</span></span>
+              <strong>Classique</strong>
+              <button type="button" className={!neonActuel ? 'bouton-sombre petit' : 'bouton-or petit'} disabled={enCours || !neonActuel}
+                onClick={() => faire(() => equiperNeon(null), 'Pseudo classique équipé.')}>{!neonActuel ? 'Équipé' : 'Équiper'}</button>
+            </li>
+            {neons.map((c) => {
+              const a = possedes.includes(c.id) || profil.est_admin;
+              const n = styleNeon(c.id);
+              return (
+                <li key={c.id} className={neonActuel === c.id ? 'equipe' : ''} style={{ ['--n' as string]: NEONS[c.id]?.couleurs[0] }}>
+                  <span className="apercu-neon"><span className={n.className} style={n.style}>{profil.pseudo}</span></span>
+                  <strong>{c.nom}</strong>
+                  {a
+                    ? <button type="button" className={neonActuel === c.id ? 'bouton-sombre petit' : 'bouton-or petit'} disabled={enCours || neonActuel === c.id}
+                        onClick={() => faire(() => equiperNeon(c.id), `${c.nom} équipé !`)}>{neonActuel === c.id ? 'Équipé' : 'Équiper'}</button>
+                    : <button type="button" className="bouton-or petit" disabled={enCours || !peutPayer(c.prix)}
+                        onClick={() => confirm(`Acheter le ${c.nom} pour ${c.prix} Louidors ?`) && faire(() => acheter(c.id), `${c.nom} acheté ! Équipe-le pour l’afficher.`)}>{c.prix} Louidors</button>}
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 

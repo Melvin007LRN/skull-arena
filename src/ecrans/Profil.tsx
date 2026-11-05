@@ -1,5 +1,6 @@
 // Mon pirate : portrait encadré, grade et niveau, chiffres clés, puis onglets
 // Profil · Cadres · Badges · Stats · Historique. La gestion du compte est en bas de l'onglet Profil.
+import { styleNeon } from '../lib/neons.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
 import {
@@ -75,7 +76,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
         </button>
         <input ref={fichier} type="file" accept="image/*" hidden
           onChange={(e) => { const f = e.target.files?.[0]; if (f) changerPhoto(f); e.target.value = ''; }} />
-        <h1 className="heros-pseudo">{profil.pseudo}</h1>
+        {(() => { const n = styleNeon(profil.couleur_nom); return <h1 className={`heros-pseudo ${profil.couleur_nom ? n.className : ''}`} style={n.style}>{profil.pseudo}</h1>; })()}
         <div className="heros-grade">
           <span className="heros-embleme">{EMBLEMES[g]}</span>
           <span>{g}</span>
@@ -276,7 +277,7 @@ function Cadres({ profil, enCours, action, recharger, ouvrirBoutique }: {
   const [possedes, setPossedes] = useState<string[]>([]);
   useEffect(() => {
     Promise.all([chargerBoutique(), chargerCadresPossedes()])
-      .then(([a, p]) => { setAchetables(a.filter((x) => x.type === 'cadre')); setPossedes(p); })
+      .then(([a, p]) => { setAchetables(a.filter((x) => x.type === 'cadre' && !x.id.startsWith('neon_'))); setPossedes(p); })
       .catch(() => {});
   }, []);
   const actuel = profil.cadre || 'or';
