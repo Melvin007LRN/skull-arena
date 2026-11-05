@@ -1744,3 +1744,39 @@
 .jeu-table.effet-baleine::after { filter: drop-shadow(0 0 8px #9fd3ff) drop-shadow(0 0 22px #6fb8ff); }
 .jeu-table.effet-skull::after { animation: eclatAnneau 1.6s ease-out; }
 @keyframes eclatAnneau { 0% { filter: drop-shadow(0 0 20px #ffd979) drop-shadow(0 0 50px #ffd979); } 100% { filter: drop-shadow(0 0 5px #ffcc33) drop-shadow(0 0 14px #ffcc3388); } }
+
+/* ================= Néons de la table : une couleur par fonction ================= */
+/* La table : néon rouge */
+.jeu-table { border-color: #ff2a4a !important; }
+.jeu-table::after { border-color: #ffb3bf !important; filter: drop-shadow(0 0 5px #ff2a4a) drop-shadow(0 0 16px #ff2a4a99) !important; }
+.jeu-table-boussole::after { border-color: rgba(255,42,74,.3) !important; }
+.jeu-table.effet-kraken::after { border-color: #e2c4ff !important; filter: drop-shadow(0 0 8px #b57bff) drop-shadow(0 0 22px #8a3fd1) !important; }
+.jeu-table.effet-baleine::after { border-color: #d9f0ff !important; filter: drop-shadow(0 0 8px #9fd3ff) drop-shadow(0 0 22px #6fb8ff) !important; }
+.jeu-table.effet-skull::after { border-color: #fff0b3 !important; filter: drop-shadow(0 0 10px #ffcc33) drop-shadow(0 0 28px #ffcc33) !important; }
+/* Manche : cyan (où en est la partie) */
+.rail-manche { --n: #2ee6ff; }
+/* Ma mise : or (mon pari) */
+.rail-mise, .bandeau-mise, .bouton-mise { --n: #ffcc33; }
+/* Scores : vert (classement) */
+.rail-scores { --n: #2dff7a; }
+/* Réglages : bleu (outils) */
+.rail-reglages, .jeu-menu { --n: #3d9bff; }
+/* Cadeaux : rose (s'amuser) */
+.bouton-objets { --n: #ff4fd8; }
+/* Discussion : violet (parler) */
+.bouton-bulle { --n: #b866ff; }
+.bouton-objets, .bouton-bulle {
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--n) 22%, #06080f), #04060c) !important;
+  border: 1.5px solid var(--n) !important;
+  box-shadow: 0 0 6px var(--n), 0 0 16px color-mix(in srgb, var(--n) 45%, transparent), inset 0 0 10px color-mix(in srgb, var(--n) 30%, transparent) !important;
+}
+/* Noms des joueurs : argent, pour laisser briller leur néon de pseudo */
+.adv-nom, .moi-nom { --n: #cfd6e6; }
+/* À moi de jouer : vert (action) */
+.moi-tour, .adv-sablier { --n: #2dff7a; }
+/* Infos au centre : cyan · résultat du pli : or */
+.infos-table { --n: #2ee6ff; }
+.zone-pli .annonce-pli { --n: #ffcc33; }
+/* Fenêtres en partie (fin de manche, pouvoirs…) : violet */
+.jeu .voile .fenetre { --n: #b866ff; }
+.jeu .voile .fenetre .bouton-or { --n: #ffcc33; }

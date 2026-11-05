@@ -530,7 +530,7 @@ export function TableJeu(p: PropsTable) {
       {/* Barre du haut */}
       <img className="jeu-logo" src="/decor/logo.webp" alt="Skull Arena" />
       <nav className="jeu-rail" aria-label="Informations de la partie">
-        <div className="rail-pastille" aria-label={`Manche ${vue.manche} sur 10`}>
+        <div className="rail-pastille rail-manche" aria-label={`Manche ${vue.manche} sur 10`}>
           <small>Manche</small>
           <strong>{vue.manche}<em>/10</em></strong>
         </div>
@@ -538,8 +538,8 @@ export function TableJeu(p: PropsTable) {
           <small>⚔ Mise</small>
           <strong>{miseDe(moi) ?? (miseLocale?.manche === vue.manche ? miseLocale.mise : vue.aMise[moi] ? '✓' : '?')}</strong>
         </div>
-        <button type="button" className="rail-rond" onClick={() => setScoresOuverts(true)} aria-label="Scores">📊</button>
-        <button type="button" className="rail-rond" onClick={() => setMenuOuvert((m) => !m)} aria-label="Réglages">⚙</button>
+        <button type="button" className="rail-rond rail-scores" onClick={() => setScoresOuverts(true)} aria-label="Scores">📊</button>
+        <button type="button" className="rail-rond rail-reglages" onClick={() => setMenuOuvert((m) => !m)} aria-label="Réglages">⚙</button>
         {menuOuvert && (
           <div className="jeu-menu">
             <button type="button" onClick={() => setMusiqueOn(musique.basculer())}>{musiqueOn ? '🎵 Musique : oui' : '🔇 Musique : non'}</button>
