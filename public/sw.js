@@ -1,6 +1,6 @@
 // Service worker de Skull Arena : rend l'appli installable et accélère le chargement.
 // Les images et les fichiers du site sont gardés en cache ; le serveur de jeu (Supabase) n'est jamais mis en cache.
-const VERSION = 'skull-arena-v2';
+const VERSION = 'skull-arena-v3';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['/', '/manifest.webmanifest', '/decor/logo.webp'])).then(() => self.skipWaiting()));
@@ -22,8 +22,18 @@ self.addEventListener('fetch', (e) => {
       .catch(() => caches.match('/')));
     return;
   }
-  // Cartes, décors, icônes et fichiers du site (noms versionnés) : le cache d'abord.
-  if (/^\/(cartes|decor|icones|assets)\//.test(url.pathname)) {
+  // Cartes, décors, icônes : on affiche le cache tout de suite et on va chercher la nouvelle version en arrière-plan
+  // (une carte redessinée apparaît donc au lancement suivant, sans rien vider).
+  if (/^\/(cartes|decor|icones)\//.test(url.pathname)) {
+    e.respondWith(caches.open(VERSION).then((c) => c.match(req).then((deja) => {
+      const frais = fetch(req).then((r) => { if (r.ok) c.put(req, r.clone()); return r; }).catch(() => deja);
+      if (deja) { e.waitUntil(frais); return deja; }
+      return frais;
+    })));
+    return;
+  }
+  // Fichiers du site (noms versionnés) : le cache d'abord.
+  if (/^\/assets\//.test(url.pathname)) {
     e.respondWith(caches.match(req).then((deja) => deja || fetch(req).then((r) => {
       if (r.ok) { const copie = r.clone(); caches.open(VERSION).then((c) => c.put(req, copie)); }
       return r;

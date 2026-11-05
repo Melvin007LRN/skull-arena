@@ -10,6 +10,14 @@ const prevenir = () => abonnes.forEach((f) => f());
 export function preparerInstallation() {
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    // Nouvelle version du service worker (nouvelles cartes, etc.) : on recharge une fois pour l'afficher tout de suite.
+    const avaitDeja = Boolean(navigator.serviceWorker.controller);
+    let recharge = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!avaitDeja || recharge) return;
+      recharge = true;
+      window.location.reload();
+    });
   }
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); // on propose l'installation nous-mêmes, au bon moment
