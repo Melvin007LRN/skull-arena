@@ -1496,3 +1496,10 @@
 }
 
 .bete .ga-passer { inset: auto 0 auto 0; top: auto; bottom: max(14px, env(safe-area-inset-bottom)); text-align: center; color: rgba(255,255,255,.55); font: 600 11px var(--corps, 'Inter'), sans-serif; letter-spacing: .12em; text-transform: uppercase; animation: bete-sous 4s ease both; }
+
+/* ---------- Mise : le bandeau ne cache plus le haut des cartes ---------- */
+.bandeau-mise { top: calc(28dvh + 14px); gap: 5px; padding: 7px 12px 6px; }
+.bandeau-titre { font-family: var(--gravure, 'Cinzel'), serif; font-weight: 700; font-size: clamp(15px, 4.6dvh, 20px); white-space: nowrap; letter-spacing: .02em; }
+.boutons-mise.compacts .bouton-mise { width: clamp(30px, 9dvh, 40px); height: clamp(30px, 9dvh, 40px); }
+.bandeau-mise small { font-size: 11px; }
+.main-eventail.en-mise .carte-main { width: clamp(62px, 26dvh, 128px); }

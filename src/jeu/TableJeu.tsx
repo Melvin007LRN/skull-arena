@@ -157,6 +157,12 @@ export function TableJeu(p: PropsTable) {
   const [objetChoisi, setObjetChoisi] = useState<string | null>(null);
   const [ongletFin, setOngletFin] = useState<'podium' | 'resume'>('podium');
   const [grandeAnim, setGrandeAnim] = useState<GrandEvenement | null>(null);
+  const [taille, setTaille] = useState(() => ({ l: window.innerWidth, h: window.innerHeight }));
+  useEffect(() => {
+    const maj = () => setTaille({ l: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', maj);
+    return () => window.removeEventListener('resize', maj);
+  }, []);
   const [volsDistribution, setVolsDistribution] = useState<Array<{ k: string; x0: number; y0: number; x1: number; y1: number; retard: number }>>([]);
   const racine = useRef<HTMLDivElement>(null);
   const mancheVue = useRef(0);
@@ -445,7 +451,10 @@ export function TableJeu(p: PropsTable) {
   // Disposition en éventail
   const n = mainTriee.length;
   const enMise = vue.phase === 'mise' && decompte === 0;
-  const ecart = enMise ? Math.min(92, 720 / Math.max(n, 1)) : Math.min(64, 620 / Math.max(n, 1));
+  // Écart entre les cartes : jamais plus large que l'écran (toutes les cartes restent visibles, même sur un petit iPhone).
+  const largeurCarte = Math.min(enMise ? 128 : 132, Math.max(enMise ? 62 : 64, taille.h * (enMise ? 0.26 : 0.29)));
+  const ecartMax = n > 1 ? (taille.l - largeurCarte - 2 * DECALAGE_MAIN - 90) / (n - 1) : 99;
+  const ecart = Math.max(18, Math.min(enMise ? 92 : 64, (enMise ? 720 : 620) / Math.max(n, 1), ecartMax));
   const angleMax = Math.min(28, n * 3.2);
 
   const classement = [...vue.joueurs].sort((a, b) => vue.scores[b] - vue.scores[a]);
@@ -620,7 +629,7 @@ export function TableJeu(p: PropsTable) {
           const decalage = (i - centre) * ecart;
           // Tout passe par transform : quand une carte part, les autres se resserrent en douceur.
           const style: CSSProperties = {
-            left: '50%',
+            left: `calc(50% + ${DECALAGE_MAIN}px)`,
             transform: g
               ? `translate(calc(-50% + ${decalage}px + var(--dx, 0px)), calc(var(--dy, 0px) - 30px)) rotate(0deg) scale(1.08)`
               : `translate(calc(-50% + ${decalage}px), ${levee ? -34 : Math.abs(i - centre) * 3}px) rotate(${angle}deg)`,
@@ -1076,6 +1085,8 @@ function ResumePartie({ vue, pseudo }: { vue: VueJeu; pseudo: (id: string) => st
 }
 
 const DUREE_GRANDE_ANIM = 1700;
+/** La main est décalée vers la droite pour que la 1re carte ne passe pas sous mon avatar (en bas à gauche). */
+const DECALAGE_MAIN = 56;
 
 type TypeEvenement = 'regicide' | 'roi' | 'abordage' | 'kraken' | 'baleine';
 interface GrandEvenement { type: TypeEvenement; /** Classe d'animation, si différente du type. */ classe?: string; titre: string; texte: string; carte: string; victimes: string[]; son: 'regicide' | 'roiFrappe' | 'abordageFort' | 'krakenFort' | 'baleineForte' }
