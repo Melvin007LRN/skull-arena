@@ -24,7 +24,7 @@
 
 /* ---------- Logo et rail d'infos sur le côté ---------- */
 .jeu-logo {
-  position: absolute; z-index: 40; left: max(4px, env(safe-area-inset-left)); top: max(2px, env(safe-area-inset-top));
+  position: absolute; z-index: 40; left: max(4px, var(--sa-g)); top: max(2px, var(--sa-h));
   height: clamp(54px, calc(19 * var(--gh)), 82px);
   filter: drop-shadow(0 4px 10px #000);
   -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 70%, transparent 100%);
@@ -33,7 +33,7 @@
 }
 .jeu-rail {
   position: absolute; z-index: 40;
-  right: max(6px, env(safe-area-inset-right)); top: max(6px, env(safe-area-inset-top));
+  right: max(6px, var(--sa-d)); top: max(6px, var(--sa-h));
   width: var(--rail);
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
@@ -64,9 +64,9 @@
 /* ---------- Table ---------- */
 .jeu-arene {
   position: absolute;
-  left: max(70px, calc(env(safe-area-inset-left) + 60px));
-  right: max(78px, calc(env(safe-area-inset-right) + var(--rail) + 20px));
-  top: max(4px, env(safe-area-inset-top));
+  left: max(70px, calc(var(--sa-g) + 60px));
+  right: max(78px, calc(var(--sa-d) + var(--rail) + 20px));
+  top: max(4px, var(--sa-h));
   bottom: 0;
 }
 /* La table : un ovale qui descend derrière la main. Contours dessinés avec des bordures
@@ -162,14 +162,14 @@
 .adv-exclure { position: absolute; z-index: 4; top: 0; left: -6px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: #7d1a15cc; color: #fff; font-size: 10px; cursor: pointer; }
 
 /* ---------- Mon coin ---------- */
-.moi-coin { position: absolute; z-index: 37; left: max(8px, env(safe-area-inset-left)); bottom: max(8px, env(safe-area-inset-bottom)); }
+.moi-coin { position: absolute; z-index: 37; left: max(8px, var(--sa-g)); bottom: max(8px, var(--sa-b)); }
 .moi-coin.actif .avatar { filter: drop-shadow(0 0 10px #ffd979); }
 .moi-coin .adv-couronne { top: -12px; }
 
 /* ---------- Main en éventail ---------- */
 .main-eventail { position: absolute; z-index: 35; left: 0; right: 0; bottom: 0; height: calc(36 * var(--gh)); pointer-events: none; }
 .carte-main {
-  position: absolute; bottom: max(calc(-2 * var(--gh)), calc(env(safe-area-inset-bottom) - calc(2 * var(--gh))));
+  position: absolute; bottom: max(calc(-2 * var(--gh)), calc(var(--sa-b) - calc(2 * var(--gh))));
   width: clamp(64px, calc(29 * var(--gh)), 132px);
   padding: 0; border: 0; background: none; cursor: grab;
   transform-origin: 50% 120%;
@@ -201,13 +201,13 @@
 
 /* ---------- Phrases rapides ---------- */
 .bouton-bulle {
-  position: absolute; z-index: 38; right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom));
+  position: absolute; z-index: 38; right: max(10px, var(--sa-d)); bottom: max(10px, var(--sa-b));
   width: 48px; height: 48px; border-radius: 50%;
   border: 1px solid var(--or); background: radial-gradient(circle, #3a2412, #120c07);
   font-size: 22px; box-shadow: 0 4px 14px #000c; cursor: pointer;
 }
 .panneau-phrases {
-  position: absolute; z-index: 45; right: max(10px, env(safe-area-inset-right)); bottom: 66px;
+  position: absolute; z-index: 45; right: max(10px, var(--sa-d)); bottom: 66px;
   display: flex; flex-direction: column; gap: 5px; padding: 8px;
   max-height: calc(calc(100 * var(--gh)) - var(--haut) - 80px); overflow-y: auto;
   border-radius: 14px; border: 1px solid var(--or); background: #120c07f5; box-shadow: 0 10px 30px #000;
@@ -232,7 +232,7 @@
 
 /* ---------- Bandeaux et fenêtres ---------- */
 .bandeau {
-  position: absolute; z-index: 50; left: 50%; top: max(8px, env(safe-area-inset-top)); transform: translateX(-50%);
+  position: absolute; z-index: 50; left: 50%; top: max(8px, var(--sa-h)); transform: translateX(-50%);
   max-width: 80%; margin: 0; padding: 6px 14px; border-radius: 10px;
   background: #0f2a14f0; border: 1px solid #2f6b38; color: #d6f5d9; font-size: 13px; text-align: center;
 }
@@ -376,11 +376,11 @@
 
 /* ---------- Objets et réactions ---------- */
 .bouton-objets {
-  position: absolute; z-index: 38; right: calc(max(10px, env(safe-area-inset-right)) + 56px); bottom: max(10px, env(safe-area-inset-bottom));
+  position: absolute; z-index: 38; right: calc(max(10px, var(--sa-d)) + 56px); bottom: max(10px, var(--sa-b));
   width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--or); background: radial-gradient(circle, #3a2412, #120c07);
   font-size: 22px; box-shadow: 0 4px 14px #000c; cursor: pointer;
 }
-.panneau-objets { right: calc(max(10px, env(safe-area-inset-right)) + 56px); min-width: 200px; }
+.panneau-objets { right: calc(max(10px, var(--sa-d)) + 56px); min-width: 200px; }
 .panneau-phrases small { color: #f3e6c8b3; font-size: 11px; max-width: 220px; white-space: normal; }
 .grille-lancer { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 .grille-lancer button { display: flex; flex-direction: column; align-items: center; padding: 4px !important; border-radius: 10px !important; font-size: 22px !important; line-height: 1; }
@@ -711,7 +711,7 @@
 .bete-vignette { background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 45%, rgba(0,0,0,.85) 100%); }
 
 /* Titre géant */
-.bete-titre { inset: auto 0 0 0; top: auto; bottom: max(calc(9 * var(--gh)), calc(env(safe-area-inset-bottom) + 56px)); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 0 16px; }
+.bete-titre { inset: auto 0 0 0; top: auto; bottom: max(calc(9 * var(--gh)), calc(var(--sa-b) + 56px)); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 0 16px; }
 .bete-titre small, .bete-titre strong, .bete-titre span { will-change: transform, opacity; }
 .bete-titre small { font-family: var(--gravure, 'Cinzel'), serif; font-size: clamp(12px, min(calc(3.6 * var(--gw)), calc(4.4 * var(--gh))), 20px); letter-spacing: .28em; text-transform: uppercase; color: var(--or1);
   text-shadow: 0 2px 8px #000; animation: bete-sur 4s cubic-bezier(.2,.8,.3,1) both; }
@@ -849,14 +849,14 @@
 .adv-exclure { position: absolute; z-index: 4; top: 0; left: -6px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: #7d1a15cc; color: #fff; font-size: 10px; cursor: pointer; }
 
 /* ---------- Mon coin ---------- */
-.moi-coin { position: absolute; z-index: 37; left: max(8px, env(safe-area-inset-left)); bottom: max(8px, env(safe-area-inset-bottom)); }
+.moi-coin { position: absolute; z-index: 37; left: max(8px, var(--sa-g)); bottom: max(8px, var(--sa-b)); }
 .moi-coin.actif .avatar { filter: drop-shadow(0 0 10px #ffd979); }
 .moi-coin .adv-couronne { top: -12px; }
 
 /* ---------- Main en éventail ---------- */
 .main-eventail { position: absolute; z-index: 35; left: 0; right: 0; bottom: 0; height: calc(36 * var(--gh)); pointer-events: none; }
 .carte-main {
-  position: absolute; bottom: max(calc(-2 * var(--gh)), calc(env(safe-area-inset-bottom) - calc(2 * var(--gh))));
+  position: absolute; bottom: max(calc(-2 * var(--gh)), calc(var(--sa-b) - calc(2 * var(--gh))));
   width: clamp(64px, calc(29 * var(--gh)), 132px);
   padding: 0; border: 0; background: none; cursor: grab;
   transform-origin: 50% 120%;
@@ -888,13 +888,13 @@
 
 /* ---------- Phrases rapides ---------- */
 .bouton-bulle {
-  position: absolute; z-index: 38; right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom));
+  position: absolute; z-index: 38; right: max(10px, var(--sa-d)); bottom: max(10px, var(--sa-b));
   width: 48px; height: 48px; border-radius: 50%;
   border: 1px solid var(--or); background: radial-gradient(circle, #3a2412, #120c07);
   font-size: 22px; box-shadow: 0 4px 14px #000c; cursor: pointer;
 }
 .panneau-phrases {
-  position: absolute; z-index: 45; right: max(10px, env(safe-area-inset-right)); bottom: 66px;
+  position: absolute; z-index: 45; right: max(10px, var(--sa-d)); bottom: 66px;
   display: flex; flex-direction: column; gap: 5px; padding: 8px;
   max-height: calc(calc(100 * var(--gh)) - var(--haut) - 80px); overflow-y: auto;
   border-radius: 14px; border: 1px solid var(--or); background: #120c07f5; box-shadow: 0 10px 30px #000;
@@ -919,7 +919,7 @@
 
 /* ---------- Bandeaux et fenêtres ---------- */
 .bandeau {
-  position: absolute; z-index: 50; left: 50%; top: max(8px, env(safe-area-inset-top)); transform: translateX(-50%);
+  position: absolute; z-index: 50; left: 50%; top: max(8px, var(--sa-h)); transform: translateX(-50%);
   max-width: 80%; margin: 0; padding: 6px 14px; border-radius: 10px;
   background: #0f2a14f0; border: 1px solid #2f6b38; color: #d6f5d9; font-size: 13px; text-align: center;
 }
@@ -1063,11 +1063,11 @@
 
 /* ---------- Objets et réactions ---------- */
 .bouton-objets {
-  position: absolute; z-index: 38; right: calc(max(10px, env(safe-area-inset-right)) + 56px); bottom: max(10px, env(safe-area-inset-bottom));
+  position: absolute; z-index: 38; right: calc(max(10px, var(--sa-d)) + 56px); bottom: max(10px, var(--sa-b));
   width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--or); background: radial-gradient(circle, #3a2412, #120c07);
   font-size: 22px; box-shadow: 0 4px 14px #000c; cursor: pointer;
 }
-.panneau-objets { right: calc(max(10px, env(safe-area-inset-right)) + 56px); min-width: 200px; }
+.panneau-objets { right: calc(max(10px, var(--sa-d)) + 56px); min-width: 200px; }
 .panneau-phrases small { color: #f3e6c8b3; font-size: 11px; max-width: 220px; white-space: normal; }
 .grille-lancer { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 .grille-lancer button { display: flex; flex-direction: column; align-items: center; padding: 4px !important; border-radius: 10px !important; font-size: 22px !important; line-height: 1; }
@@ -1398,7 +1398,7 @@
 .bete-vignette { background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 45%, rgba(0,0,0,.85) 100%); }
 
 /* Titre géant */
-.bete-titre { inset: auto 0 0 0; top: auto; bottom: max(calc(9 * var(--gh)), calc(env(safe-area-inset-bottom) + 56px)); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 0 16px; }
+.bete-titre { inset: auto 0 0 0; top: auto; bottom: max(calc(9 * var(--gh)), calc(var(--sa-b) + 56px)); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 0 16px; }
 .bete-titre small, .bete-titre strong, .bete-titre span { will-change: transform, opacity; }
 .bete-titre small { font-family: var(--gravure, 'Cinzel'), serif; font-size: clamp(12px, min(calc(3.6 * var(--gw)), calc(4.4 * var(--gh))), 20px); letter-spacing: .28em; text-transform: uppercase; color: var(--or1);
   text-shadow: 0 2px 8px #000; animation: bete-sur 4s cubic-bezier(.2,.8,.3,1) both; }
@@ -1495,7 +1495,7 @@
   .bete-secousse, .bete-rayons, .bete-sillage span, .bete-bulles span { animation: none; }
 }
 
-.bete .ga-passer { inset: auto 0 auto 0; top: auto; bottom: max(14px, env(safe-area-inset-bottom)); text-align: center; color: rgba(255,255,255,.55); font: 600 11px var(--corps, 'Inter'), sans-serif; letter-spacing: .12em; text-transform: uppercase; animation: bete-sous 4s ease both; }
+.bete .ga-passer { inset: auto 0 auto 0; top: auto; bottom: max(14px, var(--sa-b)); text-align: center; color: rgba(255,255,255,.55); font: 600 11px var(--corps, 'Inter'), sans-serif; letter-spacing: .12em; text-transform: uppercase; animation: bete-sous 4s ease both; }
 
 /* ---------- Mise : le bandeau ne cache plus le haut des cartes ---------- */
 .bandeau-mise { top: calc(calc(28 * var(--gh)) + 14px); gap: 5px; padding: 7px 12px 6px; }
@@ -1547,7 +1547,7 @@
 .zone-pli .carte-pli { pointer-events: auto; }
 /* Journal : toutes les infos de la partie au même endroit, à gauche, sous les joueurs et loin du pli */
 .journal {
-  position: absolute; z-index: 45; left: max(12px, calc(env(safe-area-inset-left) + 6px)); top: 47%;
+  position: absolute; z-index: 45; left: max(12px, calc(var(--sa-g) + 6px)); top: 47%;
   width: min(calc(25 * var(--gw)), 230px); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; pointer-events: none;
 }
 .journal > * {
@@ -1684,3 +1684,41 @@
 .gc-navire-fantome { left: 44% !important; top: -10% !important; font-size: 50px !important; }
 .gc-explosion { font-size: 120px; }
 .gc-legende { top: 56% !important; }
+
+/* ================= Épuration de la table ================= */
+/* Infos au centre de la table, SOUS les cartes du pli */
+.infos-table { position: absolute; left: 50%; top: 47%; transform: translate(-50%, -50%); z-index: 1; width: min(62%, 420px);
+  display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.infos-table > p { position: static !important; transform: none !important; margin: 0; text-align: center; white-space: normal;
+  padding: 5px 12px; border-radius: 12px; font-size: clamp(11px, calc(3.3 * var(--gh)), 13px); color: #fff; line-height: 1.25;
+  background: rgba(4,6,12,.82); border: 1.5px solid color-mix(in srgb, var(--n) 60%, transparent); box-shadow: 0 0 8px color-mix(in srgb, var(--n) 30%, transparent); animation: fondu .3s ease; }
+.infos-table > .indice-table { font-family: var(--corps); font-weight: 700; }
+/* Résultat du pli : au centre, par-dessus (2 s, quand le pli est joué) */
+.zone-pli .annonce-pli { z-index: 60; top: 47% !important; font-family: var(--corps) !important; font-weight: 800; font-size: clamp(13px, calc(4 * var(--gh)), 17px) !important;
+  background: rgba(4,6,12,.92) !important; border: 2px solid var(--n) !important; color: #fff !important; box-shadow: 0 0 10px var(--n), 0 0 24px color-mix(in srgb, var(--n) 45%, transparent) !important; }
+/* La carte qui mène porte une couronne (plus de texte « X mène ») */
+.carte-pli.maitresse::after { content: '👑'; position: absolute; left: 50%; top: -14px; transform: translateX(-50%); font-size: 18px; filter: drop-shadow(0 0 6px #ffcc33); animation: fondu .3s ease; }
+/* Celui qui doit jouer : un sablier sur son avatar (plus de texte « Au tour de… ») */
+.adv-sablier { position: absolute; z-index: 5; left: -6px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px;
+  background: rgba(4,6,12,.9); border: 1.5px solid var(--n); box-shadow: 0 0 8px var(--n); animation: pulsation 1.2s ease-in-out infinite; }
+/* Mes pastilles : à droite de mon avatar, empilées */
+.moi-pastilles { position: absolute; left: calc(100% + 6px); bottom: 4px; display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 4px; }
+.moi-pastilles .moi-objectif { position: static !important; }
+.moi-tour { display: flex; flex-direction: column; padding: 4px 11px; border-radius: 10px; white-space: nowrap; font-weight: 900; font-size: 13px; color: #fff;
+  background: rgba(4,6,12,.9); border: 2px solid var(--n); box-shadow: 0 0 8px var(--n), 0 0 18px color-mix(in srgb, var(--n) 45%, transparent); text-shadow: 0 0 8px var(--n); animation: pulsation 1.4s ease-in-out infinite; }
+.moi-tour small { font-weight: 600; font-size: 10px; color: #ffffffb0; text-shadow: none; }
+.moi-coin .adv-couronne { top: auto !important; bottom: calc(100% + 18px); left: -6px; transform: none; font-size: 16px; }
+/* Tailles : chaque chose dans sa bande (joueurs en haut, pli au milieu, main en bas) */
+.carte-pli { width: clamp(40px, calc(16 * var(--gh)), 92px) !important; }
+.carte-main { width: clamp(60px, calc(26 * var(--gh)), 124px); }
+.jeu-arene.nombreux .adv-nom { max-width: 118px !important; font-size: 12px !important; padding: 2px 9px 2px 3px !important; }
+.jeu-arene.nombreux .adv-nom .adv-medaillon { display: none; }
+
+/* Zones sûres (encoche, barre d'accueil) dans le repère de la table */
+.jeu { --sa-g: env(safe-area-inset-left); --sa-d: env(safe-area-inset-right); --sa-h: env(safe-area-inset-top); --sa-b: env(safe-area-inset-bottom); }
+.jeu.pivote { --sa-g: env(safe-area-inset-top); --sa-d: env(safe-area-inset-bottom); --sa-h: env(safe-area-inset-right); --sa-b: env(safe-area-inset-left); }
+/* L'objectif des adversaires se lit sur leur ruban (plus de pastille sous le nom) : or = en cours, vert = mise atteinte, rouge = ratée */
+.adv-ruban.obj-or { background: linear-gradient(180deg, #3a2a08, #1a1204) !important; border-color: #ffcc33 !important; color: #ffe9a0 !important; box-shadow: 0 0 6px #ffcc3388; }
+.adv-ruban.obj-vert { background: linear-gradient(180deg, #1f6a33, #0d3a1a) !important; border-color: #2dff7a !important; color: #d6ffe2 !important; box-shadow: 0 0 8px #2dff7a99; }
+.adv-ruban.obj-rouge { background: linear-gradient(180deg, #8a1a22, #4a0a10) !important; border-color: #ff2a4a !important; color: #ffd6da !important; box-shadow: 0 0 8px #ff2a4a99; }
+.adv-robot-mini { font-size: 11px; margin-left: 2px; }

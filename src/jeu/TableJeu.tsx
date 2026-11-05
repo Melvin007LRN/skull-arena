@@ -385,7 +385,7 @@ export function TableJeu(p: PropsTable) {
     const depart = joueur === moi ? { x: 50, y: 120 } : { x: pos.x, y: pos.y + 12 };
     const dejaPose = pliMontre.slice(0, index).some((c) => c.joueur === joueur); // Dernière salve : 2e carte décalée
     let x = cx + (pos.x - cx) * 0.5 + (index - (pliMontre.length - 1) / 2) * 2.5 + (dejaPose ? 7 : 0);
-    let y = cy + (ancreY - cy) * 0.14;
+    let y = cy + (ancreY - cy) * 0.06;
     const rot = ((index * 37) % 13) - 6;
     if (cible && etape === 'gagnant') {
       // le pli glisse doucement vers le gagnant
@@ -559,6 +559,35 @@ export function TableJeu(p: PropsTable) {
         {/* Le pli, posé sur la table (repère de l'arène) */}
         <div className="zone-pli" onClick={(e) => { if (e.target === e.currentTarget && !pliAffiche && vue.dernierPli) setVoirDernierPli(true); }}>
           <span className="centre-pli" aria-hidden="true" />
+          {/* Infos de la table : au centre, sous les cartes (jamais par-dessus) */}
+          <div className="infos-table" aria-live="polite">
+            {!pliAffiche && vue.phase === 'jeu' && pliMontre.length === 0 && (
+              <p className="indice-table">
+                {aMoi ? 'À toi d’ouvrir le pli !' : `${pseudo(vue.joueurActif ?? '')} ouvre le pli…`}
+                {vue.dernierPli && <small>Touche la table pour revoir le dernier pli</small>}
+              </p>
+            )}
+            {vue.juanitaRegarde && vue.juanitaRegarde !== moi && <p>🔮 {pseudo(vue.juanitaRegarde)} consulte les cartes non distribuées…</p>}
+            {!pliAffiche && vue.imposee && vue.imposee.joueur !== moi && ['jeu', 'pouvoir'].includes(vue.phase) && (
+              <p>🗡️ {pseudo(vue.imposee.joueur)} doit poser la carte prise par {pseudo(vue.imposee.par)}</p>
+            )}
+            {vue.phase === 'mise' && decompte === 0 && (vue.aMise[moi] || miseLocale?.manche === vue.manche) && (
+              <p>Mise {miseLocale?.manche === vue.manche ? `de ${miseLocale.mise} ` : ''}verrouillée · ▶ {vue.meneur === moi ? 'tu ouvres' : `${pseudo(vue.meneur)} ouvre`} le premier pli</p>
+            )}
+            {!pliAffiche && vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
+              <p>{vue.pouvoir.type === 'planche' ? 'Supplice de la planche' : NOMS_PIRATES[vue.pouvoir.type]} · {pseudo(vue.pouvoir.joueur)} choisit…</p>
+            )}
+            {!pliAffiche && vue.phase === 'harry' && !vue.harryEnAttente.includes(moi) && <p>Harry le Géant réfléchit…</p>}
+          </div>
+          {resultat && (
+            <p className="annonce-pli">
+              {resultat.effet === 'kraken' ? '🐙 Le Kraken engloutit le pli !'
+                : resultat.gagnant ? <>{pseudo(resultat.gagnant)} remporte le pli{resultat.bonus ? <strong> {resultat.bonus > 0 ? '+' : ''}{resultat.bonus}</strong> : null}</>
+                : resultat.effet === 'raie' ? '🐟 La Raie tachetée disperse le pli !'
+                : resultat.effet === 'baleine' ? '🐋 La Baleine blanche disperse le pli !'
+                : 'Personne ne remporte ce pli'}
+            </p>
+          )}
           {pliMontre.map((c, i) => (
             <figure key={`${vue.manche}-${c.carteId}`} className={`carte-pli ${UNITES_CONTENEUR ? 'cq' : ''} ${resultat && resultat.indexGagnant === i ? 'gagnante' : ''} ${resultat && resultat.indexGagnant !== i ? 'perdante' : ''} ${maitresse?.indexGagnant === i ? 'maitresse' : ''}`}
               style={styleCartePli(c.joueur, i)} onClick={() => (!pliAffiche && vue.dernierPli && vue.pliEnCours.length === 0 ? setVoirDernierPli(true) : setZoom(c.carteId))}>
@@ -585,20 +614,20 @@ export function TableJeu(p: PropsTable) {
                 ))}
               </div>
               <div className="adv-avatar" data-joueur={j} onClick={() => { if (!vue.robots?.includes(j)) ouvrirProfil(j); }}>
+                {actif && vue.phase === 'jeu' && <span className="adv-sablier" title="À son tour">⏳</span>}
                 {vue.joueurs.indexOf(j) === vue.couronne && <span className="adv-couronne">👑</span>}
                 {vue.phase === 'mise' && vue.meneur === j && <span className="adv-ouvre" title="Ouvre le premier pli">▶ 1er</span>}
                 <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} cadre={cadre(j)} />
                 {humain(j) && <span className={`pastille-co ${connecte(j) ? 'en-ligne' : 'hors-ligne'}`} title={connecte(j) ? 'Connecté' : 'Déconnecté'} />}
-                {vue.mises && <span className="adv-ruban">{vue.plisGagnes[j]}/{miseDe(j)}</span>}
+                {vue.mises && (() => { const o = objectif(j); return <span className={`adv-ruban ${o ? `obj-${o.ton}` : ''}`} title={o?.texte}>{vue.plisGagnes[j]}/{miseDe(j)}</span>; })()}
                 <Badges j={j} />
                 {!vue.mises && vue.phase === 'mise' && <span className={`adv-ruban ${vue.aMise[j] ? 'ok' : 'attente'}`}>{vue.aMise[j] ? '✓' : '…'}</span>}
               </div>
               <div className="adv-nom">
                 <span className="adv-medaillon">☠</span>
                 <span className={neonNom(j).className} style={neonNom(j).style}>{pseudo(j)}</span>
+                {vue.remplaces?.includes(j) && <span className="adv-robot-mini" title="Un robot joue à sa place">🤖</span>}
               </div>
-              {(() => { const o = objectif(j); return o ? <span className={`adv-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
-              {vue.remplaces?.includes(j) && <span className="adv-robot">🤖 robot</span>}
               {p.hote === moi && !vue.robots?.includes(j) && !vue.definitifs?.includes(j) && !finie && (
                 <button type="button" className="adv-exclure" aria-label={`Exclure ${pseudo(j)}`}
                   onClick={() => { if (confirm(`Exclure ${pseudo(j)} ? Un robot finira la partie à sa place.`)) p.exclure(j); }}>✕</button>
@@ -624,7 +653,12 @@ export function TableJeu(p: PropsTable) {
         <span className="adv-ruban">{vue.mises ? `${vue.plisGagnes[moi]}/${miseDe(moi)}` : vue.aMise[moi] ? '✓' : '…'}</span>
         <Badges j={moi} />
         {vue.joueurs.indexOf(moi) === vue.couronne && <span className="adv-couronne">👑</span>}
-        {(() => { const o = objectif(moi); return o ? <span key={o.texte} className={`moi-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
+        <span className="moi-pastilles">
+          {aMoi && !tigresse && !choixValeur && !choixJoker && vue.phase === 'jeu' && (
+            <span className="moi-tour">{vue.salve === moi ? '💥 2e carte !' : 'À toi de jouer !'}{vue.manche <= 2 && <small>{selection ? 'Glisse-la vers le centre ou touche-la encore' : 'Glisse une carte vers le centre'}</small>}</span>
+          )}
+          {(() => { const o = objectif(moi); return o ? <span key={o.texte} className={`moi-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
+        </span>
       </div>
 
       {/* Ma main */}
@@ -657,54 +691,6 @@ export function TableJeu(p: PropsTable) {
         })}
       </section>
 
-      {/* Journal de la partie : toutes les infos au même endroit (à gauche), jamais sur les cartes */}
-      <div className="journal" aria-live="polite">
-      {aMoi && !tigresse && !choixValeur && !choixJoker && (
-        <p className="aide-geste">
-          <span className="fleches">⌃⌃</span>
-          {selection ? 'Glisse-la vers l’arène, ou touche-la encore pour la jouer' : 'Glisse ta carte vers l’arène pour la jouer'}
-        </p>
-      )}
-          {resultat && (
-            <p className="annonce-pli">
-              {resultat.effet === 'kraken' ? '🐙 Le Kraken engloutit le pli !'
-                : resultat.gagnant ? <>{pseudo(resultat.gagnant)} remporte le pli{resultat.bonus ? <strong> {resultat.bonus > 0 ? '+' : ''}{resultat.bonus}</strong> : null}</>
-                : resultat.effet === 'raie' ? '🐟 La Raie tachetée disperse le pli !'
-                : resultat.effet === 'baleine' ? '🐋 La Baleine blanche disperse le pli !'
-                : 'Personne ne remporte ce pli'}
-            </p>
-          )}
-          {maitresse && (
-            <p className="meneur-pli">
-              {maitresse.effet === 'kraken' ? '🐙 Le Kraken rôde : personne ne gagnera ce pli…'
-                : maitresse.gagnant ? <>⚔ {maitresse.gagnant === moi ? 'Tu mènes' : `${pseudo(maitresse.gagnant)} mène`}{maitresse.effet === 'raie' ? ' · 🐟 la plus petite gagne' : ''}</>
-                : maitresse.effet === 'raie' ? '🐟 La Raie rôde…' : maitresse.effet === 'baleine' ? '🐋 La Baleine rôde…' : null}
-            </p>
-          )}
-          {!pliAffiche && vue.phase === 'jeu' && pliMontre.length === 0 && (
-            <p className="indice-table">
-              {aMoi ? 'À toi d’ouvrir le pli !' : `${pseudo(vue.joueurActif ?? '')} ouvre le pli…`}
-              {vue.dernierPli && <small>Touche la table pour revoir le dernier pli</small>}
-            </p>
-          )}
-          {vue.juanitaRegarde && vue.juanitaRegarde !== moi && (
-            <p className="indice-table bas">🔮 {pseudo(vue.juanitaRegarde)} consulte les cartes non distribuées…</p>
-          )}
-      {!aMoi && !pliAffiche && vue.phase === 'jeu' && vue.joueurActif && vue.joueurActif !== moi && pliMontre.length > 0 && (
-        <p className="aide-geste discret">{vue.salve === vue.joueurActif ? `💥 ${pseudo(vue.joueurActif)} tire sa Dernière salve…` : `Au tour de ${pseudo(vue.joueurActif)}…`}</p>
-      )}
-      {!pliAffiche && vue.imposee && vue.imposee.joueur !== moi && ['jeu', 'pouvoir'].includes(vue.phase) && (
-        <p className="aide-geste discret haut">🗡️ Mary Thorne : {pseudo(vue.imposee.joueur)} doit poser la carte prise par {pseudo(vue.imposee.par)}</p>
-      )}
-      {vue.phase === 'mise' && decompte === 0 && (vue.aMise[moi] || miseLocale?.manche === vue.manche) && (
-        <p className="aide-geste discret">
-          Mise {miseLocale?.manche === vue.manche ? `de ${miseLocale.mise} ` : ''}verrouillée · ▶ {vue.meneur === moi ? 'tu ouvres' : `${pseudo(vue.meneur)} ouvre`} le premier pli
-        </p>
-      )}
-      {!pliAffiche && vue.phase === 'pouvoir' && vue.pouvoir && !pouvoirMoi && (
-        <p className="aide-geste discret">{vue.pouvoir.type === 'planche' ? 'Supplice de la planche' : NOMS_PIRATES[vue.pouvoir.type]} · {pseudo(vue.pouvoir.joueur)} choisit…</p>
-      )}
-      </div>
 
       {!pliAffiche && vue.phase === 'jeu' && vue.salve === moi && <p className="bandeau">💥 Dernière salve : pose ta deuxième carte !</p>}
       {!pliAffiche && main.carteImposee && main.main.includes(main.carteImposee) && (
@@ -852,7 +838,6 @@ export function TableJeu(p: PropsTable) {
           </div>
         </Fenetre>
       )}
-      {!pliAffiche && vue.phase === 'harry' && !vue.harryEnAttente.includes(moi) && <p className="aide-geste discret">Harry le Géant réfléchit…</p>}
 
       {main.revelationJuanita && !pliAffiche && juanitaFermee !== cleJuanita && (
         <Fenetre titre="Juanita Jade" sousTitre="Les cartes non distribuées, pour tes yeux seulement (15 secondes)">
