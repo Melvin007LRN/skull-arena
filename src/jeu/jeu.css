@@ -1503,3 +1503,28 @@
 .boutons-mise.compacts .bouton-mise { width: clamp(30px, 9dvh, 40px); height: clamp(30px, 9dvh, 40px); }
 .bandeau-mise small { font-size: 11px; }
 .main-eventail.en-mise .carte-main { width: clamp(62px, 26dvh, 128px); }
+
+/* ================= Néon en partie (même effet que les cartes) ================= */
+.jeu { --n: #ffcc33; }
+.jeu-table { border-color: #ffcc33; filter: drop-shadow(0 0 6px #ffcc33aa) drop-shadow(0 0 18px #ffcc3355) drop-shadow(0 14px 24px #000c); }
+.jeu-table::before { border-color: #05070d; }
+.jeu-table::after { border-color: #fff0b3; }
+.rail-pastille, .rail-rond, .adv-nom, .aide-geste, .bandeau-mise, .jeu-menu, .zoom-regle {
+  background: linear-gradient(165deg, rgba(12,15,26,.92), rgba(4,6,12,.95)) !important;
+  border: 1.5px solid var(--n) !important;
+  box-shadow: 0 0 4px var(--n), 0 0 12px color-mix(in srgb, var(--n) 40%, transparent), inset 0 0 8px color-mix(in srgb, var(--n) 22%, transparent) !important;
+}
+.aide-geste.discret { border-color: color-mix(in srgb, var(--n) 55%, transparent) !important; box-shadow: 0 0 8px color-mix(in srgb, var(--n) 30%, transparent) !important; }
+.rail-pastille strong, .rail-rond, .adv-nom, .aide-geste, .jeu-menu button { color: #fff !important; text-shadow: 0 0 6px var(--n); }
+.rail-pastille small, .rail-pastille em { color: color-mix(in srgb, var(--n) 45%, #fff) !important; }
+.bouton-mise {
+  color: #fff !important; text-shadow: 0 0 8px var(--n);
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--n) 35%, #06080f), #06080f) !important;
+  border: 2px solid var(--n) !important;
+  box-shadow: 0 0 6px var(--n), 0 0 14px color-mix(in srgb, var(--n) 50%, transparent), inset 0 0 8px color-mix(in srgb, var(--n) 40%, transparent) !important;
+  font-family: var(--corps) !important; font-weight: 900 !important;
+}
+.bandeau-titre { color: #fff !important; text-shadow: 0 0 6px var(--n), 0 0 16px var(--n); }
+.carte-main.jouable img { box-shadow: 0 0 0 2px #fff6, 0 0 14px #ffffff55, 0 8px 18px #000d; }
+.carte-main.levee img { box-shadow: 0 0 0 3px #fff, 0 0 24px 6px #ffffffaa, 0 12px 24px #000e; }
+.main-eventail.en-mise .carte-main img { box-shadow: 0 10px 22px #000e; }

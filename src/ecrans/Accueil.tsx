@@ -13,6 +13,8 @@ import { useAmis, useEnLigne } from '../lib/amis.ts';
 import { totalNonLus, useNonLus, useSocial } from '../lib/social.ts';
 
 interface Entree {
+  /** Couleur du néon de la tuile (assortie à son image). */
+  neon?: string;
   id: string;
   titre: string;
   phrase: string;
@@ -69,17 +71,17 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
 
   const n = niveau(profil.xp);
   const jouer: Entree = {
-    id: 'jouer', titre: 'Jouer', vedette: true, image: '/cartes/skull_king.webp', cadrage: '50% 22%', action: () => ouvrirLobby('jouer'),
+    id: 'jouer', titre: 'Jouer', vedette: true, image: '/decor/art/skull_king.webp', cadrage: '50% 22%', action: () => ouvrirLobby('jouer'),
     phrase: 'Lève l’ancre et défie jusqu’à 8 pirates en ligne. Que le meilleur menteur gagne.',
   };
   // Deux tuiles par ligne, dans cet ordre précis.
   const tuiles: Entree[] = [
-    { id: 'code', titre: 'Rejoindre', image: '/cartes/pirate_rosie.webp', cadrage: '50% 18%', action: () => ouvrirLobby('code'), phrase: 'Entre le code d’un ami', icone: 'longue-vue' },
-    { id: 'profil', titre: 'Mon pirate', image: '/cartes/pirate_harry.webp', cadrage: '50% 20%', action: ouvrirProfil, phrase: 'Ta légende, tes trophées', icone: 'tete' },
-    { id: 'amis', titre: 'Compagnons', image: '/cartes/pirate_bendt.webp', cadrage: '50% 20%', action: ouvrirAmis, phrase: 'Amis et messages', icone: 'pavillon' },
-    { id: 'classement', titre: 'Classement', image: '/cartes/jaune_14.webp', cadrage: '50% 45%', action: ouvrirClassement, phrase: 'Saison et légendes', icone: 'couronne' },
-    { id: 'entrainement', titre: 'Entraînement', image: '/cartes/noir_7.webp', cadrage: '50% 30%', action: () => ouvrirLobby('entrainement'), phrase: 'Contre les robots', icone: 'cible' },
-    { id: 'regles', titre: 'Le grimoire', image: '/cartes/sirene_1.webp', cadrage: '50% 25%', action: ouvrirRegles, phrase: 'Toutes les règles', icone: 'grimoire' },
+    { id: 'code', neon: '#ff2a4a', titre: 'Rejoindre', image: '/decor/art/pirate_rosie.webp', cadrage: '50% 18%', action: () => ouvrirLobby('code'), phrase: 'Entre le code d’un ami', icone: 'longue-vue' },
+    { id: 'profil', neon: '#ff7a1a', titre: 'Mon pirate', image: '/decor/art/pirate_harry.webp', cadrage: '50% 20%', action: ouvrirProfil, phrase: 'Ta légende, tes trophées', icone: 'tete' },
+    { id: 'amis', neon: '#2dff7a', titre: 'Compagnons', image: '/decor/art/pirate_bendt.webp', cadrage: '50% 20%', action: ouvrirAmis, phrase: 'Amis et messages', icone: 'pavillon' },
+    { id: 'classement', neon: '#ffcc33', titre: 'Classement', image: '/decor/art/jaune_14.webp', cadrage: '50% 45%', action: ouvrirClassement, phrase: 'Saison et légendes', icone: 'couronne' },
+    { id: 'entrainement', neon: '#3d9bff', titre: 'Entraînement', image: '/decor/art/noir_7.webp', cadrage: '50% 30%', action: () => ouvrirLobby('entrainement'), phrase: 'Contre les robots', icone: 'cible' },
+    { id: 'regles', neon: '#2ee6ff', titre: 'Le grimoire', image: '/decor/art/sirene_1.webp', cadrage: '50% 25%', action: ouvrirRegles, phrase: 'Toutes les règles', icone: 'grimoire' },
   ];
 
 
@@ -139,7 +141,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       <div className="grille-tuiles">
         {tuiles.map((e, i) => (
           <Apparition key={e.id} delai={(i % 2) * 70}>
-            <button type="button" className="tuile neon" onClick={e.action}>
+            <button type="button" className="tuile neon" onClick={e.action} style={e.neon ? { ['--n' as string]: e.neon } : undefined}>
               <img src={e.image} alt="" loading="lazy" style={{ objectPosition: e.cadrage }} />
               <span className="tuile-degrade" />
               {e.icone && <Medaillon nom={e.icone} taille={36} className="tuile-medaillon" />}

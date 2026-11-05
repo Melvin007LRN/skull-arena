@@ -139,8 +139,8 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
           {recherche ? (
             <RechercheEnCours depuis={recherche.depuis} nb={recherche.nb} maintenant={maintenant} annuler={annulerRecherche} />
           ) : (
-            <button type="button" className="tuile neon tuile-rapide" onClick={lancerRecherche} disabled={enCours}>
-              <img src="/cartes/skull_king.webp" alt="" style={{ objectPosition: '50% 22%' }} />
+            <button type="button" className="tuile neon tuile-rapide" onClick={lancerRecherche} disabled={enCours} style={{ ['--n' as string]: '#ffcc33' }}>
+              <img src="/decor/art/skull_king.webp" alt="" style={{ objectPosition: '50% 22%' }} />
               <span className="tuile-degrade" />
               <span className="tuile-texte">
                 <span className="etiquette-mode">⚡ Partie rapide</span>
@@ -152,8 +152,8 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
           )}
 
           <div className="grille-tuiles">
-            <button type="button" className="tuile neon tuile-mode" onClick={() => creer(false)} disabled={enCours || recherche !== null}>
-              <img src="/cartes/butin_1.webp" alt="" style={{ objectPosition: '50% 30%' }} />
+            <button type="button" className="tuile neon tuile-mode" onClick={() => creer(false)} disabled={enCours || recherche !== null} style={{ ['--n' as string]: '#2dff7a' }}>
+              <img src="/decor/art/butin_1.webp" alt="" style={{ objectPosition: '50% 30%' }} />
               <span className="tuile-degrade" />
               <span className="tuile-texte">
                 <span className="etiquette-mode">🔒 Privé</span>
@@ -161,8 +161,8 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
                 <small>Partage un code ou un lien. Tu es le capitaine : robots, extension et départ.</small>
               </span>
             </button>
-            <button type="button" className="tuile neon tuile-mode" onClick={() => creer(true)} disabled={enCours || recherche !== null}>
-              <img src="/cartes/pirate_juanita.webp" alt="" style={{ objectPosition: '50% 25%' }} />
+            <button type="button" className="tuile neon tuile-mode" onClick={() => creer(true)} disabled={enCours || recherche !== null} style={{ ['--n' as string]: '#b866ff' }}>
+              <img src="/decor/art/pirate_juanita.webp" alt="" style={{ objectPosition: '50% 25%' }} />
               <span className="tuile-degrade" />
               <span className="tuile-texte">
                 <span className="etiquette-mode">🌍 Public</span>

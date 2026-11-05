@@ -1100,3 +1100,127 @@ button, a, input, label, .tuile, .affiche { touch-action: manipulation; }
 img { -webkit-user-drag: none; }
 /* Moins d'animations si le téléphone le demande */
 @media (prefers-reduced-motion: reduce) { .ecran, .voile, .voile > .fenetre, .voile > section { animation: none; } }
+
+/* =====================================================================
+   THÈME « NÉON DES ABYSSES » — même effet que les cartes
+   Chaque bloc a une couleur de néon (--n) assortie à son image ou à son écran.
+   ===================================================================== */
+:root {
+  --n-or: #ffcc33; --n-violet: #b866ff; --n-vert: #2dff7a; --n-bleu: #3d9bff;
+  --n-rouge: #ff2a4a; --n-orange: #ff7a1a; --n-cyan: #2ee6ff;
+  --n: var(--n-or);
+  --verre: linear-gradient(165deg, rgba(12,15,26,.9), rgba(4,6,12,.94));
+}
+/* Couleur dominante de chaque écran (assortie au décor et aux images) */
+.ecran-accueil { --n: var(--n-or); }
+.ecran-lobby, .ecran-attente { --n: var(--n-cyan); }
+.ecran-profil { --n: var(--n-violet); }
+.ecran-boutique { --n: var(--n-or); }
+.ecran-classement { --n: var(--n-or); }
+.ecran-reglages { --n: var(--n-bleu); }
+.ecran-regles { --n: var(--n-violet); }
+.ecran-amis { --n: var(--n-vert); }
+.ecran-connexion, .ecran-centre, .ecran-legal, .ecran-admin { --n: var(--n-cyan); }
+
+/* Titres : lettres claires qui brillent de la couleur de l'écran */
+.titre-pirate, .heros-pseudo, .carte-joueur-texte strong {
+  background: none !important; -webkit-background-clip: border-box; background-clip: border-box;
+  color: color-mix(in srgb, var(--n) 22%, #fff) !important; filter: none !important;
+  text-shadow: 0 0 6px var(--n), 0 0 18px color-mix(in srgb, var(--n) 70%, transparent), 0 0 34px color-mix(in srgb, var(--n) 40%, transparent) !important;
+}
+
+/* Panneaux : verre sombre, contour néon lumineux */
+.parchemin, .neon {
+  background: var(--verre) !important;
+  border: 1.5px solid var(--n) !important;
+  box-shadow: 0 0 4px var(--n), 0 0 16px color-mix(in srgb, var(--n) 45%, transparent),
+              inset 0 0 14px color-mix(in srgb, var(--n) 22%, transparent), 0 12px 28px #000c !important;
+}
+.neon:active { box-shadow: 0 0 6px var(--n), 0 0 26px color-mix(in srgb, var(--n) 70%, transparent), inset 0 0 20px color-mix(in srgb, var(--n) 35%, transparent) !important; }
+.parchemin::after, .neon::after { display: none; }
+
+/* Sous-blocs (lignes, cases) : contour néon discret */
+.profil-bloc .stat, .chiffre, .defis-jour li, .salon-ligne, .liste-salons li, .objet, .interrupteur, .ligne-compte {
+  border-color: color-mix(in srgb, var(--n) 45%, transparent) !important;
+  background: rgba(255,255,255,.03);
+}
+
+/* Bouton principal : tube néon plein */
+.bouton-or {
+  font-family: var(--corps); font-weight: 900; letter-spacing: .12em; text-transform: uppercase;
+  color: #fff !important; text-shadow: 0 0 8px var(--n), 0 0 2px #000;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--n) 38%, #06080f), color-mix(in srgb, var(--n) 14%, #06080f)) !important;
+  border: 2px solid var(--n) !important;
+  box-shadow: 0 0 6px var(--n), 0 0 20px color-mix(in srgb, var(--n) 55%, transparent), inset 0 0 14px color-mix(in srgb, var(--n) 45%, transparent) !important;
+}
+.bouton-or .icone { stroke: #fff !important; filter: drop-shadow(0 0 4px var(--n)) !important; }
+.bouton-or:disabled { filter: saturate(.3) brightness(.7); }
+/* Bouton secondaire : contour néon */
+.bouton-sombre {
+  color: color-mix(in srgb, var(--n) 25%, #fff) !important;
+  background: rgba(6,8,15,.85) !important;
+  border: 1.5px solid color-mix(in srgb, var(--n) 75%, transparent) !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--n) 30%, transparent), inset 0 0 8px color-mix(in srgb, var(--n) 18%, transparent) !important;
+}
+.bouton-danger {
+  color: #fff !important; background: rgba(40,4,10,.85) !important; border: 2px solid var(--n-rouge) !important;
+  box-shadow: 0 0 6px var(--n-rouge), 0 0 18px #ff2a4a66, inset 0 0 10px #ff2a4a55 !important; text-shadow: 0 0 8px var(--n-rouge);
+}
+.lien { color: color-mix(in srgb, var(--n) 45%, #fff); text-shadow: 0 0 8px color-mix(in srgb, var(--n) 60%, transparent); }
+.retour { color: color-mix(in srgb, var(--n) 40%, #fff) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--n) 60%, transparent); }
+
+/* Onglets : le néon s'allume sous l'onglet actif */
+.onglets button { color: #ffffff99; border-bottom: 2px solid transparent; }
+.onglets button.actif { color: #fff !important; border-bottom-color: var(--n) !important; text-shadow: 0 0 8px var(--n);
+  box-shadow: 0 6px 10px -6px var(--n); }
+.profil-onglets button { color: #ffffffb3 !important; background: transparent !important; border: 1.5px solid transparent !important; }
+.profil-onglets button.actif { color: #fff !important; background: color-mix(in srgb, var(--n) 18%, transparent) !important; border-color: var(--n) !important;
+  box-shadow: 0 0 6px var(--n), inset 0 0 10px color-mix(in srgb, var(--n) 40%, transparent) !important; text-shadow: 0 0 8px var(--n); }
+.profil-onglets button.actif .icone { stroke: #fff !important; }
+
+/* Champs de saisie */
+input:not([type='checkbox']), textarea, select {
+  background: rgba(4,6,12,.85) !important; color: #fff !important;
+  border: 1.5px solid color-mix(in srgb, var(--n) 55%, transparent) !important; box-shadow: inset 0 0 8px color-mix(in srgb, var(--n) 15%, transparent) !important;
+}
+input:focus, textarea:focus { outline: none !important; border-color: var(--n) !important; box-shadow: 0 0 10px color-mix(in srgb, var(--n) 60%, transparent), inset 0 0 10px color-mix(in srgb, var(--n) 25%, transparent) !important; }
+
+/* Interrupteurs */
+.interrupteur-curseur { background: #0b0e18 !important; border: 1.5px solid color-mix(in srgb, var(--n) 50%, transparent); }
+.interrupteur-curseur span { background: #ffffff66 !important; }
+.interrupteur.actif .interrupteur-curseur { background: color-mix(in srgb, var(--n) 30%, #06080f) !important; border-color: var(--n); box-shadow: 0 0 10px var(--n); }
+.interrupteur.actif .interrupteur-curseur span { background: #fff !important; box-shadow: 0 0 8px var(--n); }
+
+/* Icônes et médaillons : traits néon */
+.icone { stroke: color-mix(in srgb, var(--n) 30%, #fff) !important; filter: drop-shadow(0 0 3px var(--n)) !important; }
+.medaillon { background: radial-gradient(circle at 35% 30%, #141a2a, #04060c 70%) !important; border: 1.5px solid var(--n) !important;
+  box-shadow: 0 0 8px var(--n), inset 0 0 8px color-mix(in srgb, var(--n) 35%, transparent) !important; }
+.medaillon.fait { --n: var(--n-vert); }
+
+/* Tuiles d'image : le néon prend la couleur de l'image */
+.tuile-texte strong, .affiche-vedette.neon .affiche-titre {
+  color: #fff !important; background: none !important; -webkit-background-clip: border-box; background-clip: border-box; filter: none !important;
+  text-shadow: 0 0 6px var(--n), 0 0 16px var(--n), 0 2px 4px #000 !important;
+}
+.tuile-degrade, .affiche-vedette .affiche-degrade { background: linear-gradient(180deg, transparent 30%, rgba(4,6,12,.7) 62%, #04060c 100%) !important; }
+.etiquette-mode { background: rgba(4,6,12,.75) !important; border: 1px solid var(--n) !important; color: #fff !important; box-shadow: 0 0 8px color-mix(in srgb, var(--n) 60%, transparent); }
+
+/* Pastilles, jauges, chiffres */
+.pastille-nombre { background: var(--n-rouge) !important; box-shadow: 0 0 8px var(--n-rouge) !important; color: #fff !important; }
+.barre-xp, .jauge { background: #0b0e18 !important; border: 1px solid color-mix(in srgb, var(--n) 45%, transparent); }
+.barre-xp > *, .jauge > i, .jauge > span > i { background: linear-gradient(90deg, color-mix(in srgb, var(--n) 60%, #fff), var(--n)) !important; box-shadow: 0 0 10px var(--n); }
+.chiffre strong, .stat-valeur, .hexa { color: color-mix(in srgb, var(--n) 25%, #fff) !important; text-shadow: 0 0 8px var(--n); }
+.puce-boutique, .bourse { border-color: var(--n-or) !important; box-shadow: 0 0 8px #ffcc3388 !important; background: rgba(4,6,12,.8) !important; }
+.sous-titre, .bloc-titre { color: color-mix(in srgb, var(--n) 30%, #fff); text-shadow: 0 0 8px color-mix(in srgb, var(--n) 50%, transparent); }
+
+/* Grimoire : pages en verre sombre, contour néon violet */
+.page-contenu {
+  background: var(--verre) !important; color: #eef0ff !important;
+  border: 1.5px solid var(--n) !important;
+  box-shadow: 0 0 4px var(--n), 0 0 16px color-mix(in srgb, var(--n) 45%, transparent), inset 0 0 16px color-mix(in srgb, var(--n) 22%, transparent) !important;
+}
+.page-numero { color: color-mix(in srgb, var(--n) 50%, #fff) !important; }
+.page-texte strong { color: color-mix(in srgb, var(--n) 45%, #fff) !important; }
+.page-texte .exemple { border-left-color: var(--n) !important; background: color-mix(in srgb, var(--n) 10%, transparent) !important; }
+.livre-points button { background: color-mix(in srgb, var(--n) 35%, transparent) !important; }
+.livre-points button.actif { background: var(--n) !important; box-shadow: 0 0 8px var(--n); }
