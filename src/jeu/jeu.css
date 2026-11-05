@@ -1528,3 +1528,15 @@
 .carte-main.jouable img { box-shadow: 0 0 0 2px #fff6, 0 0 14px #ffffff55, 0 8px 18px #000d; }
 .carte-main.levee img { box-shadow: 0 0 0 3px #fff, 0 0 24px 6px #ffffffaa, 0 12px 24px #000e; }
 .main-eventail.en-mise .carte-main img { box-shadow: 0 10px 22px #000e; }
+
+/* ================= Fin de partie : retour en portrait ================= */
+.jeu.fin-portrait .tourne-telephone { display: none !important; }
+.jeu.fin-portrait .voile { background: rgba(3,5,10,.86) url('/decor/fond-table.webp') center / cover; background-blend-mode: multiply; padding: 18px 14px; }
+.jeu.fin-portrait .voile .fenetre { width: min(440px, 100%); max-height: calc(100% - 20px); }
+/* Téléphone encore couché : on fait pivoter tout l'affichage pour qu'il soit déjà droit */
+@media (orientation: landscape) and (max-height: 600px) {
+  .jeu.fin-portrait { right: auto; bottom: auto; left: 0; top: 0; width: 100vh; height: 100vw; transform-origin: 0 0; }
+  .jeu.fin-portrait.rot-g { top: 100vh; transform: rotate(-90deg); }
+  .jeu.fin-portrait.rot-d { left: 100vw; transform: rotate(90deg); }
+  .jeu.fin-portrait .voile .fenetre { max-height: calc(100vw - 40px); }
+}

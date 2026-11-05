@@ -200,6 +200,29 @@ export function TableJeu(p: PropsTable) {
   // Victoire : pluie d'or et fanfare pour le (ou les) vainqueur(s).
   const meilleur = Math.max(...vue.joueurs.map((j) => vue.scores[j]));
   const jeGagne = vue.phase === 'fin_partie' && !vue.annulee && vue.scores[moi] === meilleur;
+
+  // Fin de partie : l'écran repasse en portrait (verrouillage sur Android ; sur iPhone, l'affichage pivote
+  // tout seul tant que le téléphone est encore couché, puis se remet droit quand on le redresse).
+  const [sensRotation, setSensRotation] = useState<'rot-g' | 'rot-d'>('rot-g');
+  const finPortrait = (vue.phase === 'fin_partie' || vue.annulee) && etapePli === 'aucune';
+  useEffect(() => {
+    if (!finPortrait) return;
+    const lireSens = () => {
+      const angle = screen.orientation?.angle ?? Number((window as unknown as { orientation?: number }).orientation ?? 90);
+      setSensRotation(angle === 270 || angle === -90 ? 'rot-d' : 'rot-g');
+    };
+    lireSens();
+    window.addEventListener('orientationchange', lireSens);
+    screen.orientation?.addEventListener?.('change', lireSens);
+    (async () => {
+      try { await (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('portrait'); }
+      catch { try { screen.orientation?.unlock?.(); } catch { /* rien */ } }
+    })();
+    return () => {
+      window.removeEventListener('orientationchange', lireSens);
+      screen.orientation?.removeEventListener?.('change', lireSens);
+    };
+  }, [finPortrait]);
   useEffect(() => {
     if (!jeGagne) return;
     const t = setTimeout(() => { son.fanfare(); vibrer(200); }, 400);
@@ -488,7 +511,7 @@ export function TableJeu(p: PropsTable) {
 
   // ---------- Rendu ----------
   return (
-    <div className={`jeu ${tempete ? 'tempete' : ''}`} onPointerDown={debloquerSon} ref={racine}>
+    <div className={`jeu ${tempete ? 'tempete' : ''} ${finPortrait ? `fin-portrait ${sensRotation}` : ''}`} onPointerDown={debloquerSon} ref={racine}>
       {tempete && <div className="eclairs" aria-hidden="true" />}
       <div className="jeu-decor" />
       <div className="jeu-fumee" />
