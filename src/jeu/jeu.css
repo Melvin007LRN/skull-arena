@@ -1722,3 +1722,16 @@
 .adv-ruban.obj-vert { background: linear-gradient(180deg, #1f6a33, #0d3a1a) !important; border-color: #2dff7a !important; color: #d6ffe2 !important; box-shadow: 0 0 8px #2dff7a99; }
 .adv-ruban.obj-rouge { background: linear-gradient(180deg, #8a1a22, #4a0a10) !important; border-color: #ff2a4a !important; color: #ffd6da !important; box-shadow: 0 0 8px #ff2a4a99; }
 .adv-robot-mini { font-size: 11px; margin-left: 2px; }
+
+/* ================= Table en verre fumé : on voit le décor à travers, l'esprit table reste ================= */
+.jeu-table {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 38%, rgba(255,214,120,.06), transparent 60%),
+    radial-gradient(ellipse at 50% 45%, rgba(8,11,22,.55) 0%, rgba(6,8,18,.66) 55%, rgba(3,4,9,.86) 100%) !important;
+}
+.jeu-table::before { border-color: rgba(5,7,13,.65) !important; }
+/* Bord intérieur assombri pour garder l'effet « plateau » */
+.jeu-table-boussole { background: radial-gradient(ellipse at 50% 42%, transparent 0, transparent 50%, rgba(0,0,0,.42) 100%) !important;
+  box-shadow: inset 0 0 0 10px rgba(0,0,0,.25); }
+/* Filet doré intérieur, comme le liseré d'un tapis de jeu */
+.jeu-table-boussole::after { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px solid rgba(255,204,51,.28); }
