@@ -165,6 +165,10 @@ export function TableJeu(p: PropsTable) {
     window.addEventListener('resize', maj);
     return () => window.removeEventListener('resize', maj);
   }, []);
+  // Rythme de la distribution : une carte à la fois, lentement ; plus il y a de cartes, plus c'est long.
+  const nbDistribuees = vue.cartesParJoueur * vue.joueurs.length;
+  const dureeDistribution = Math.min(6, 0.9 + vue.manche * 0.32 + vue.joueurs.length * 0.05); // en secondes
+  const intervalleDistribution = Math.max(0.075, dureeDistribution / Math.max(nbDistribuees, 1));
   const [volsDistribution, setVolsDistribution] = useState<Array<{ k: string; x0: number; y0: number; x1: number; y1: number; retard: number }>>([]);
   const racine = useRef<HTMLDivElement>(null);
   const mancheVue = useRef(0);
@@ -240,11 +244,16 @@ export function TableJeu(p: PropsTable) {
   useEffect(() => {
     if (p.decompteDesactive || vue.manche === mancheVue.current) return;
     mancheVue.current = vue.manche;
-    setDecompte(4); // 3, 2, 1, « À l'abordage ! »
+    setDecompte(5); // 5 : distribution en cours, puis 3, 2, 1, « À l'abordage ! »
     setDistribution((d) => d + 1);
   }, [vue.manche, p.decompteDesactive]);
   useEffect(() => {
     if (decompte <= 0) return;
+    if (decompte === 5) {
+      // le temps de distribuer toutes les cartes, une par une
+      const t = setTimeout(() => setDecompte(4), (nbDistribuees * intervalleDistribution + 0.6) * 1000);
+      return () => clearTimeout(t);
+    }
     if (decompte > 1) son.decompte(); else son.abordage();
     const t = setTimeout(() => setDecompte((d) => d - 1), decompte === 1 ? 800 : 900);
     return () => clearTimeout(t);
@@ -349,17 +358,19 @@ export function TableJeu(p: PropsTable) {
       const c = centreDans(r, r.querySelector('.centre-pli'));
       if (!c) return;
       const x0 = c.x, y0 = c.y;
-      const nb = Math.min(vue.cartesParJoueur, 4);
+      const nb = vue.cartesParJoueur;
+      const pas = intervalleDistribution * 1000;
+      son.distribuer(nbDistribuees, intervalleDistribution);
       const vols: typeof volsDistribution = [];
       vue.joueurs.forEach((j, i) => {
         const el = centreDans(r, r.querySelector(`[data-joueur="${j}"]`));
         const x1 = j === moi ? base.width / 2 : el ? el.x : x0;
         const y1 = j === moi ? base.height - 40 : el ? el.y : y0;
-        for (let k = 0; k < nb; k++) vols.push({ k: `${distribution}-${j}-${k}`, x0, y0, x1, y1, retard: (k * vue.joueurs.length + i) * 55 });
+        for (let k = 0; k < nb; k++) vols.push({ k: `${distribution}-${j}-${k}`, x0, y0, x1, y1, retard: 50 + (k * vue.joueurs.length + i) * pas });
       });
       setVolsDistribution(vols);
     });
-    const fin = setTimeout(() => setVolsDistribution([]), 2600);
+    const fin = setTimeout(() => setVolsDistribution([]), (nbDistribuees * intervalleDistribution + 1) * 1000);
     return () => { cancelAnimationFrame(t); clearTimeout(fin); };
   }, [distribution]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -678,7 +689,7 @@ export function TableJeu(p: PropsTable) {
               ? `translate(calc(-50% + ${decalage}px + var(--dx, 0px)), calc(var(--dy, 0px) - 30px)) rotate(0deg) scale(1.08)`
               : `translate(calc(-50% + ${decalage}px), ${levee ? -34 : Math.abs(i - centre) * 3}px) rotate(${angle}deg)`,
             zIndex: g ? 100 : levee ? 60 : i,
-            animationDelay: `${i * 70}ms`,
+            animationDelay: `${Math.round((50 + (i * vue.joueurs.length + Math.max(0, vue.joueurs.indexOf(moi))) * intervalleDistribution * 1000) + 450)}ms`,
           };
           return (
             <button key={id} type="button" className={`carte-main ${main.carteImposee === id ? 'imposee' : ''} ${jouable ? 'jouable' : ''} ${interdite ? 'interdite' : ''} ${levee ? 'levee' : ''} ${g ? 'glissee' : ''} ${defausse.includes(id) ? 'a-defausser' : ''}`}
@@ -985,7 +996,7 @@ export function TableJeu(p: PropsTable) {
       )}
 
       {/* Décompte */}
-      {decompte > 0 && (
+      {decompte > 0 && decompte <= 4 && (
         <div className="voile decompte" aria-live="polite">
           <span key={decompte} className={decompte === 1 ? 'abordage' : ''}>{decompte === 1 ? 'À l’abordage !' : decompte - 1}</span>
         </div>
