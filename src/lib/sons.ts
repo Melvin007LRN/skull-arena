@@ -2,7 +2,25 @@
 // Harpe (cordes pincées), cartes en papier, bois, cloche de bord, tambour, vagues… et une réverbération douce.
 // Le mode silencieux de l'iPhone les coupe.
 let ctx: AudioContext | null = null;
-let bus: GainNode | null = null; // tout passe par ici : compression + réverbération
+let bus: GainNode | null = null; // les bruitages (volume « effets »)
+let busMusique: GainNode | null = null; // la musique et le ressac (volume « musique »)
+
+// ---------- Volumes réglables (0 à 1), gardés sur le téléphone ----------
+const CLES_VOLUME = { musique: 'skull-vol-musique', effets: 'skull-vol-effets' } as const;
+type Piste = keyof typeof CLES_VOLUME;
+function lireVolume(p: Piste): number {
+  try { const v = localStorage.getItem(CLES_VOLUME[p]); return v === null ? 0.8 : Math.min(1, Math.max(0, Number(v))); } catch { return 0.8; }
+}
+/** Courbe d'écoute : le curseur suit l'oreille (le milieu sonne « à moitié »). */
+const gainDe = (v: number) => v * v * 1.25;
+export const volumes = {
+  lire: lireVolume,
+  regler(p: Piste, v: number) {
+    try { localStorage.setItem(CLES_VOLUME[p], String(v)); } catch { /* stockage indisponible */ }
+    const n = p === 'musique' ? busMusique : bus;
+    if (n && ctx) n.gain.setTargetAtTime(gainDe(v), ctx.currentTime, 0.05);
+  },
+};
 
 /** Sur iPhone, le son ne peut démarrer qu'après un premier toucher : on prépare le contexte à ce moment-là. */
 export function debloquerSon() {
@@ -21,8 +39,12 @@ function construireBus(c: AudioContext) {
   comp.threshold.value = -18; comp.ratio.value = 3; comp.attack.value = 0.01; comp.release.value = 0.25;
   const sortie = c.createGain(); sortie.gain.value = 0.9;
   comp.connect(sortie).connect(c.destination);
-  bus = c.createGain();
-  bus.connect(comp);
+  const melange = c.createGain();
+  melange.connect(comp);
+  bus = c.createGain(); bus.gain.value = gainDe(lireVolume('effets'));
+  bus.connect(melange);
+  busMusique = c.createGain(); busMusique.gain.value = gainDe(lireVolume('musique'));
+  busMusique.connect(melange);
   // Réverbération : une petite cale de navire en bois
   const duree = 2.2, n = Math.floor(c.sampleRate * duree);
   const ir = c.createBuffer(2, n, c.sampleRate);
@@ -33,7 +55,7 @@ function construireBus(c: AudioContext) {
   const rev = c.createConvolver(); rev.buffer = ir;
   const humide = c.createGain(); humide.gain.value = 0.28;
   const filtre = c.createBiquadFilter(); filtre.type = 'lowpass'; filtre.frequency.value = 4200;
-  bus.connect(filtre).connect(rev).connect(humide).connect(comp);
+  melange.connect(filtre).connect(rev).connect(humide).connect(comp);
 }
 
 const maintenant = (debut = 0) => (ctx ? ctx.currentTime + debut : 0);
@@ -274,7 +296,7 @@ function jouerBoucle() {
 
 /** Le ressac : des vagues douces qui vont et viennent. */
 function demarrerRessac(): { arreter: () => void } | null {
-  if (!ctx || !bus) return null;
+  if (!ctx || !busMusique) return null;
   const s = bruitSource(4); if (!s) return null;
   s.loop = true;
   const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
@@ -283,7 +305,7 @@ function demarrerRessac(): { arreter: () => void } | null {
   const lg = ctx.createGain(); lg.gain.value = 0.035;
   const base = ctx.createConstantSource(); base.offset.value = 0.045;
   lfo.connect(lg).connect(g.gain); base.connect(g.gain);
-  s.connect(f).connect(g).connect(bus);
+  s.connect(f).connect(g).connect(busMusique);
   s.start(); lfo.start(); base.start();
   return {
     arreter: () => {
@@ -300,12 +322,12 @@ export const musique = {
   active(): boolean { try { return localStorage.getItem(CLE_MUSIQUE) !== '0'; } catch { return true; } },
   demarrer() {
     debloquerSon();
-    if (!ctx || !bus || maitre) return;
+    if (!ctx || !busMusique || maitre) return;
     ctx.resume?.()?.catch(() => {});
     maitre = ctx.createGain();
     maitre.gain.value = 0.0001;
     maitre.gain.setTargetAtTime(0.32, ctx.currentTime, 1.2); // entrée en fondu
-    maitre.connect(bus);
+    maitre.connect(busMusique!);
     couplet = 0;
     jouerBoucle();
     ressac = demarrerRessac();

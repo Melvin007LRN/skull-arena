@@ -10,6 +10,7 @@ import { debloquerSon, musique, son, sonBete, vibrer } from '../lib/sons.ts';
 import { couleurImposeeJoker, COULEURS_JOKER, resoudrePli, role, type CarteJouee } from '../engine/pli.ts';
 import { OBJETS } from '../lib/boutique.ts';
 import { styleNeon } from '../lib/neons.ts';
+import { CurseursVolume } from '../composants/CurseursVolume.tsx';
 import { useBloques, useSocial } from '../lib/social.ts';
 
 export const REVELATION_MS = 2500;
@@ -554,6 +555,7 @@ export function TableJeu(p: PropsTable) {
         {menuOuvert && (
           <div className="jeu-menu">
             <button type="button" onClick={() => setMusiqueOn(musique.basculer())}>{musiqueOn ? '🎵 Musique : oui' : '🔇 Musique : non'}</button>
+            <CurseursVolume />
             {!finie && <button type="button" onClick={() => { setMenuOuvert(false); setConfirmQuitter(true); }}>Quitter la partie</button>}
             <button type="button" onClick={() => setMenuOuvert(false)}>Fermer</button>
           </div>

@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
 import { musique, vibrations, vibrer } from '../lib/sons.ts';
+import { CurseursVolume } from '../composants/CurseursVolume.tsx';
 import type { Profil } from '../lib/profil.ts';
 import type { PageLegale } from './Legal.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
@@ -56,6 +57,7 @@ export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvri
       <section className="parchemin">
         <h2 className="titre-pirate">Son et sensations</h2>
         <Interrupteur libelle="Musique d’ambiance" aide="Un chant de marins à la harpe et le ressac, pendant les parties" actif={musiqueOn} basculer={basculerMusique} />
+        <CurseursVolume apercuMusique />
         <Interrupteur libelle="Vibrations" aide="Quand c’est ton tour et à la victoire (Android)" actif={vibrationsOn} basculer={basculerVibrations} />
         {notif.etat === 'actives' || notif.etat === 'inactives'
           ? <Interrupteur libelle="Notifications" aide="Invitations, messages et demandes d’ami, même appli fermée" actif={notif.etat === 'actives'}

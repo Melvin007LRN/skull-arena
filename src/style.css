@@ -1250,3 +1250,20 @@ input:focus, textarea:focus { outline: none !important; border-color: var(--n) !
 .objet-grand strong { flex: 1; font-size: 16px; }
 .objet-grand small { width: 100%; order: 3; }
 .objet-grand .objet-achats { order: 4; width: 100%; }
+
+/* Curseurs de volume (néon) */
+.curseurs-volume { display: flex; flex-direction: column; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid color-mix(in srgb, var(--n) 45%, transparent); background: rgba(255,255,255,.03); }
+.curseur-volume { display: flex; flex-direction: column; gap: 6px; cursor: pointer; }
+.curseur-libelle { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: #fff; }
+.curseur-libelle small { margin-left: auto; font-weight: 600; color: color-mix(in srgb, var(--n) 45%, #fff); font-variant-numeric: tabular-nums; }
+.curseur-volume input[type='range'] {
+  -webkit-appearance: none; appearance: none; width: 100% !important; height: 8px !important; min-height: 0 !important; margin: 8px 0 !important; border-radius: 4px !important; padding: 0 !important;
+  border: 0 !important; box-shadow: none !important; outline: none !important; touch-action: pan-y;
+  background: linear-gradient(90deg, var(--n) 0 var(--p), #1a1f2e var(--p) 100%) !important;
+}
+.curseur-volume input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 2px solid var(--n);
+  box-shadow: 0 0 8px var(--n), 0 0 16px color-mix(in srgb, var(--n) 50%, transparent);
+}
+.curseur-volume input[type='range']::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 2px solid var(--n); box-shadow: 0 0 8px var(--n); }
+.jeu-menu .curseurs-volume { min-width: 210px; margin: 4px 0; }
