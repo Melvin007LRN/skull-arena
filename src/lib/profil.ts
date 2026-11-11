@@ -26,7 +26,7 @@ export interface Profil {
 
 export const PSEUDO_REGEX = /^[A-Za-z0-9_\-À-ÿ]{3,16}$/;
 export const CHANGEMENTS_PSEUDO_MAX = 3;
-export const PARTIES_AVANT_CLASSEMENT = 5;
+export const PARTIES_AVANT_CLASSEMENT = 1;
 
 export function niveau(xp: number): number {
   return 1 + Math.floor(Math.max(xp, 0) / 100);
@@ -102,7 +102,7 @@ export async function chargerClassement(): Promise<LigneClassement[]> {
   if (error) throw error;
   return ((data ?? []) as Omit<LigneClassement, 'pm'>[])
     .map((p) => ({ ...p, pm: Math.round(p.points_total / p.parties_jouees) }))
-    .sort((a, b) => b.pm - a.pm || b.victoires - a.victoires || b.xp - a.xp);
+    .sort((a, b) => b.victoires - a.victoires || a.parties_jouees - b.parties_jouees || b.pm - a.pm || b.xp - a.xp);
 }
 
 // Avis de recherche : le pirate qui a le plus de victoires depuis toujours.

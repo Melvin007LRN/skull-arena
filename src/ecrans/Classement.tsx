@@ -31,12 +31,12 @@ export function EcranClassement({ profil, retour }: { profil: Profil; retour: ()
       <h1 className="titre-pirate grand">Classement</h1>
       <div className="onglets">
         <button type="button" className={onglet === 'saison' ? 'actif' : ''} onClick={() => setOnglet('saison')}>Saison</button>
-        <button type="button" className={onglet === 'permanent' ? 'actif' : ''} onClick={() => setOnglet('permanent')}>Permanent</button>
+        <button type="button" className={onglet === 'permanent' ? 'actif' : ''} onClick={() => setOnglet('permanent')}>Général</button>
       </div>
       <p className="petit-texte centre">
         {onglet === 'saison'
           ? `Saison de ${nomSaison()} · classement au nombre de victoires ce mois-ci. Tout repart à zéro le 1er du mois !`
-          : `Points moyens par partie (PM), à partir de ${PARTIES_AVANT_CLASSEMENT} parties jouées.`}
+          : 'Classement général au nombre de victoires depuis toujours.'}
       </p>
 
       {onglet === 'permanent' && restantes > 0 && (
@@ -49,7 +49,7 @@ export function EcranClassement({ profil, retour }: { profil: Profil; retour: ()
         {liste === null && !erreur && <p className="petit-texte centre">Chargement…</p>}
         {liste?.length === 0 && (
           <p className="petit-texte centre">
-            {onglet === 'saison' ? 'Personne n’a encore gagné ce mois-ci. Remporte une partie et prends la tête !' : `Personne n’est encore classé. Sois le premier à jouer ${PARTIES_AVANT_CLASSEMENT} parties !`}
+            {onglet === 'saison' ? 'Personne n’a encore gagné ce mois-ci. Remporte une partie et prends la tête !' : 'Personne n’est encore classé. Joue ta première partie !'}
           </p>
         )}
         {liste && liste.length > 0 && (
@@ -62,11 +62,9 @@ export function EcranClassement({ profil, retour }: { profil: Profil; retour: ()
                   <Avatar photo={l.photo_url} taille={i === 0 ? 56 : 44} cadre={l.cadre} />
                   <span className="cl-nom">
                     <strong>{l.pseudo}</strong>
-                    <small>Niv. {n} · {grade(n)} · {onglet === 'saison' ? `${l.pm} PM · ${l.parties} partie${l.parties > 1 ? 's' : ''}` : `${l.victoires} victoire${l.victoires > 1 ? 's' : ''} / ${l.parties}`}</small>
+                    <small>Niv. {n} · {grade(n)} · {l.pm} PM · {l.parties} partie{l.parties > 1 ? 's' : ''}</small>
                   </span>
-                  {onglet === 'saison'
-                    ? <span className="cl-pm">{l.victoires}<small>VICT.</small></span>
-                    : <span className="cl-pm">{l.pm}<small>PM</small></span>}
+                  <span className="cl-pm">{l.victoires}<small>VICT.</small></span>
                 </li>
               );
             })}
