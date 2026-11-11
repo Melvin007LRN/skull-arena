@@ -78,6 +78,8 @@ export interface EtatPartie {
   historique: ScoreManche[][];
   /** Partie jouée avec les 19 cartes de l'extension. */
   extension?: boolean;
+  /** Variante : les points bonus (captures, 14, 7/8…) comptent même si la mise est ratée. */
+  bonusToujours?: boolean;
   /** Mary Thorne : carte que ce joueur doit obligatoirement poser au pli suivant. */
   imposee?: { joueur: string; carteId: string; par: string } | null;
   /** Pouvoirs encore à appliquer pour ce joueur (le Second peut en cumuler plusieurs). */
@@ -98,7 +100,7 @@ function parJoueur<T>(joueurs: string[], valeur: () => T): Record<string, T> {
   return Object.fromEntries(joueurs.map((j) => [j, valeur()]));
 }
 
-export function creerPartie(joueurs: string[], graine: number, options: { extension?: boolean } = {}): EtatPartie {
+export function creerPartie(joueurs: string[], graine: number, options: { extension?: boolean; bonusToujours?: boolean } = {}): EtatPartie {
   const max = options.extension ? 9 : 8; // avec les 93 cartes de l'extension, on peut jouer à 9
   if (joueurs.length < 2 || joueurs.length > max) throw new ErreurRegle(`Une partie se joue de 2 à ${max} joueurs.`);
   if (new Set(joueurs).size !== joueurs.length) throw new ErreurRegle('Chaque joueur doit être unique.');
@@ -110,7 +112,7 @@ export function creerPartie(joueurs: string[], graine: number, options: { extens
     detailBonusManche: {}, alliances: [], rascal: {}, harry: {}, harryEnAttente: [], meneur: joueurs[0],
     pliEnCours: [], numeroPli: 1, dernierPli: null, pouvoir: null, revelationJuanita: null,
     scores: parJoueur(joueurs, () => 0), historique: [],
-    extension: Boolean(options.extension), imposee: null, filePouvoirs: null,
+    extension: Boolean(options.extension), bonusToujours: Boolean(options.bonusToujours), imposee: null, filePouvoirs: null,
   };
   return demarrerManche(etat, 1);
 }
@@ -457,13 +459,15 @@ function finirManche(e: EtatPartie) {
 
 export function calculerScoreJoueur(args: {
   manche: number; mise: number; plis: number; bonus: number; alliances: number; rascal: number;
+  /** Variante : les bonus comptent même si la mise est ratée. */
+  bonusToujours?: boolean;
 }): Omit<ScoreManche, 'joueur'> {
-  const { manche, mise, plis, bonus, alliances, rascal } = args;
+  const { manche, mise, plis, bonus, alliances, rascal, bonusToujours } = args;
   const reussie = mise === plis;
   let pointsMise: number;
   if (mise === 0) pointsMise = reussie ? 10 * manche : -10 * manche;
   else pointsMise = reussie ? 20 * mise : -10 * Math.abs(mise - plis);
-  const b = reussie ? bonus : 0;
+  const b = reussie || bonusToujours ? bonus : 0;
   const a = reussie ? alliances : 0;
   const r = reussie ? rascal : -rascal;
   return { mise, plis, reussie, pointsMise, bonus: b, alliances: a, rascal: r, total: pointsMise + b + a + r };
@@ -483,7 +487,7 @@ function calculerScores(e: EtatPartie) {
     joueur: j,
     ...calculerScoreJoueur({
       manche: e.manche, mise: miseFinale(j), plis: e.plisGagnes[j], bonus: e.bonusManche[j],
-      alliances: alliances[j], rascal: e.rascal[j],
+      alliances: alliances[j], rascal: e.rascal[j], bonusToujours: e.bonusToujours,
     }),
   }));
   for (const r of resultats) e.scores[r.joueur] += r.total;

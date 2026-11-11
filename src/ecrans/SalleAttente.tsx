@@ -163,6 +163,15 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
         ) : (
           <p className="petit-texte centre">{salon.extension ? '🃏 Partie avec l’extension (19 cartes en plus)' : 'Partie avec le jeu de base'}</p>
         )}
+        {suisHote ? (
+          <button type="button" className={`interrupteur ${salon.bonus_toujours ? 'actif' : ''}`} role="switch" aria-checked={Boolean(salon.bonus_toujours)} disabled={enCours}
+            onClick={() => faire(() => appel('regler_salon', { salon_id: salon.id, bonus_toujours: !salon.bonus_toujours }))}>
+            <span className="interrupteur-texte"><strong>Bonus toujours comptés</strong><small>Les bonus (14, captures de Pirates, Skull King…) rapportent même si la mise est ratée</small></span>
+            <span className="interrupteur-curseur" aria-hidden="true"><span /></span>
+          </button>
+        ) : (
+          salon.bonus_toujours && <p className="petit-texte centre">⭐ Variante : les bonus comptent même si la mise est ratée</p>
+        )}
       </section>
 
       {erreur && <p className="message erreur">{erreur}</p>}

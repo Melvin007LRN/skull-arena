@@ -95,7 +95,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
           <p className="petit-texte">Une grosse animation sur toute la table, vue par tous les pirates.</p>
           <ul className="grille-objets grands">
             {grands.map((o) => (
-              <li key={o.id} className="objet-grand">
+              <li key={o.id} className={`objet-grand ${o.id === 'tempete_insultes' ? 'objet-ultime' : ''}`}>
                 <span className="objet-icone">{o.icone}</span>
                 <strong>{o.nom}</strong>
                 <small>Dans ton coffre : {inventaire[o.id] ?? 0}</small>

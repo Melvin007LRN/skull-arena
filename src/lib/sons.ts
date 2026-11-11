@@ -184,6 +184,18 @@ const accord = (...n: string[]) => n.map((x) => H[x]);
 
 /** Bandes-son des grandes bêtes (4 s) : profondeurs, vagues, harpe inquiétante. */
 export const sonBete = {
+  /** La Tempête d'insultes (8 s) : tonnerre, roulement de tambours, harpe moqueuse, coup final. */
+  tempete: () => {
+    son.tonnerre(); souffle(0, 7.5, 0.1, 'lowpass', 500, 0.5, 1, 1400); // pluie et vent
+    for (let k = 0; k < 22; k++) bois(1.1 + k * 0.23 + Math.random() * 0.08, 0.18 + Math.random() * 0.1, 380 + Math.random() * 500); // insultes qui tombent
+    for (let k = 0; k < 16; k++) tambour(1 + k * 0.32, 0.16 + k * 0.012); // roulement qui monte
+    // petite mélodie moqueuse à la harpe : « nananère »
+    [[H.A4, 1.6], [H.F4, 1.85], [H.A4, 2.1], [H.F4, 2.35], [H.E4, 2.6], [H.F4, 2.85], [H.D4, 3.2]].forEach(([f, t]) => harpe(f, t, 0.2));
+    [[H.A4, 4.0], [H.F4, 4.25], [H.A4, 4.5], [H.F4, 4.75], [H.E4, 5.0], [H.F4, 5.25], [H.D4, 5.6]].forEach(([f, t]) => harpe(f * 1.06, t, 0.2));
+    setTimeout(() => son.tonnerre(), 3500);
+    tambour(6.5, 0.5); tambour(6.62, 0.45); coup(90, 30, 6.5, 1.6, 0.3); cloche(392, 6.55, 0.14, 3);
+    arpege(accord('D2', 'A2', 'D3', 'F3', 'Bb3', 'D4'), 6.6, 0.05, 0.22);
+  },
   kraken: () => {
     tambour(0, 0.4); tambour(0.9, 0.45); vague(0, 0.16, 3.6);
     coup(70, 34, 0.85, 2.6, 0.22, 'sine'); coup(52, 30, 0.9, 2.8, 0.16, 'triangle');

@@ -13,6 +13,8 @@ export interface Salon {
   entrainement: boolean;
   /** Partie avec les 19 cartes de l'extension. */
   extension?: boolean;
+  /** Variante : les bonus comptent même si la mise est ratée. */
+  bonus_toujours?: boolean;
 }
 
 export interface MembreSalon {

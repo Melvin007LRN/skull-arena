@@ -30,7 +30,7 @@ export function regleCarte(id: string): { nom: string; texte: string } {
   switch (c.type) {
     case 'numero':
       if (c.bonusPli) {
-        return { nom: `${c.valeur} ${NOMS_COULEURS[c.couleur]} · extension`, texte: `Carte numérotée normale. À valeur égale, la première posée gagne. Celui qui remporte le pli qui la contient gagne ${c.bonusPli > 0 ? '+5' : '−5'} (si sa mise est exacte).` };
+        return { nom: `${c.valeur} ${NOMS_COULEURS[c.couleur]} · extension`, texte: `Carte numérotée normale. À valeur égale, la première posée gagne. Celui qui remporte le pli qui la contient gagne ${c.bonusPli > 0 ? '+5' : '−5'}.` };
       }
       return c.couleur === 'noir'
         ? { nom: `${c.valeur} ${NOMS_COULEURS.noir}`, texte: `L’atout : bat toutes les couleurs, mais perd contre les personnages.${c.valeur === 14 ? ' Le capturer rapporte +20 (si la mise est exacte).' : ''}` }
@@ -1147,6 +1147,61 @@ function Eclats({ x, y, emojis, mode }: { x: number; y: number; emojis: string[]
   );
 }
 
+// ---------- Le cadeau ultime : la Tempête d'insultes (8 s) ----------
+const INSULTES = [
+  'T’es nul !', 'T’es naze !', 'Tocard !', 'Marin d’eau douce !', 'Bouse de mouette !', 'Rat de cale !', 'Mollusque !',
+  'Moule à gaufres !', 'Bachi-bouzouk !', 'Va ramer !', 'Boulet !', 'Crabe mou !', 'Ectoplasme !', 'Naze de chez naze !',
+  'Même le perroquet joue mieux !', 'Retourne pêcher !', 'Loser !', 'Mauvais !', 'Patate !', 'Moussaillon de pacotille !',
+  'Tu joues avec les pieds !', 'Cornichon !', 'Sardine !', 'Zéro pointé !',
+];
+const COULEURS_INSULTES = ['#ff2a4a', '#ffcc33', '#2ee6ff', '#b866ff', '#2dff7a', '#ff4fd8', '#ff7a1a'];
+function TempeteInsultes({ cible }: { cible: { x: number; y: number } }) {
+  const h = useMemo(() => {
+    const r = (a: number, b: number) => a + Math.random() * (b - a);
+    const melange = [...INSULTES].sort(() => Math.random() - 0.5);
+    return {
+      pluie: Array.from({ length: 34 }, (_, k) => ({
+        k, t: melange[k % melange.length], x: r(4, 92), dl: 1 + r(0, 4.4), du: r(1.6, 2.4), s: r(0.75, 1.3), rot: r(-18, 18),
+        c: COULEURS_INSULTES[k % COULEURS_INSULTES.length], vx: r(-8, 8),
+      })),
+      eclats: Array.from({ length: 7 }, (_, k) => ({
+        k, t: melange[(k + 11) % melange.length].toUpperCase(), dl: 1.4 + k * 0.68, x: r(-22, 22), y: r(-14, 14), rot: r(-12, 12),
+        c: COULEURS_INSULTES[(k + 2) % COULEURS_INSULTES.length],
+      })),
+      gouttes: Array.from({ length: 60 }, (_, k) => ({ k, x: r(0, 100), dl: r(0, 1.2), du: r(0.45, 0.8) })),
+      eclairs: [0.15, 0.55, 3.45, 3.6, 6.45],
+    };
+  }, []);
+  return (
+    <div className="gc-tempete" aria-hidden="true">
+      <div className="ti-ciel" />
+      <div className="ti-nuage n1" /><div className="ti-nuage n2" /><div className="ti-nuage n3" />
+      {h.eclairs.map((d, i) => <div key={i} className="ti-eclair" style={{ animationDelay: `${d}s` }} />)}
+      <div className="ti-gouttes">{h.gouttes.map((g) => <i key={g.k} style={{ left: `${g.x}%`, animationDelay: `${g.dl}s`, animationDuration: `${g.du}s` }} />)}</div>
+      <div className="ti-cible" style={{ left: cible.x, top: cible.y }}>
+        <span className="ti-anneau" /><span className="ti-anneau a2" />
+        <span className="ti-nuage-perso">🌩️</span>
+      </div>
+      {h.pluie.map((p) => (
+        <span key={p.k} className="ti-insulte" style={{
+          left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s`, color: p.c,
+          ['--s' as string]: p.s, ['--rot' as string]: `${p.rot}deg`, ['--c' as string]: p.c, ['--vx' as string]: `${p.vx}vw`,
+          ['--cx' as string]: `${cible.x}px`, ['--cy' as string]: `${cible.y}px`,
+        }}>{p.t}</span>
+      ))}
+      {h.eclats.map((e) => (
+        <span key={e.k} className="ti-eclat" style={{
+          left: '50%', top: '50%', animationDelay: `${e.dl}s`, ['--c' as string]: e.c,
+          ['--x' as string]: `${e.x}vmin`, ['--y' as string]: `${e.y}vmin`, ['--rot' as string]: `${e.rot}deg`,
+        }}>{e.t}</span>
+      ))}
+      <div className="ti-final" style={{ left: '50%', top: '50%' }}>
+        <span className="ti-tampon">COULÉ !</span>
+      </div>
+    </div>
+  );
+}
+
 /** Les cadeaux spectaculaires : 4,5 s d'animation sur toute la table, vue par tous. */
 function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: number; y: number }; legende: string }) {
   const hasard = useMemo(() => {
@@ -1204,6 +1259,7 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
           <span className="gc-hante" style={{ left: cible.x, top: cible.y }}>👻</span>
         </>
       )}
+      {objet === 'tempete_insultes' && <TempeteInsultes cible={cible} />}
       {objet === 'kraken_poche' && (
         <div className="gc-kraken" style={{ left: cible.x, top: cible.y }}>
           {[-70, -35, 0, 35, 70].map((r, k) => (

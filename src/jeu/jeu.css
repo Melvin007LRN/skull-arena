@@ -1780,3 +1780,82 @@
 /* Fenêtres en partie (fin de manche, pouvoirs…) : violet */
 .jeu .voile .fenetre { --n: #b866ff; }
 .jeu .voile .fenetre .bouton-or { --n: #ffcc33; }
+
+/* ================= Cadeau ultime : la Tempête d'insultes (8 s) ================= */
+.grand-cadeau.gc-tempete_insultes { animation: gc-vie-long 8.6s linear both; }
+.gc-tempete_insultes .gc-voile { display: none; }
+.gc-tempete_insultes .gc-legende { animation: gc-legende-long 8.6s cubic-bezier(.2,1.3,.4,1) both; border-color: #b866ff; box-shadow: 0 0 10px #b866ff, 0 0 26px #b866ff88; text-shadow: 0 0 8px #b866ff; top: 7% !important; }
+@keyframes gc-vie-long { 0% { opacity: 0; } 3% { opacity: 1; } 93% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes gc-legende-long { 0% { opacity: 0; transform: translateX(-50%) scale(.4); } 6% { opacity: 1; transform: translateX(-50%) scale(1.08); } 9% { transform: translateX(-50%) scale(1); } 92% { opacity: 1; } 100% { opacity: 0; } }
+.gc-tempete { position: absolute; inset: 0; overflow: hidden; }
+.gc-tempete > * { position: absolute; pointer-events: none; }
+
+/* Ciel d'orage qui tombe sur la table */
+.ti-ciel { inset: 0; background: radial-gradient(ellipse 120% 70% at 50% 0%, rgba(40,10,70,.85), rgba(6,3,14,.75) 55%, rgba(0,0,0,.55) 100%);
+  animation: ti-ciel 8.6s ease both; }
+@keyframes ti-ciel { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+.ti-nuage { top: -18%; width: 70%; height: 42%; border-radius: 50%; background: radial-gradient(ellipse at 50% 60%, #3a2a55, #1a1028 55%, transparent 72%);
+  filter: drop-shadow(0 10px 30px #000); animation: ti-nuage 8.6s ease-in-out both; will-change: transform; }
+.ti-nuage.n1 { left: -10%; } .ti-nuage.n2 { left: 22%; top: -24%; width: 60%; animation-delay: .15s; } .ti-nuage.n3 { left: 48%; animation-delay: .3s; }
+@keyframes ti-nuage { 0% { transform: translateY(-60%) scale(.8); opacity: 0; } 12% { transform: translateY(0) scale(1); opacity: 1; } 50% { transform: translateY(4%) scale(1.04); } 88% { opacity: 1; } 100% { transform: translateY(-50%); opacity: 0; } }
+.ti-eclair { inset: 0; background: radial-gradient(ellipse at 50% 10%, rgba(220,200,255,.95), rgba(184,102,255,.35) 40%, transparent 70%); opacity: 0; animation: ti-eclair .45s linear both; }
+@keyframes ti-eclair { 0% { opacity: 0; } 10% { opacity: 1; } 25% { opacity: .2; } 40% { opacity: .9; } 100% { opacity: 0; } }
+.ti-gouttes { inset: 0; }
+.ti-gouttes i { position: absolute; top: -10%; width: 1.5px; height: 46px; background: linear-gradient(transparent, rgba(190,210,255,.55)); transform: rotate(12deg);
+  animation: ti-goutte linear infinite; animation-fill-mode: backwards; }
+@keyframes ti-goutte { from { transform: translate(0, 0) rotate(12deg); } to { transform: translate(-6vw, calc(120 * var(--gh))) rotate(12deg); } }
+
+/* La cible : anneaux d'alerte et petit nuage d'orage personnel */
+.ti-cible { width: 0; height: 0; }
+.ti-anneau { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; border: 3px solid #ff2a4a;
+  box-shadow: 0 0 14px #ff2a4a, inset 0 0 14px #ff2a4a; opacity: 0; animation: ti-anneau 1.1s ease-out 1s 6 both; }
+.ti-anneau.a2 { animation-delay: 1.55s; border-color: #b866ff; box-shadow: 0 0 14px #b866ff, inset 0 0 14px #b866ff; }
+@keyframes ti-anneau { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(1.7); } }
+.ti-nuage-perso { position: absolute; left: 0; top: -82px; transform: translateX(-50%); font-size: 54px; filter: drop-shadow(0 0 12px #b866ff);
+  opacity: 0; animation: ti-nuage-perso 8.6s ease both; }
+@keyframes ti-nuage-perso { 0%, 8% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(.5); } 14% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  20%, 30%, 40%, 50%, 60%, 70% { transform: translateX(-46%) rotate(-4deg); } 25%, 35%, 45%, 55%, 65%, 75% { transform: translateX(-54%) rotate(4deg); } 88% { opacity: 1; } 100% { opacity: 0; } }
+
+/* La pluie d'insultes : des bulles néon qui tombent du ciel sur la cible */
+.ti-insulte { top: -12%; white-space: nowrap; font-family: var(--corps); font-weight: 900; font-size: calc(clamp(13px, calc(4.4 * var(--gh)), 22px) * var(--s));
+  padding: 4px 12px; border-radius: 999px; background: rgba(6,4,14,.85); border: 2px solid var(--c);
+  box-shadow: 0 0 8px var(--c), 0 0 20px color-mix(in srgb, var(--c) 50%, transparent), inset 0 0 8px color-mix(in srgb, var(--c) 30%, transparent);
+  text-shadow: 0 0 8px var(--c); opacity: 0; will-change: transform, opacity; animation-name: ti-insulte; animation-timing-function: cubic-bezier(.45,.05,.75,.9); animation-fill-mode: both; }
+@keyframes ti-insulte {
+  0% { opacity: 0; transform: translate(-50%, 0) rotate(var(--rot)) scale(.6); }
+  10% { opacity: 1; transform: translate(-50%, 0) rotate(var(--rot)) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--vx)), calc(115 * var(--gh))) rotate(calc(var(--rot) * -1.5)) scale(.85); }
+}
+/* Les insultes qui éclatent en gros sur la cible, façon bande dessinée */
+.ti-eclat { white-space: nowrap; font-family: var(--titre, 'Cinzel Decorative'), serif; font-weight: 900; font-size: clamp(24px, calc(10 * var(--gh)), 54px);
+  color: #fff; -webkit-text-stroke: 2px #000; paint-order: stroke fill;
+  text-shadow: 0 0 10px var(--c), 0 0 24px var(--c), 0 0 46px var(--c), 0 4px 0 #000;
+  opacity: 0; transform: translate(-50%, -50%) scale(0); will-change: transform, opacity; animation: ti-eclat 1.5s cubic-bezier(.2,1.6,.35,1) both; }
+@keyframes ti-eclat {
+  0% { opacity: 0; transform: translate(calc(-50% + var(--x) * .2), calc(-50% + var(--y) * .2)) scale(.2) rotate(0); }
+  18% { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.25) rotate(var(--rot)); }
+  30% { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1) rotate(var(--rot)); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 8vmin)) scale(1.05) rotate(var(--rot)); }
+}
+/* Le tampon final : COULÉ ! */
+.ti-final { width: 0; height: 0; }
+.ti-tampon { position: absolute; left: 0; top: 0; white-space: nowrap; transform: translate(-50%, -50%) rotate(-12deg) scale(4); opacity: 0;
+  font-family: var(--titre, 'Cinzel Decorative'), serif; font-weight: 900; font-size: clamp(34px, calc(16 * var(--gh)), 84px); color: #ff2a4a; letter-spacing: .06em;
+  padding: 4px 22px; border: 6px double #ff2a4a; border-radius: 14px; background: rgba(20,0,6,.75);
+  text-shadow: 0 0 10px #ff2a4a, 0 0 30px #ff2a4a; box-shadow: 0 0 20px #ff2a4a, 0 0 50px #ff2a4a88, inset 0 0 20px #ff2a4a66;
+  animation: ti-tampon 2.1s cubic-bezier(.3,1.5,.4,1) 6.45s both; }
+@keyframes ti-tampon {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-12deg) scale(4); }
+  14% { opacity: 1; transform: translate(-50%, -50%) rotate(-12deg) scale(.92); }
+  20% { transform: translate(-50%, -50%) rotate(-12deg) scale(1.04); }
+  26%, 85% { opacity: 1; transform: translate(-50%, -50%) rotate(-12deg) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(-12deg) scale(1.1); }
+}
+.grand-cadeau.gc-tempete_insultes { animation: gc-vie-long 8.6s linear both, ti-choc .5s linear 6.5s both; }
+@keyframes ti-choc { 0%, 100% { transform: none; } 20% { transform: translate(-10px, 6px); } 40% { transform: translate(9px, -7px); } 60% { transform: translate(-6px, -4px); } 80% { transform: translate(4px, 3px); } }
+
+@media (prefers-reduced-motion: reduce) { .grand-cadeau.gc-tempete_insultes { animation: gc-vie-long 8.6s linear both; } .ti-gouttes { display: none; } }
+.gc-tempete_insultes .gc-legende { top: auto !important; bottom: 4% !important; }
+.ti-eclat { font-size: clamp(22px, calc(8.5 * var(--gh)), 48px); max-width: 92%; }

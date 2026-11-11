@@ -30,6 +30,8 @@ export interface VuePublique {
   historique: ScoreManche[][];
   /** Partie avec l'extension. */
   extension: boolean;
+  /** Variante : les bonus comptent même si la mise est ratée. */
+  bonusToujours?: boolean;
   /** Mary Thorne : qui doit poser la carte prise (la carte elle-même reste secrète), et qui l'a prise. */
   imposee: { joueur: string; par: string } | null;
   /** Dernière salve : joueur qui doit poser sa carte supplémentaire. */
@@ -70,6 +72,7 @@ export function vuePublique(e: EtatPartie): VuePublique {
     scores: e.scores,
     historique: e.historique,
     extension: Boolean(e.extension),
+    bonusToujours: Boolean(e.bonusToujours),
     imposee: e.imposee ? { joueur: e.imposee.joueur, par: e.imposee.par } : null,
     salve: (() => {
       const a = joueurActif(e);

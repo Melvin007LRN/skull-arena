@@ -117,11 +117,12 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
             pluie_tresor: () => [200, 500, 800, 1100, 1500, 1900, 2400].forEach((ms) => setTimeout(son.piece, ms)),
             navire_fantome: () => sonBete.raie(),
             kraken_poche: () => sonBete.kraken(),
+            tempete_insultes: () => sonBete.tempete(),
           };
           sons[ligne.objet]?.();
           vibrer(200);
         } else setTimeout(() => son.impact(), 850);
-        setTimeout(() => setLancers((x) => x.filter((y) => y.id !== ligne.id)), grand ? 5000 : 3200);
+        setTimeout(() => setLancers((x) => x.filter((y) => y.id !== ligne.id)), grand ? (ligne.objet === 'tempete_insultes' ? 8800 : 5000) : 3200);
       })
       .subscribe();
     return () => { supabase.removeChannel(canal); };

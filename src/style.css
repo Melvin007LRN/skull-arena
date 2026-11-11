@@ -1267,3 +1267,13 @@ input:focus, textarea:focus { outline: none !important; border-color: var(--n) !
 }
 .curseur-volume input[type='range']::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 2px solid var(--n); box-shadow: 0 0 8px var(--n); }
 .jeu-menu .curseurs-volume { min-width: 210px; margin: 4px 0; }
+.regle-extension { display: flex; flex-direction: column; gap: 10px; }
+/* Le cadeau ultime dans la boutique */
+.grille-objets li.objet-ultime { position: relative; overflow: hidden; border: 2px solid #b866ff !important;
+  background: radial-gradient(ellipse at 20% 0%, rgba(184,102,255,.28), transparent 60%), radial-gradient(ellipse at 100% 100%, rgba(255,42,74,.22), transparent 60%), rgba(6,4,14,.9) !important;
+  box-shadow: 0 0 10px #b866ff, 0 0 28px #b866ff77, inset 0 0 18px #b866ff44 !important; animation: ultime-lueur 2.4s ease-in-out infinite; }
+.grille-objets li.objet-ultime::before { content: 'ULTIME'; position: absolute; top: 8px; right: -30px; transform: rotate(35deg); padding: 3px 34px;
+  font-family: var(--corps); font-weight: 900; font-size: 11px; letter-spacing: .2em; color: #fff; background: linear-gradient(90deg, #b866ff, #ff2a4a); box-shadow: 0 0 10px #b866ff; }
+.objet-ultime .objet-icone { filter: drop-shadow(0 0 12px #b866ff) !important; animation: ultime-icone 1.6s ease-in-out infinite alternate; }
+@keyframes ultime-lueur { 50% { box-shadow: 0 0 16px #ff2a4a, 0 0 40px #b866ff99, inset 0 0 24px #b866ff55 !important; } }
+@keyframes ultime-icone { to { transform: scale(1.12) rotate(-6deg); } }

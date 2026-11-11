@@ -120,7 +120,7 @@ const PAGES: Page[] = [
     cartes: ['noir_14', 'sirene_2'],
     contenu: (
       <>
-        <p>Les bonus ne comptent <strong>que si ta mise est exacte</strong>.</p>
+        <p>Les bonus ne comptent <strong>que si ta mise est exacte</strong>. L’hôte peut activer la variante « Bonus toujours comptés » dans le salon : ils comptent alors même si la mise est ratée.</p>
         <ul>
           <li>Capturer un 14 de couleur : <strong>+10</strong> · le 14 noir : <strong>+20</strong></li>
           <li>Une Sirène prise par un Pirate : <strong>+20</strong></li>

@@ -22,6 +22,8 @@ export const OBJETS: Record<string, { icone: string; nom: string; phrase: string
   pluie_tresor: { icone: '💰', nom: 'Pluie de trésor', phrase: 'fait pleuvoir l’or sur', grand: true },
   navire_fantome: { icone: '👻', nom: 'Navire fantôme', phrase: 'envoie le navire fantôme hanter', grand: true },
   kraken_poche: { icone: '🐙', nom: 'Kraken de poche', phrase: 'lâche le Kraken sur', grand: true },
+  // L'ultime : 8 secondes de tempête et une pluie d'insultes
+  tempete_insultes: { icone: '🌩️', nom: 'Tempête d’insultes', phrase: 'déchaîne la Tempête d’insultes sur', grand: true },
 };
 
 /** Cadres gagnés (jamais vendus) avec leur condition. */

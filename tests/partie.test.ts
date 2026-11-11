@@ -259,3 +259,12 @@ test('vues : la vue publique ne montre ni les mains ni les mises avant la révé
   assert.deepEqual(vuePublique(e).mises, { A: 1, B: 0, C: 1 });
   assert.deepEqual(vuePrivee(e, 'B').main, e.mains.B);
 });
+
+test('variante : les bonus comptent même si la mise est ratée', async () => {
+  const { calculerScoreJoueur } = await import('../src/engine/partie.ts');
+  const normal = calculerScoreJoueur({ manche: 3, mise: 2, plis: 1, bonus: 30, alliances: 0, rascal: 0 });
+  const variante = calculerScoreJoueur({ manche: 3, mise: 2, plis: 1, bonus: 30, alliances: 0, rascal: 0, bonusToujours: true });
+  assert.equal(normal.total, -10);
+  assert.equal(variante.total, 20);
+  assert.equal(variante.bonus, 30);
+});
