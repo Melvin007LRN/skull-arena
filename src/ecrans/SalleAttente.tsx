@@ -1,6 +1,7 @@
 // Salle d'attente : les joueurs s'installent autour de la table, se déclarent prêts, l'hôte lance.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { appel, partagerInvitation, type MembreSalon, type Salon } from '../lib/jeu.ts';
+import { Titre } from '../composants/Perso.tsx';
 import { Avatar } from '../composants/Avatar.tsx';
 import { inviterAmi, useAmis, useEnLigne } from '../lib/amis.ts';
 import { messageErreur } from '../lib/supabase.ts';
@@ -118,9 +119,9 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
           return (
             <div key={m.joueur_id} className={`siege ${m.pret || m.joueur_id === salon.hote ? 'pret' : ''}`} style={style}>
               <button type="button" className="siege-ouvrir" disabled={m.est_robot || m.joueur_id === moi} onClick={() => ouvrirProfil(m.joueur_id)} aria-label={`Profil de ${m.pseudo}`}>
-                <Avatar photo={m.photo_url} taille={58} alt={m.pseudo} cadre={m.cadre} />
+                <Avatar photo={m.photo_url} taille={58} alt={m.pseudo} cadre={m.cadre} compagnon={m.perso?.compagnon} />
               </button>
-              <span className="siege-nom">{m.joueur_id === salon.hote && '👑 '}{m.pseudo}</span>
+              <span className="siege-nom">{m.joueur_id === salon.hote && '👑 '}{m.pseudo}<Titre perso={m.perso} className="siege-titre" /></span>
               {suisHote && m.joueur_id !== moi && (
                 <button type="button" className="exclure"
                   onClick={() => faire(() => appel(m.est_robot ? 'retirer_robot' : 'exclure', { salon_id: salon.id, joueur_id: m.joueur_id }))}

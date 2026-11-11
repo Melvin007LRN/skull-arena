@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, messageErreur } from './lib/supabase.ts';
 import { chargerProfil, type Profil } from './lib/profil.ts';
+import { appliquerTheme } from './lib/perso.ts';
 import { Connexion } from './ecrans/Connexion.tsx';
 import { NouveauMotDePasse } from './ecrans/NouveauMotDePasse.tsx';
 import { Accueil } from './ecrans/Accueil.tsx';
@@ -77,6 +78,8 @@ export function App() {
   }, [session, recharger]);
 
   useEffect(() => window.scrollTo(0, 0), [ecran.nom]);
+  // Thème du site choisi à la boutique (couleur néon de tous les écrans).
+  useEffect(() => appliquerTheme(profil?.perso?.theme), [profil?.perso?.theme]);
 
   // À l'ouverture : lien d'invitation (?salon=CODE), sinon retour automatique dans la partie en cours.
   useEffect(() => {

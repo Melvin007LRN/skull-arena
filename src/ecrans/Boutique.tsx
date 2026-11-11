@@ -7,13 +7,21 @@ import {
 } from '../lib/boutique.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { NEONS, styleNeon } from '../lib/neons.ts';
+import { offrir } from '../lib/perso.ts';
+import { FenetreOffrir, RayonPerso } from './BoutiquePerso.tsx';
+
+type Onglet = 'objets' | 'neons' | 'cadres' | 'table' | 'pirate' | 'chat' | 'coffre';
+const ONGLETS: Array<[Onglet, string]> = [
+  ['objets', 'Objets'], ['table', 'Table'], ['pirate', 'Pirate'], ['neons', 'Néons'], ['cadres', 'Cadres'], ['chat', 'Chat'], ['coffre', 'Mon coffre'],
+];
 
 export function Louidors({ montant, grand = false }: { montant: number; grand?: boolean }) {
   return <span className={`louidors ${grand ? 'grand' : ''}`}><span className="piece-or" aria-hidden="true" />{montant}<small> Louidors</small></span>;
 }
 
 export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; retour: () => void; recharger: () => Promise<void> }) {
-  const [onglet, setOnglet] = useState<'objets' | 'neons' | 'cadres' | 'coffre'>('objets');
+  const [onglet, setOnglet] = useState<Onglet>('objets');
+  const [aOffrir, setAOffrir] = useState<Article | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
   const [inventaire, setInventaire] = useState<Record<string, number>>({});
   const [possedes, setPossedes] = useState<string[]>([]);
@@ -56,11 +64,10 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
       <div className="solde"><Louidors montant={profil.louidors} grand /></div>
       <p className="petit-texte centre">Gagne des Louidors à chaque partie comptée — {GAINS_LOUIDORS}.</p>
 
-      <div className="onglets">
-        <button type="button" className={onglet === 'objets' ? 'actif' : ''} onClick={() => setOnglet('objets')}>Objets</button>
-        <button type="button" className={onglet === 'neons' ? 'actif' : ''} onClick={() => setOnglet('neons')}>Néons</button>
-        <button type="button" className={onglet === 'cadres' ? 'actif' : ''} onClick={() => setOnglet('cadres')}>Cadres</button>
-        <button type="button" className={onglet === 'coffre' ? 'actif' : ''} onClick={() => setOnglet('coffre')}>Mon coffre</button>
+      <div className="onglets onglets-defilants">
+        {ONGLETS.map(([id, nom]) => (
+          <button key={id} type="button" className={onglet === id ? 'actif' : ''} onClick={() => { setOnglet(id); setMessage(null); }}>{nom}</button>
+        ))}
       </div>
       {message && <p className={`message ${message.ok ? 'info' : 'erreur'}`}>{message.texte}</p>}
 
@@ -79,6 +86,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                   <button type="button" className="bouton-sombre petit" disabled={enCours || !peutPayer(o.prix * 4)}
                     onClick={() => faire(() => acheter(o.id, 5), `5 × ${o.nom} ajoutés à ton coffre.`)}>×5 · {o.prix * 4}</button>
                 </div>
+                <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(o)}>🎁 Offrir</button>
               </li>
             ))}
           </ul>
@@ -97,6 +105,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                   <button type="button" className="bouton-sombre petit" disabled={enCours || !peutPayer(o.prix * 4)}
                     onClick={() => faire(() => acheter(o.id, 5), `5 × ${o.nom} ajoutés à ton coffre.`)}>×5 · {o.prix * 4}</button>
                 </div>
+                <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(o)}>🎁 Offrir</button>
               </li>
             ))}
           </ul>
@@ -125,6 +134,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                         onClick={() => faire(() => equiperNeon(c.id), `${c.nom} équipé !`)}>{neonActuel === c.id ? 'Équipé' : 'Équiper'}</button>
                     : <button type="button" className="bouton-or petit" disabled={enCours || !peutPayer(c.prix)}
                         onClick={() => confirm(`Acheter le ${c.nom} pour ${c.prix} Louidors ?`) && faire(() => acheter(c.id), `${c.nom} acheté ! Équipe-le pour l’afficher.`)}>{c.prix} Louidors</button>}
+                  <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(c)}>🎁 Offrir</button>
                 </li>
               );
             })}
@@ -146,6 +156,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                         onClick={() => faire(() => equiperCadre(c.id), `${c.nom} équipé !`)}>{actuel === c.id ? 'Équipé' : 'Équiper'}</button>
                     : <button type="button" className="bouton-or petit" disabled={enCours || !peutPayer(c.prix)}
                         onClick={() => confirm(`Acheter le ${c.nom} pour ${c.prix} Louidors ?`) && faire(() => acheter(c.id), `${c.nom} acheté !`)}>{c.prix} Louidors</button>}
+                  <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(c)}>🎁 Offrir</button>
                 </li>
               );
             })}
@@ -167,6 +178,22 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
             })}
           </ul>
         </section>
+      )}
+
+      {(onglet === 'table' || onglet === 'pirate' || onglet === 'chat') && (
+        <RayonPerso onglet={onglet} profil={profil} articles={articles} possedes={possedes} enCours={enCours} faire={faire}
+          acheter={(a) => confirm(`Acheter « ${a.nom} » pour ${a.prix} Louidors ?`) && faire(() => acheter(a.id), `${a.nom} acheté !`)}
+          offrirArticle={setAOffrir} />
+      )}
+
+      {aOffrir && (
+        <FenetreOffrir article={aOffrir} moi={profil.id} enCours={enCours} fermer={() => setAOffrir(null)}
+          offrir={(ami, pseudo) => {
+            if (!confirm(`Offrir « ${aOffrir.nom} » à ${pseudo} pour ${aOffrir.prix} Louidors ?`)) return;
+            const a = aOffrir;
+            setAOffrir(null);
+            faire(() => offrir(a.id, ami), `${a.nom} offert à ${pseudo} ! 🎁`);
+          }} />
       )}
 
       {onglet === 'coffre' && (

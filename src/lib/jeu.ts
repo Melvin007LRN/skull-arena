@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase.ts';
 import type { VuePublique, VuePrivee } from '../engine/vues.ts';
+import type { Perso } from './perso.ts';
 
 export interface Salon {
   id: string;
@@ -21,6 +22,7 @@ export interface MembreSalon {
   photo_url: string | null;
   cadre?: string | null;
   couleur_nom?: string | null;
+  perso?: Perso | null;
   est_robot: boolean;
   pret: boolean;
   place: number;

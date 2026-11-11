@@ -1,7 +1,7 @@
 // Néons de pseudo : la couleur du nom d'un pirate, achetée à la boutique et vue par tous en partie.
 import type { CSSProperties } from 'react';
 
-export interface Neon { id: string; nom: string; couleurs: string[]; anime?: boolean }
+export interface Neon { id: string; nom: string; couleurs: string[]; anime?: boolean; effet?: string }
 
 export const NEONS: Record<string, Neon> = {
   neon_rouge: { id: 'neon_rouge', nom: 'Néon Rubis', couleurs: ['#ff2a4a'] },
@@ -13,6 +13,12 @@ export const NEONS: Record<string, Neon> = {
   neon_glace: { id: 'neon_glace', nom: 'Néon Glacier', couleurs: ['#cfefff'] },
   neon_or: { id: 'neon_or', nom: 'Néon Doublon', couleurs: ['#ffcc33'] },
   neon_arcenciel: { id: 'neon_arcenciel', nom: 'Néon Arc-en-ciel', couleurs: ['#ff2a4a', '#ffcc33', '#2dff7a', '#2ee6ff', '#b866ff'], anime: true },
+  // Pseudos animés
+  neon_flamme: { id: 'neon_flamme', nom: 'Pseudo de feu', couleurs: ['#ff7a1a'], effet: 'flamme' },
+  neon_spectre: { id: 'neon_spectre', nom: 'Pseudo spectral', couleurs: ['#7dffc4'], effet: 'spectre' },
+  neon_eclair: { id: 'neon_eclair', nom: 'Pseudo électrique', couleurs: ['#2ee6ff'], effet: 'eclair' },
+  neon_maree: { id: 'neon_maree', nom: 'Pseudo marée', couleurs: ['#2ee6ff', '#3d9bff', '#b866ff'], effet: 'maree' },
+  neon_tresor: { id: 'neon_tresor', nom: 'Or scintillant', couleurs: ['#ffcc33'], effet: 'tresor' },
 };
 
 const clair = (h: string) => {
@@ -28,7 +34,7 @@ export function styleNeon(id: string | null | undefined): { style?: CSSPropertie
   if (n.anime) return { className: 'pseudo-neon arc-en-ciel' };
   const c = n.couleurs[0];
   return {
-    className: 'pseudo-neon perso',
+    className: `pseudo-neon perso${n.effet ? ` effet-${n.effet}` : ''}`,
     style: { ['--neon-clair' as string]: clair(c), ['--neon-ombre' as string]: `0 0 4px ${c}, 0 0 10px ${c}, 0 0 20px ${c}`, ['--neon-nom' as string]: c },
   };
 }

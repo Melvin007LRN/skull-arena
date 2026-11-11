@@ -10,6 +10,8 @@ import { debloquerSon, musique, son, sonBete, vibrer } from '../lib/sons.ts';
 import { couleurImposeeJoker, COULEURS_JOKER, resoudrePli, role, type CarteJouee } from '../engine/pli.ts';
 import { OBJETS } from '../lib/boutique.ts';
 import { styleNeon } from '../lib/neons.ts';
+import { article } from '../lib/perso.ts';
+import { DosCarte, Eclats as EclatsPerso, PluieEmojis, Titre } from '../composants/Perso.tsx';
 import { CurseursVolume } from '../composants/CurseursVolume.tsx';
 import { useBloques, useSocial } from '../lib/social.ts';
 
@@ -110,6 +112,8 @@ export interface PropsTable {
   inventaire?: Record<string, number>;
   lancerObjet?: (objet: string, cible: string) => Promise<boolean>;
   envoyerReaction?: (emoji: string) => void;
+  /** Emotes en plus (packs achetés). */
+  emotes?: string[];
   /** Record à battre : meilleur score jamais réalisé sur SKULL ARENA. */
   record?: { pseudo: string; score: number } | null;
 }
@@ -182,6 +186,9 @@ export function TableJeu(p: PropsTable) {
   const photo = (id: string) => infos.get(id)?.photo_url ?? null;
   const cadre = (id: string) => infos.get(id)?.cadre ?? null;
   const neonNom = (id: string) => styleNeon(infos.get(id)?.couleur_nom);
+  const persoDe = (id: string | null | undefined) => (id ? infos.get(id)?.perso ?? null : null);
+  const compagnon = (id: string) => persoDe(id)?.compagnon ?? null;
+  const monTapis = persoDe(moi)?.tapis;
   const piloteParRobot = (j: string) => vue.robots?.includes(j) || vue.remplaces?.includes(j);
   const finie = vue.phase === 'fin_partie' || vue.annulee;
   const tRevelation = vue.rapide ? REVELATION_RAPIDE_MS : REVELATION_MS;
@@ -240,6 +247,22 @@ export function TableJeu(p: PropsTable) {
     const t = setTimeout(() => { son.fanfare(); vibrer(200); }, 400);
     return () => clearTimeout(t);
   }, [jeGagne]);
+
+  // ---------- Entrées en scène : au tout début de la partie, chacun son effet ----------
+  const [entrees, setEntrees] = useState<Array<{ cle: string; joueur: string; effet: string }>>([]);
+  const entreesJouees = useRef(false);
+  useEffect(() => {
+    if (entreesJouees.current || vue.manche !== 1 || vue.phase !== 'mise' || vue.historique.length > 0) return;
+    entreesJouees.current = true;
+    const avec = vue.joueurs.filter((j) => article(persoDe(j)?.entree));
+    const ts = avec.map((j, i) => setTimeout(() => {
+      const cle = `${j}-${Date.now()}`;
+      setEntrees((x) => [...x, { cle, joueur: j, effet: persoDe(j)!.entree! }]);
+      son.impact();
+      setTimeout(() => setEntrees((x) => x.filter((y) => y.cle !== cle)), 2600);
+    }, 700 + i * 900));
+    return () => ts.forEach(clearTimeout);
+  }, [vue.manche, vue.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- Décompte de 3 s au début de chaque manche ----------
   useEffect(() => {
@@ -564,7 +587,7 @@ export function TableJeu(p: PropsTable) {
 
       {/* Table */}
       <section className={`jeu-arene ${autres.length >= 5 ? 'nombreux' : ''}`}>
-        <div className={`jeu-table ${effet ? `effet-${effet}` : ''}`}
+        <div className={`jeu-table ${monTapis ? `tapis-fond ${monTapis}` : ''} ${effet ? `effet-${effet}` : ''}`}
           onClick={(e) => { if (e.target === e.currentTarget && !pliAffiche && vue.dernierPli) setVoirDernierPli(true); }}>
           <div className="jeu-table-boussole" />
         </div>
@@ -623,14 +646,14 @@ export function TableJeu(p: PropsTable) {
             <div key={j} className={`adversaire ${actif ? 'actif' : ''}`} style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
               <div className="adv-dos" aria-hidden="true">
                 {Array.from({ length: Math.min(nbCartes, 6) }, (_, k) => (
-                  <img key={k} src="/decor/dos-carte.webp" alt="" style={{ transform: `rotate(${(k - Math.min(nbCartes, 6) / 2) * 9}deg)` }} />
+                  <DosCarte key={k} modele={persoDe(j)?.dos} style={{ transform: `rotate(${(k - Math.min(nbCartes, 6) / 2) * 9}deg)` }} />
                 ))}
               </div>
               <div className="adv-avatar" data-joueur={j} onClick={() => { if (!vue.robots?.includes(j)) ouvrirProfil(j); }}>
                 {actif && vue.phase === 'jeu' && <span className="adv-sablier" title="À son tour">⏳</span>}
                 {vue.joueurs.indexOf(j) === vue.couronne && <span className="adv-couronne">👑</span>}
                 {vue.phase === 'mise' && vue.meneur === j && <span className="adv-ouvre" title="Ouvre le premier pli">▶ 1er</span>}
-                <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} cadre={cadre(j)} />
+                <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} cadre={cadre(j)} compagnon={compagnon(j)} />
                 {humain(j) && <span className={`pastille-co ${connecte(j) ? 'en-ligne' : 'hors-ligne'}`} title={connecte(j) ? 'Connecté' : 'Déconnecté'} />}
                 {vue.mises && (() => { const o = objectif(j); return <span className={`adv-ruban ${o ? `obj-${o.ton}` : ''}`} title={o?.texte}>{vue.plisGagnes[j]}/{miseDe(j)}</span>; })()}
                 <Badges j={j} />
@@ -662,7 +685,7 @@ export function TableJeu(p: PropsTable) {
       <div className={`moi-coin ${aMoi ? 'actif' : ''}`} data-joueur={moi}>
         {vue.phase === 'mise' && vue.meneur === moi && <span className="adv-ouvre" title="Tu ouvres le premier pli">▶ 1er</span>}
         <span className={`moi-nom ${neonNom(moi).className}`} style={neonNom(moi).style}>{pseudo(moi)}</span>
-        <Avatar photo={photo(moi)} taille={56} cadre={cadre(moi)} />
+        <Avatar photo={photo(moi)} taille={56} cadre={cadre(moi)} compagnon={compagnon(moi)} />
         <span className="adv-ruban">{vue.mises ? `${vue.plisGagnes[moi]}/${miseDe(moi)}` : vue.aMise[moi] ? '✓' : '…'}</span>
         <Badges j={moi} />
         {vue.joueurs.indexOf(moi) === vue.couronne && <span className="adv-couronne">👑</span>}
@@ -748,7 +771,7 @@ export function TableJeu(p: PropsTable) {
         <div className="panneau-phrases">
           {p.envoyerReaction && (
             <div className="rangee-emojis">
-              {EMOJIS.map((e) => <button key={e} type="button" onClick={() => { p.envoyerReaction!(e); setChatOuvert(false); }}>{e}</button>)}
+              {[...EMOJIS, ...(p.emotes ?? [])].map((e) => <button key={e} type="button" onClick={() => { p.envoyerReaction!(e); setChatOuvert(false); }}>{e}</button>)}
             </div>
           )}
           {p.phrases.map((t) => (
@@ -921,8 +944,9 @@ export function TableJeu(p: PropsTable) {
               return (
                 <div key={j} className={`marche marche-${rang + 1}`}>
                   {rang === 0 && <span className="podium-couronne">👑</span>}
-                  <Avatar photo={photo(j)} taille={rang === 0 ? 84 : 64} cadre={cadre(j)} />
+                  <Avatar photo={photo(j)} taille={rang === 0 ? 84 : 64} cadre={cadre(j)} compagnon={compagnon(j)} />
                   <strong>{pseudo(j)}</strong>
+                  <Titre perso={persoDe(j)} className="podium-titre" />
                   <span>{vue.scores[j]} pts</span>
                   <div className="socle">{rang + 1}</div>
                 </div>
@@ -948,7 +972,11 @@ export function TableJeu(p: PropsTable) {
           </div>
         </Fenetre>
       )}
-      {!pliAffiche && jeGagne && <PluieOr />}
+      {!pliAffiche && vue.phase === 'fin_partie' && !vue.annulee && (() => {
+        // Célébration choisie par le vainqueur (vue par toute la table), sinon la pluie d'or pour le gagnant.
+        const pluie = article(persoDe(classement[0])?.victoire)?.emojis;
+        return pluie ? <PluieEmojis emojis={pluie} /> : jeGagne ? <PluieOr /> : null;
+      })()}
       {vue.annulee && (
         <Fenetre titre="Partie annulée" sousTitre="Plus aucun pirate humain à bord : cette partie ne compte pas.">
           <button type="button" className="bouton-or" onClick={p.retourAccueil}>Retour au port</button>
@@ -1018,6 +1046,9 @@ export function TableJeu(p: PropsTable) {
           ))}
         </div>
       )}
+
+      {/* Personnalisations : entrées en scène et effets de pli */}
+      <EffetsPerso racine={racine} entrees={entrees} pli={resultat?.gagnant ? { joueur: resultat.gagnant, effet: persoDe(resultat.gagnant)?.pli ?? null, cle: `${vue.manche}-${vue.joueurs.reduce((t, j) => t + (vue.plisGagnes[j] ?? 0), 0)}` } : null} />
 
       {/* Objets lancés et réactions */}
       <Projectiles racine={racine} lancers={p.lancers ?? []} reactions={(p.reactions ?? []).filter((r) => !muets.includes(r.de))} pseudo={pseudo} />
@@ -1574,5 +1605,42 @@ function TableauScores({ vue, moi, pseudo, photo, cadre, record, fermer }: {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Effets des personnalisations sur les avatars : entrée en scène et pli remporté. */
+function EffetsPerso({ racine, entrees, pli }: {
+  racine: RefObject<HTMLDivElement | null>;
+  entrees: Array<{ cle: string; joueur: string; effet: string }>;
+  pli: { joueur: string; effet: string | null; cle: string } | null;
+}) {
+  return (
+    <div className="projectiles effets-perso" aria-hidden="true">
+      {entrees.map((e) => <EffetSurJoueur key={e.cle} racine={racine} joueur={e.joueur} effet={e.effet} nomVisible />)}
+      {pli?.effet && <EffetSurJoueur key={pli.cle} racine={racine} joueur={pli.joueur} effet={pli.effet} retard={0.15} />}
+    </div>
+  );
+}
+
+/** Mesure la place de l'avatar une fois affiché, puis lance les éclats dessus. */
+function EffetSurJoueur({ racine, joueur, effet, retard = 0, nomVisible = false }: {
+  racine: RefObject<HTMLDivElement | null>; joueur: string; effet: string; retard?: number; nomVisible?: boolean;
+}) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    // Une image plus tard : la table (et sa référence) est alors en place.
+    const t = requestAnimationFrame(() => {
+      const r = racine.current;
+      if (r) setPos(centreDans(r, r.querySelector(`[data-joueur="${joueur}"]`)));
+    });
+    return () => cancelAnimationFrame(t);
+  }, [racine, joueur]);
+  const a = article(effet);
+  if (!a?.emojis || !pos) return null;
+  return (
+    <span>
+      <EclatsPerso x={pos.x} y={pos.y} emojis={a.emojis} mode={a.mode} couleur={a.couleur} retard={retard} nombre={nomVisible ? 18 : undefined} />
+      {nomVisible && <span className="entree-nom" style={{ left: pos.x, top: pos.y }}>{a.nom}</span>}
+    </span>
   );
 }

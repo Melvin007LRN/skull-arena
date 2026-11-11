@@ -12,6 +12,8 @@ import { CADRES_GAGNES, chargerBoutique, chargerCadresPossedes, equiperCadre, ty
 import { Avatar } from '../composants/Avatar.tsx';
 import { Louidors } from './Boutique.tsx';
 import { Icone } from '../composants/Icone.tsx';
+import { Titre } from '../composants/Perso.tsx';
+import { chargerPaliers, gainPalier, PALIER, reclamerPalier } from '../lib/perso.ts';
 
 type Onglet = 'profil' | 'cadres' | 'badges' | 'stats' | 'historique';
 const ONGLETS: Array<{ id: Onglet; icone: string; nom: string }> = [
@@ -68,15 +70,16 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
       </div>
 
       {/* Carte d'identité */}
-      <section className="profil-heros neon">
+      <section className={`profil-heros neon ${profil.perso?.banniere ? `banniere-perso ${profil.perso.banniere}` : ''}`}>
         <button type="button" className="heros-portrait" onClick={() => fichier.current?.click()} disabled={enCours} aria-label="Changer la photo">
           <span className="heros-aura" aria-hidden="true" />
-          <Avatar photo={profil.photo_url} taille={124} alt={profil.pseudo} cadre={profil.cadre} />
+          <Avatar photo={profil.photo_url} taille={124} alt={profil.pseudo} cadre={profil.cadre} compagnon={profil.perso?.compagnon} />
           <span className="heros-photo">📷</span>
         </button>
         <input ref={fichier} type="file" accept="image/*" hidden
           onChange={(e) => { const f = e.target.files?.[0]; if (f) changerPhoto(f); e.target.value = ''; }} />
         {(() => { const n = styleNeon(profil.couleur_nom); return <h1 className={`heros-pseudo ${profil.couleur_nom ? n.className : ''}`} style={n.style}>{profil.pseudo}</h1>; })()}
+        <Titre perso={profil.perso} className="heros-titre" />
         <div className="heros-grade">
           <span className="heros-embleme">{EMBLEMES[g]}</span>
           <span>{g}</span>
@@ -116,6 +119,10 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
 
       {onglet === 'profil' && (
         <>
+          <CoffresNiveau profil={profil} recharger={recharger} />
+          {ouvrirBoutique && (
+            <button type="button" className="bouton-sombre bouton-tenue" onClick={ouvrirBoutique}>🎨 Personnaliser mon pirate</button>
+          )}
           <section className="parchemin neon profil-bloc">
             <div className="bloc-titre"><h2 className="titre-pirate">Mes badges</h2><button type="button" className="lien" onClick={() => setOnglet('badges')}>{badgesObtenus}/{BADGES.length} · tout voir ›</button></div>
             <div className="medailles">
@@ -364,6 +371,43 @@ function Compte({ profil, enCours, action, recharger }: { profil: Profil; enCour
           <button type="button" className="lien" onClick={() => setConfirmSuppression(false)}>Annuler</button>
         </div>
       )}
+    </section>
+  );
+}
+
+/** Coffres de niveau : un coffre de Louidors tous les 5 niveaux. */
+function CoffresNiveau({ profil, recharger }: { profil: Profil; recharger: () => Promise<void> }) {
+  const [ouverts, setOuverts] = useState<number[] | null>(null);
+  const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null);
+  const [enCours, setEnCours] = useState(false);
+  useEffect(() => { chargerPaliers().then(setOuverts).catch(() => setOuverts([])); }, []);
+  const n = niveau(profil.xp);
+  const prochain = (Math.floor(n / PALIER) + 1) * PALIER;
+  const paliers = Array.from({ length: Math.floor(n / PALIER) }, (_, i) => (i + 1) * PALIER);
+  const aOuvrir = paliers.filter((p) => !ouverts?.includes(p));
+  async function ouvrir(p: number) {
+    setEnCours(true); setMessage(null);
+    try { await reclamerPalier(p); setOuverts((o) => [...(o ?? []), p]); await recharger(); setMessage({ ok: true, texte: `Coffre du niveau ${p} ouvert : +${gainPalier(p)} Louidors !` }); }
+    catch (e) { setMessage({ ok: false, texte: messageErreur(e) }); }
+    finally { setEnCours(false); }
+  }
+  return (
+    <section className="parchemin neon profil-bloc coffres-niveau">
+      <div className="bloc-titre"><h2 className="titre-pirate">Coffres de niveau</h2></div>
+      {message && <p className={`message ${message.ok ? 'info' : 'erreur'}`}>{message.texte}</p>}
+      {ouverts === null ? <p className="petit-texte">Chargement…</p> : (
+        <div className="coffres">
+          {aOuvrir.map((p) => (
+            <button key={p} type="button" className="coffre-niveau pret" disabled={enCours} onClick={() => ouvrir(p)}>
+              <span>🧰</span><strong>Niv. {p}</strong><small>Ouvrir · +{gainPalier(p)}</small>
+            </button>
+          ))}
+          <div className="coffre-niveau">
+            <span>🔒</span><strong>Niv. {prochain}</strong><small>+{gainPalier(prochain)} Louidors</small>
+          </div>
+        </div>
+      )}
+      <p className="petit-texte">Un coffre de Louidors tous les {PALIER} niveaux. Encore {prochain - n} niveau{prochain - n > 1 ? 'x' : ''} avant le prochain.</p>
     </section>
   );
 }

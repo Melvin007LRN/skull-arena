@@ -6,7 +6,8 @@ import { TableJeu } from './TableJeu.tsx';
 import { creerPaquet } from '../engine/cards.ts';
 import { niveau } from '../lib/profil.ts';
 import { usePhrases } from '../lib/phrases.ts';
-import { chargerInventaire, OBJETS, utiliserObjet } from '../lib/boutique.ts';
+import { chargerCadresPossedes, chargerInventaire, OBJETS, utiliserObjet } from '../lib/boutique.ts';
+import { extrasChat, TOUTES_PHRASES_PREMIUM } from '../lib/perso.ts';
 import { son, sonBete, vibrer } from '../lib/sons.ts';
 import './jeu.css';
 
@@ -40,7 +41,15 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   partieId: string; membres: MembreSalon[]; moi: string; hote: string; retourAccueil: () => void;
 }) {
   const { vue, main } = usePartie(partieId, moi);
-  const phrases = usePhrases();
+  const phrasesBase = usePhrases();
+  // Packs de phrases et d'emotes achetés à la boutique.
+  const [extras, setExtras] = useState<{ phrases: string[]; emotes: string[] }>({ phrases: [], emotes: [] });
+  useEffect(() => {
+    Promise.all([chargerCadresPossedes(), supabase.from('profils').select('est_admin').eq('id', moi).maybeSingle()])
+      .then(([possedes, { data }]) => setExtras(extrasChat(possedes, Boolean((data as { est_admin?: boolean } | null)?.est_admin))))
+      .catch(() => {});
+  }, [moi]);
+  const phrases = useMemo(() => [...phrasesBase, ...extras.phrases.filter((t) => !phrasesBase.includes(t))], [phrasesBase, extras.phrases]);
   const phrasesRef = useRef(phrases);
   phrasesRef.current = phrases;
   const [enCours, setEnCours] = useState(false);
@@ -195,7 +204,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
     });
     canal.on('broadcast', { event: 'phrase' }, ({ payload }) => {
       const { de, texte } = payload as { de: string; texte: string };
-      if (!phrasesRef.current.includes(texte)) return;
+      if (!phrasesRef.current.includes(texte) && !TOUTES_PHRASES_PREMIUM.includes(texte)) return;
       clearTimeout(minuterie);
       setBulle({ de, texte, cle: Date.now() });
       minuterie = window.setTimeout(() => setBulle(null), 2600);
@@ -245,7 +254,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   return (
     <TableJeu
       vue={vue} main={main} membres={tousMembres} moi={moi} hote={hote} gain={gain} bilan={bilan} rejouer={rejouer}
-      lancers={lancers} reactions={reactions} inventaire={inventaire} lancerObjet={lancerObjet} envoyerReaction={envoyerReaction}
+      lancers={lancers} reactions={reactions} emotes={extras.emotes} inventaire={inventaire} lancerObjet={lancerObjet} envoyerReaction={envoyerReaction}
       enCours={enCours} erreur={erreur} bulle={bulle} phrases={phrases} presents={presents} record={record}
       envoyer={envoyer} envoyerPhrase={envoyerPhrase}
       quitter={async () => { try { await appel('abandonner', { partie_id: partieId }); } catch { /* déjà finie */ } sortir(); }}

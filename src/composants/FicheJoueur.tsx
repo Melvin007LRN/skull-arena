@@ -8,6 +8,7 @@ import {
 import { demanderAmi, inviterAmi, useEnLigne } from '../lib/amis.ts';
 import { bloquer, MOTIFS_SIGNALEMENT, rechargerBlocages, signaler, useBloques, useConversation, useSocial } from '../lib/social.ts';
 import { Avatar } from './Avatar.tsx';
+import { Titre } from './Perso.tsx';
 
 type Lien = 'aucun' | 'attente_envoyee' | 'attente_recue' | 'ami';
 
@@ -54,13 +55,14 @@ export function FicheJoueur({ joueur, moi, fermer, salonInvitation }: { joueur: 
           const prec = precisionMises(p);
           return (
             <>
-              <div className="fiche-entete">
+              <div className={`fiche-entete ${p.perso?.banniere ? `banniere-perso ${p.perso.banniere}` : ''}`}>
                 <span className="ami-avatar">
-                  <Avatar photo={p.photo_url} taille={96} cadre={p.cadre} alt={p.pseudo} />
+                  <Avatar photo={p.photo_url} taille={96} cadre={p.cadre} alt={p.pseudo} compagnon={p.perso?.compagnon} />
                   {!estMoi && <span className={`pastille-co ${enLigne.has(joueur) ? 'en-ligne' : 'hors-ligne'}`} />}
                 </span>
                 <div>
                   <h2 className="titre-pirate">{p.pseudo}</h2>
+                  <Titre perso={p.perso} />
                   <p className="grade">Niveau {n} · {grade(n)}</p>
                   <small>{enLigne.has(joueur) ? '🟢 En ligne' : 'Hors ligne'}{p.est_admin ? ' · ⚓ Capitaine du navire' : ''}</small>
                 </div>

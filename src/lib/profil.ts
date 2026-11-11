@@ -1,4 +1,5 @@
 import { supabase } from './supabase.ts';
+import type { Perso } from './perso.ts';
 
 export interface Profil {
   id: string;
@@ -20,6 +21,7 @@ export interface Profil {
   louidors: number;
   cadre: string | null;
   couleur_nom?: string | null;
+  perso?: Perso | null;
 }
 
 export const PSEUDO_REGEX = /^[A-Za-z0-9_\-À-ÿ]{3,16}$/;

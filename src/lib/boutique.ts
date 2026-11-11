@@ -2,7 +2,7 @@
 import { supabase } from './supabase.ts';
 import { niveau, type Profil } from './profil.ts';
 
-export interface Article { id: string; type: 'objet' | 'cadre' | 'couleur'; nom: string; icone: string; prix: number; ordre: number }
+export interface Article { id: string; type: 'objet' | 'cadre' | 'couleur' | 'perso'; nom: string; icone: string; prix: number; ordre: number }
 
 /** Objets lançables en partie (icône affichée pendant le vol). */
 export const OBJETS: Record<string, { icone: string; nom: string; phrase: string; grand?: boolean }> = {
