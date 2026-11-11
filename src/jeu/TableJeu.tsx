@@ -42,7 +42,7 @@ export function regleCarte(id: string): { nom: string; texte: string } {
     case 'joker': return { nom: 'Joker 15', texte: 'Un 15 jaune, violet ou vert. Si la couleur n’est pas encore lancée, tu la choisis ; sinon il prend la couleur demandée. Sur un pli noir, il perd contre le noir. Il se pose toujours.' };
     case 'second': return { nom: 'Le Second', texte: 'Bat toutes les cartes sauf le Skull King et les Sirènes. S’il gagne, il prend les pouvoirs des Pirates capturés (sans leurs bonus). Capturé par le Skull King ou une Sirène : +30.' };
     case 'raie': return { nom: 'Raie tachetée', texte: 'Léviathan : la plus petite carte numérotée gagne le pli (égalité : la première posée). Avec d’autres léviathans, le dernier posé décide.' };
-    case 'davy': return { nom: 'Casier de Davy Jones', texte: 'Ne gagne jamais. Détruit tous les léviathans du pli (Kraken, Baleine, Raie), puis le pli se joue normalement. Le gagnant touche +20 par léviathan détruit.' };
+    case 'davy': return { nom: 'Casier de Davy Jones', texte: 'Ne gagne jamais. Détruit tous les léviathans du pli (Kraken, Baleine, Raie), puis le pli se joue normalement. Celui qui pose le Casier touche +20 par léviathan détruit.' };
     case 'planche': return { nom: 'Supplice de la planche', texte: 'Ne gagne jamais. À la fin du pli, jette un Pirate à la mer (tu choisis s’il y en a plusieurs) : le pli se joue comme s’il n’avait pas été posé.' };
     case 'salve': return { nom: 'Dernière salve', texte: 'Ne gagne jamais (ce n’est pas une Fuite). Quand tout le monde a joué, tu poses immédiatement une deuxième carte. Tu ne joueras donc pas le dernier pli de la manche.' };
     case 'skull_king': return { nom: 'Skull King', texte: 'Bat les Pirates (+30 par Pirate capturé) mais tombe face à une Sirène.' };
@@ -1332,13 +1332,13 @@ interface GrandEvenement { type: TypeEvenement; /** Classe d'animation, si diff�
 /** Repère les grands moments d'un pli terminé. */
 function detecterEvenement(
   cartes: Array<{ joueur: string; carteId: string; tigresse?: 'pirate' | 'fuite' }>,
-  r: { effet: string; gagnant: string | null; indexGagnant: number | null; bonus: number; retire?: number | null; detruits?: number[] },
+  r: { effet: string; gagnant: string | null; indexGagnant: number | null; bonus: number; retire?: number | null; detruits?: number[]; davy?: { joueur: string; points: number } | null },
   pseudo: (id: string) => string,
 ): GrandEvenement | null {
   const ids = cartes.map((c) => c.carteId);
   if (r.detruits?.length) {
     return { type: 'kraken', classe: 'davy', titre: 'Le Casier de Davy Jones !', carte: 'davy_jones', son: 'krakenFort', victimes: r.detruits.map((i) => ids[i]),
-      texte: `${r.detruits.length > 1 ? 'Les léviathans sombrent' : 'Le léviathan sombre'} au fond des mers${r.gagnant ? ` · ${pseudo(r.gagnant)} +${20 * r.detruits.length}` : ''}` };
+      texte: `${r.detruits.length > 1 ? 'Les léviathans sombrent' : 'Le léviathan sombre'} au fond des mers · ${pseudo(r.davy?.joueur ?? cartes.find((c) => c.carteId === 'davy_jones')?.joueur ?? '')} +${20 * r.detruits.length}` };
   }
   if (r.retire !== null && r.retire !== undefined) {
     return { type: 'abordage', classe: 'planche', titre: 'Par-dessus bord !', carte: 'planche', son: 'abordageFort', victimes: [ids[r.retire]],

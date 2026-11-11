@@ -122,6 +122,8 @@ export interface ResultatPli {
   retire: number | null;
   /** Index des léviathans détruits par le Casier de Davy Jones. */
   detruits: number[];
+  /** Bonus du Casier de Davy Jones : +20 par léviathan détruit, pour le joueur qui a posé le Casier. */
+  davy: { joueur: string; points: number } | null;
 }
 
 /** Gagnant selon la hiérarchie normale, parmi `indices`, sans tenir compte des léviathans. */
@@ -162,6 +164,8 @@ export function resoudrePli(cartes: readonly CarteJouee[], retire: number | null
   const avecDavy = actives.some((i) => role(cartes[i]) === 'davy');
   const detruits = avecDavy ? actives.filter((i) => LEVIATHANS.has(role(cartes[i]))) : [];
   actives = actives.filter((i) => !detruits.includes(i));
+  const indexDavy = avecDavy ? actives.find((i) => role(cartes[i]) === 'davy')! : -1;
+  const davy = detruits.length > 0 ? { joueur: cartes[indexDavy].joueur, points: 20 * detruits.length } : null;
 
   // Plusieurs léviathans : seul le dernier posé compte.
   const leviathans = actives.filter((i) => LEVIATHANS.has(role(cartes[i])));
@@ -170,7 +174,7 @@ export function resoudrePli(cartes: readonly CarteJouee[], retire: number | null
 
   const vide = {
     gagnant: null, bonus: 0, detailBonus: [] as string[], alliances: [] as Array<[string, string]>,
-    pouvoir: null, pouvoirs: [] as NomPirate[], indexGagnant: null, retire, detruits,
+    pouvoir: null, pouvoirs: [] as NomPirate[], indexGagnant: null, retire, detruits, davy,
   };
 
   if (effet === 'kraken') {
@@ -210,10 +214,6 @@ export function resoudrePli(cartes: readonly CarteJouee[], retire: number | null
       detailBonus.push(`${c.valeur} ${c.couleur} capturé : ${c.bonusPli > 0 ? '+' : ''}${c.bonusPli}`);
     }
   }
-  if (detruits.length > 0) {
-    bonus += 20 * detruits.length;
-    detailBonus.push(`${detruits.length} léviathan(s) au Casier de Davy Jones : +${20 * detruits.length}`);
-  }
   if (effet === 'normal') {
     const nb = (r: Role) => actives.filter((i) => role(cartes[i]) === r).length;
     if (roleGagnant === 'sirene' && nb('skull_king') > 0) {
@@ -251,7 +251,7 @@ export function resoudrePli(cartes: readonly CarteJouee[], retire: number | null
 
   return {
     gagnant, prochainMeneur: gagnant, effet, bonus, detailBonus, alliances,
-    pouvoir: pouvoirs[0] ?? null, pouvoirs, indexGagnant: idx, retire, detruits,
+    pouvoir: pouvoirs[0] ?? null, pouvoirs, indexGagnant: idx, retire, detruits, davy,
   };
 }
 

@@ -107,11 +107,12 @@ test('Raie tachetée : la plus petite carte numérotée gagne', () => {
   assert.equal(r.gagnant, 'A');
 });
 
-test('Casier de Davy Jones : détruit les léviathans, +20 chacun', () => {
+test('Casier de Davy Jones : détruit les léviathans, +20 chacun pour celui qui l’a posé', () => {
   const r = resoudrePli(pli(['A', 'jaune_5'], ['B', 'kraken'], ['C', 'davy_jones'], ['D', 'jaune_9'], ['E', 'raie']));
   assert.equal(r.effet, 'normal');
   assert.equal(r.gagnant, 'D');
-  assert.equal(r.bonus, 40);
+  assert.equal(r.bonus, 0, 'le gagnant du pli ne touche pas le bonus du Casier');
+  assert.deepEqual(r.davy, { joueur: 'C', points: 40 });
   assert.deepEqual(r.detruits, [1, 4]);
   const s = resoudrePli(pli(['A', 'jaune_5'], ['B', 'davy_jones']));
   assert.equal(s.gagnant, 'A', 'sans léviathan il ne fait rien et ne gagne pas');

@@ -325,6 +325,10 @@ function terminerPli(e: EtatPartie, retire: number | null): EtatPartie {
     e.detailBonusManche[g].push(...resultat.detailBonus);
     e.alliances.push(...resultat.alliances);
   }
+  if (resultat.davy) {
+    e.bonusManche[resultat.davy.joueur] += resultat.davy.points;
+    e.detailBonusManche[resultat.davy.joueur].push(`${resultat.davy.points / 20} léviathan(s) au Casier de Davy Jones : +${resultat.davy.points}`);
+  }
 
   e.numeroPli += 1;
   e.phase = 'jeu';

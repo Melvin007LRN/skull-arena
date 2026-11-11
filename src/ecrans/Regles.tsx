@@ -161,7 +161,7 @@ const PAGES: Page[] = [
       <>
         <p><strong>Raie tachetée</strong> 🐟 : un léviathan, l’inverse de la Baleine. La <strong>plus petite carte numérotée</strong> gagne, toutes couleurs confondues (égalité : la première posée). Sans carte numérotée, personne ne gagne.</p>
         <p>Avec plusieurs léviathans (Kraken, Baleine, Raie), c’est le <strong>dernier posé</strong> qui décide.</p>
-        <p><strong>Casier de Davy Jones</strong> : ne gagne jamais. Il détruit tous les léviathans du pli, puis le pli se joue normalement. Le gagnant touche <strong>+20 par léviathan détruit</strong>.</p>
+        <p><strong>Casier de Davy Jones</strong> : ne gagne jamais. Il détruit tous les léviathans du pli, puis le pli se joue normalement. Celui qui a posé le Casier touche <strong>+20 par léviathan détruit</strong>.</p>
       </>
     ),
   },
