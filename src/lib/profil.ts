@@ -105,6 +105,16 @@ export async function chargerClassement(): Promise<LigneClassement[]> {
     .sort((a, b) => b.pm - a.pm || b.victoires - a.victoires || b.xp - a.xp);
 }
 
+// Avis de recherche : le pirate qui a le plus de victoires depuis toujours.
+export async function chargerRecordVictoires(): Promise<{ id: string; pseudo: string; photo_url: string | null; cadre: string | null; victoires: number; parties_jouees: number } | null> {
+  const { data, error } = await supabase.from('profils')
+    .select('id, pseudo, photo_url, cadre, victoires, parties_jouees')
+    .eq('banni', false).gt('victoires', 0)
+    .order('victoires', { ascending: false }).order('parties_jouees', { ascending: true }).limit(1);
+  if (error) throw error;
+  return (data?.[0] ?? null) as never;
+}
+
 export async function chargerProfil(id: string): Promise<Profil | null> {
   const { data, error } = await supabase.from('profils').select('*').eq('id', id).maybeSingle();
   if (error) throw error;

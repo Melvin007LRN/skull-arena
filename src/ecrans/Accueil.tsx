@@ -2,7 +2,7 @@
 // avec une phrase d'accroche. Les sections apparaissent en douceur au défilement.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
-import { chargerClassement, chargerClassementSaison, chargerDefisDuJour, DEFIS, grade, niveau, nomSaison } from '../lib/profil.ts';
+import { chargerRecordVictoires, chargerDefisDuJour, DEFIS, grade, niveau } from '../lib/profil.ts';
 import { Louidors } from './Boutique.tsx';
 import { Avatar } from '../composants/Avatar.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
@@ -41,8 +41,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
   profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
   ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirBoutique: () => void; ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void;
 }) {
-  // Avis de recherche : le numéro 1 de la saison (sinon celui du classement permanent).
-  const [numeroUn, setNumeroUn] = useState<{ id: string; pseudo: string; photo_url: string | null; cadre: string | null; pm: number; victoires: number; saison: boolean } | null>(null);
+  // Avis de recherche : le pirate qui a le plus de victoires depuis toujours.
+  const [numeroUn, setNumeroUn] = useState<{ id: string; pseudo: string; photo_url: string | null; cadre: string | null; victoires: number; parties_jouees: number } | null>(null);
   const [defis, setDefis] = useState<Array<{ id: string; reussi: boolean }>>([]);
   const { amis } = useAmis(profil.id);
   const enLigne = useEnLigne();
@@ -53,11 +53,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
   const demandesRecues = (amis ?? []).filter((a) => a.statut === 'attente' && a.recue).length;
   const nbEnLigne = compagnons.filter((a) => enLigne.has(a.id)).length;
   useEffect(() => {
-    chargerClassementSaison().then(async (s) => {
-      if (s[0]) return setNumeroUn({ ...s[0], saison: true });
-      const l = await chargerClassement();
-      setNumeroUn(l[0] ? { ...l[0], saison: false } : null);
-    }).catch(() => {});
+    chargerRecordVictoires().then(setNumeroUn).catch(() => {});
     chargerDefisDuJour().then(setDefis).catch(() => {});
   }, []);
   const [accroche, setAccroche] = useState(0);
@@ -210,8 +206,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           <p className="avis-nom">{numeroUn ? numeroUn.pseudo : 'Le pirate à abattre'}</p>
           <p className="avis-detail">
             {numeroUn
-              ? <>Numéro 1 {numeroUn.saison ? `de la saison de ${nomSaison()}` : 'du classement'} · {numeroUn.pm} PM · {numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
-              : 'Le numéro 1 du classement sera affiché ici. Détrône-le et prends sa place.'}
+              ? <>Recordman de victoires de tous les temps · <strong>{numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}</strong> en {numeroUn.parties_jouees} partie{numeroUn.parties_jouees > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
+              : 'Le pirate qui a le plus de victoires sera affiché ici. Détrône-le et prends sa place.'}
           </p>
         </section>
       </Apparition>
