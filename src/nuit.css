@@ -323,7 +323,6 @@ body:has(.ecran) { background: #07090d; }
 
 /* Écrans très bas : on resserre */
 @media (max-height: 700px) {
-  .cr-pirate .avatar { transform: scale(.8); }
   .cr-affiche { display: none; }
   .cr-nom { font-size: 18px; margin-top: 0; }
 }
@@ -458,3 +457,14 @@ body:has(.ecran) { background: #07090d; }
 .avis-bouton:active { transform: translateY(2px); }
 .ecran .bouton-or.cr-jouer { white-space: nowrap; font-size: clamp(20px, 6.6vw, 28px) !important; letter-spacing: .1em !important; flex-wrap: nowrap; }
 .boutique-nuit .rayon-perso > h2 { display: none; }
+
+/* Accueil : fond immobile, et le bas ne passe jamais sous la barre de navigation */
+.cr-halo, .cr-fond .braises { animation: none !important; }
+.cr-fond .braises { display: none; }
+.cr-pirate .avatar, .cr-pirate > :nth-child(2) { animation: none !important; }
+.ecran-accueil.cr { padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important; }
+.ecran-accueil.cr > .cr-scene { min-height: 0 !important; }
+.cr-pirate .avatar { width: clamp(84px, calc(100dvh - 560px), 210px) !important; height: clamp(84px, calc(100dvh - 560px), 210px) !important; }
+.cr-socle { top: calc(clamp(84px, calc(100dvh - 560px), 210px) - 16px); }
+@media (max-height: 780px) { .cr-affiche { display: none; } .cr-pirate .avatar { width: clamp(84px, calc(100dvh - 470px), 190px) !important; height: clamp(84px, calc(100dvh - 470px), 190px) !important; } .cr-socle { top: calc(clamp(84px, calc(100dvh - 470px), 190px) - 16px); } }
+@media (max-height: 640px) { .cr-titre, .cr-grade { display: none; } .cr-nom { font-size: 16px; margin-top: 4px; } .ecran .bouton-or.cr-jouer { min-height: 62px; } .cr-rail { gap: 8px; } .cr-bouton-rail-icone { width: 42px; height: 42px; } }
