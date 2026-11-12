@@ -15,13 +15,43 @@ const il_y_a = (s: number) => new Date(Date.now() - s * 1000).toISOString();
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
+    const corpsReq = await req.json();
+    const { type, cible, titre, corps, secret } = corpsReq;
+    // Annonce à tous les pirates : réservée à l'admin, ou lancée depuis la base avec un secret à usage unique.
+    if (type === 'annonce') {
+      let autorise = false;
+      if (typeof secret === 'string' && secret.length >= 24) {
+        const { data: s } = await db.from('annonces_secrets').delete().eq('secret', secret).gte('cree_le', il_y_a(600)).select('secret');
+        autorise = !!s?.length;
+      } else {
+        const jeton = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? '';
+        const { data: a } = await db.auth.getUser(jeton);
+        const { data: adm } = await db.from('profils').select('est_admin').eq('id', a?.user?.id ?? '').maybeSingle();
+        autorise = !!adm?.est_admin;
+      }
+      if (!autorise) return reponse(403, { erreur: 'Réservé au capitaine du navire.' });
+      if (typeof titre !== 'string' || typeof corps !== 'string' || !titre.trim()) return reponse(400, { erreur: 'Annonce vide.' });
+      const { data: cfg } = await db.rpc('config_notifications');
+      const vapid: Vapid = { ...(cfg as Omit<Vapid, 'sujet'>), sujet: 'mailto:123melvin007@gmail.com' };
+      const { data: abos } = await db.from('push_abonnements').select('endpoint, p256dh, auth').eq('actif', true);
+      const note = { titre: titre.slice(0, 80), corps: corps.slice(0, 200), url: '/', tag: `annonce-${Date.now()}`, icone: '/icones/icone-192.png' };
+      let envoyees = 0, echecs = 0;
+      await Promise.all((abos ?? []).map(async (ab) => {
+        try {
+          const code = await envoyer(ab, note, vapid);
+          if (code === 404 || code === 410) { echecs++; await db.from('push_abonnements').update({ actif: false }).eq('endpoint', ab.endpoint); }
+          else if (code < 300) envoyees++;
+          else echecs++;
+        } catch { echecs++; }
+      }));
+      return reponse(200, { envoyees, echecs, abonnes: abos?.length ?? 0 });
+    }
+
     const jeton = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? '';
     const { data: a } = await db.auth.getUser(jeton);
     const moi = a?.user?.id;
     if (!moi) return reponse(401, { erreur: 'Non connecté.' });
-    const { type, cible } = await req.json();
     if (typeof cible !== 'string' || cible === moi) return reponse(400, { erreur: 'Cible invalide.' });
-
     const { data: p } = await db.from('profils').select('pseudo').eq('id', moi).maybeSingle();
     const pseudo = p?.pseudo ?? 'Un pirate';
     let note: { titre: string; corps: string; url: string; tag: string } | null = null;

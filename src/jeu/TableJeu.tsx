@@ -1429,7 +1429,7 @@ function centreDans(racine: HTMLElement, el: Element | null | undefined): { x: n
   return { x: px - b.left, y: py - b.top };
 }
 /** Marge de chaque côté de la main (centrée) : la 1re carte ne passe pas sous mon avatar en bas à gauche. */
-const MARGE_MAIN = 112;
+const MARGE_MAIN = 142;
 
 type TypeEvenement = 'regicide' | 'roi' | 'abordage' | 'kraken' | 'baleine';
 interface GrandEvenement { type: TypeEvenement; /** Classe d'animation, si différente du type. */ classe?: string; titre: string; texte: string; carte: string; victimes: string[]; son: 'regicide' | 'roiFrappe' | 'abordageFort' | 'krakenFort' | 'baleineForte' }
