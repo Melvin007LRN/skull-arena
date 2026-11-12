@@ -98,7 +98,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
               : 'Table publique de 5 places · mise tes Louidors'}</small>
           </span>
         </div>
-        <button type="button" className={`bouton-or cr-jouer ${jeu === 'blackjack' ? 'bj' : ''}`} onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : ouvrirBlackjack('public'))}>
+        <button type="button" className={`bouton-or cr-jouer ${jeu === 'blackjack' ? 'cr-jouer-bj' : ''}`} onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : ouvrirBlackjack('public'))}>
           <Icone nom="epees" taille={28} /> {jeu === 'skull' ? 'Jouer' : 'S’asseoir'}
         </button>
         <div className="cr-secondaires">
