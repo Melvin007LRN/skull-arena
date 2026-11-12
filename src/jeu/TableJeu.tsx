@@ -1083,6 +1083,19 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
   reactions: Array<{ cle: number; de: string; emoji: string }>;
   pseudo: (id: string) => string;
 }) {
+  // La cible encaisse : son avatar tremble à l'impact.
+  const vus = useRef(new Set<number>());
+  useEffect(() => {
+    for (const l of lancers) {
+      if (vus.current.has(l.id)) continue;
+      vus.current.add(l.id);
+      const grand = OBJETS[l.objet]?.grand;
+      const el = racine.current?.querySelector<HTMLElement>(`[data-joueur="${l.a}"]`);
+      if (!el) continue;
+      const classe = grand || l.objet === 'boulet' ? 'cible-secouee-fort' : 'cible-secouee';
+      setTimeout(() => { el.classList.add(classe); setTimeout(() => el.classList.remove(classe), grand ? 1400 : 700); }, grand ? 1000 : 800);
+    }
+  }, [lancers, racine]);
   const centre = (id: string) => {
     const r = racine.current;
     const c = r ? centreDans(r, r.querySelector(`[data-joueur="${id}"]`)) : null;
@@ -1096,15 +1109,29 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
         if (!o) return null;
         const legende = `${pseudo(l.de)} ${o.phrase} ${pseudo(l.a)}`;
         if (o.grand) return <GrandCadeau key={l.id} objet={l.objet} cible={b} legende={legende} />;
-        const imp = IMPACTS[l.objet] ?? { eclats: [o.icone], mode: 'gerbe' as const };
+        const imp: Impact = IMPACTS[l.objet] ?? { eclats: [o.icone], mode: 'gerbe' };
+        const vol = { left: a.x, top: a.y, ['--dx' as string]: `${b.x - a.x}px`, ['--dy' as string]: `${b.y - a.y}px` };
+        const ici = { left: b.x, top: b.y };
         return (
-          <div key={l.id}>
-            <span className="projectile" style={{ left: a.x, top: a.y, ['--dx' as string]: `${b.x - a.x}px`, ['--dy' as string]: `${b.y - a.y}px` }}>{o.icone}</span>
-            {imp.flash && <span className="impact-flash" style={{ left: b.x, top: b.y, ['--flash' as string]: imp.flash }} />}
-            <span className="impact-objet" style={{ left: b.x, top: b.y }}>{o.icone}</span>
+          <div key={l.id} className={imp.special === 'fumee' ? 'impact-secousse' : undefined}>
+            {[2, 1, 0].map((k) => <span key={k} className={`projectile ${k ? 'trainee' : ''}`} style={{ ...vol, animationDelay: `${k * 0.045}s`, ['--o' as string]: 1 - k * 0.32 }}>{o.icone}</span>)}
+            <span className="impact-onde" style={{ ...ici, ['--flash' as string]: imp.flash ?? '#ffffff' }} />
+            {imp.flash && <span className="impact-flash" style={{ ...ici, ['--flash' as string]: imp.flash }} />}
+            {imp.special === 'tache' && (
+              <span className="impact-tache" style={{ ...ici, ['--c' as string]: imp.couleur }}>
+                {[0, 1, 2, 3, 4].map((k) => <i key={k} style={{ ['--k' as string]: k }} />)}
+              </span>
+            )}
+            {imp.special === 'larmes' && (
+              <span className="impact-larmes" style={ici}>{[0, 1, 2, 3, 4, 5].map((k) => <i key={k} style={{ ['--k' as string]: k }}>💧</i>)}</span>
+            )}
+            {imp.special === 'fumee' && <span className="impact-fumee" style={ici}>{[0, 1, 2, 3].map((k) => <i key={k} style={{ ['--k' as string]: k }} />)}</span>}
+            {imp.special === 'couronne' ? <span className="impact-couronne" style={ici}>{o.icone}</span>
+              : imp.special === 'orbite' ? <span className="impact-orbite" style={ici}><i>{o.icone}</i></span>
+              : <span className={`impact-objet ${imp.special === 'drapeau' ? 'agite' : ''}`} style={ici}>{o.icone}</span>}
             <Eclats x={b.x} y={b.y} emojis={imp.eclats} mode={imp.mode} />
-            {imp.texte && <span className="impact-texte" style={{ left: b.x, top: b.y }}>{imp.texte}</span>}
-            <span className="legende-objet" style={{ left: b.x, top: b.y }}>{legende}</span>
+            {imp.texte && <span className="impact-texte" style={{ ...ici, ['--flash' as string]: imp.flash ?? '#ff2a4a' }}>{imp.texte}</span>}
+            <span className="legende-objet" style={ici}>{legende}</span>
           </div>
         );
       })}
@@ -1118,17 +1145,18 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
 
 // ================= Objets lancés : effets à l'impact, et grands cadeaux sur toute la table =================
 type ModeEclats = 'gerbe' | 'pluie' | 'tourbillon' | 'explosion';
-const IMPACTS: Record<string, { eclats: string[]; mode: ModeEclats; texte?: string; flash?: string }> = {
-  mouchoirs: { eclats: ['🧻', '🤧', '💧'], mode: 'pluie', texte: 'SNIF !' },
-  drapeau_blanc: { eclats: ['🏳️', '🕊️'], mode: 'tourbillon', texte: 'JE ME RENDS !' },
-  tomate: { eclats: ['🍅', '💦', '🍅'], mode: 'gerbe', texte: 'SPLATCH !', flash: '#ff2a2a' },
-  poisson: { eclats: ['🐟', '💦', '🫧'], mode: 'gerbe', texte: 'SPLAF !', flash: '#6fd3ff' },
-  rhum: { eclats: ['🍺', '🫧', '🍻'], mode: 'gerbe', texte: 'SANTÉ !', flash: '#ffcc33' },
+type Impact = { eclats: string[]; mode: ModeEclats; texte?: string; flash?: string; special?: 'tache' | 'larmes' | 'fumee' | 'couronne' | 'orbite' | 'drapeau'; couleur?: string };
+const IMPACTS: Record<string, Impact> = {
+  mouchoirs: { eclats: ['🧻', '🤧', '💧'], mode: 'pluie', texte: 'SNIF !', flash: '#8fd3ff', special: 'larmes' },
+  drapeau_blanc: { eclats: ['🕊️', '🕊️', '🪶'], mode: 'tourbillon', texte: 'JE ME RENDS !', flash: '#ffffff', special: 'drapeau' },
+  tomate: { eclats: ['🍅', '💦', '🍅'], mode: 'gerbe', texte: 'SPLATCH !', flash: '#ff2a2a', special: 'tache', couleur: '#d4161b' },
+  poisson: { eclats: ['🐟', '💦', '🫧'], mode: 'gerbe', texte: 'SPLAF !', flash: '#6fd3ff', special: 'tache', couleur: '#7fb7a8' },
+  rhum: { eclats: ['🍺', '🫧', '🍻'], mode: 'gerbe', texte: 'SANTÉ !', flash: '#ffcc33', special: 'tache', couleur: '#f3c55a' },
   rose: { eclats: ['🌹', '🌸', '💗', '🌸'], mode: 'pluie', texte: '♥', flash: '#ff4fd8' },
-  perroquet: { eclats: ['🦜', '🪶', '🪶'], mode: 'tourbillon', texte: 'COÔÔA !' },
-  doigt: { eclats: ['🖕', '💢'], mode: 'gerbe', texte: 'HÉ !' },
-  boulet: { eclats: ['💥', '🔥', '💨', '🔥'], mode: 'explosion', texte: 'BOUM !', flash: '#ff7a1a' },
-  couronne: { eclats: ['✨', '⭐', '✨', '👑'], mode: 'tourbillon', texte: 'VIVE LE ROI !', flash: '#ffcc33' },
+  perroquet: { eclats: ['🪶', '🪶', '💬'], mode: 'tourbillon', texte: 'COÔÔA !', flash: '#2dff7a', special: 'orbite' },
+  doigt: { eclats: ['💢', '💢', '😤'], mode: 'gerbe', texte: 'HÉ !', flash: '#ff7a1a' },
+  boulet: { eclats: ['💥', '🔥', '💨', '🔥'], mode: 'explosion', texte: 'BOUM !', flash: '#ff7a1a', special: 'fumee' },
+  couronne: { eclats: ['✨', '⭐', '✨', '🎉'], mode: 'tourbillon', texte: 'VIVE LE ROI !', flash: '#ffcc33', special: 'couronne' },
 };
 
 function Eclats({ x, y, emojis, mode }: { x: number; y: number; emojis: string[]; mode: ModeEclats }) {
@@ -1207,24 +1235,42 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
   const hasard = useMemo(() => {
     const r = (a: number, b: number) => a + Math.random() * (b - a);
     return {
-      bouquets: Array.from({ length: 7 }, (_, k) => ({ k, x: r(12, 88), y: r(12, 55), dl: k * 0.45 + r(0, 0.2), c: ['#ff2a4a', '#ffcc33', '#2dff7a', '#2ee6ff', '#b866ff', '#ff4fd8', '#ffffff'][k % 7] })),
-      pieces: Array.from({ length: 48 }, (_, k) => ({ k, x: r(0, 100), dl: r(0, 2.6), du: r(1.4, 2.4), s: r(0.6, 1.3), rot: r(-540, 540) })),
-      boulets: Array.from({ length: 5 }, (_, k) => ({ k, y: r(20, 80), dl: k * 0.5 })),
+      bouquets: Array.from({ length: 8 }, (_, k) => ({ k, x: r(12, 88), y: r(12, 50), dl: 0.9 + k * 0.4 + r(0, 0.15), c: ['#ff2a4a', '#ffcc33', '#2dff7a', '#2ee6ff', '#b866ff', '#ff4fd8', '#ffffff', '#ff7a1a'][k % 8] })),
+      paillettes: Array.from({ length: 36 }, (_, k) => ({ k, x: r(0, 100), dl: 3.6 + r(0, 1), du: r(1.2, 2) })),
+      pieces: Array.from({ length: 56 }, (_, k) => ({ k, x: r(0, 100), dl: 0.4 + r(0, 3), du: r(1.4, 2.4), s: r(0.6, 1.3), rot: r(-540, 540), gemme: k % 6 === 0 ? ['💎', '💍', '🪙'][k % 3] : null })),
+      boulets: Array.from({ length: 5 }, (_, k) => ({ k, y: r(20, 80), dl: 0.6 + k * 0.45 })),
+      echardes: Array.from({ length: 14 }, (_, k) => ({ k, a: r(0, 360), d: r(60, 150), dl: 1.15 + (k % 5) * 0.45, e: ['🪵', '🔥', '💨'][k % 3] })),
+      spectres: Array.from({ length: 5 }, (_, k) => ({ k, x: r(8, 92), dl: 1 + k * 0.55, du: r(2.2, 3) })),
       brumes: [0, 1, 2],
     };
   }, []);
   return (
-    <div className={`grand-cadeau gc-${objet}`} aria-hidden="true">
+    <div className={`grand-cadeau gc-${objet}`} aria-hidden="true" style={{ ['--cx' as string]: `${cible.x}px`, ['--cy' as string]: `${cible.y}px` }}>
       <div className="gc-voile" />
-      {objet === 'feu_artifice' && hasard.bouquets.map((b) => (
-        <div key={b.k} className="gc-bouquet" style={{ left: `${b.x}%`, top: `${b.y}%`, ['--c' as string]: b.c, animationDelay: `${b.dl}s` }}>
-          {Array.from({ length: 20 }, (_, i) => <i key={i} style={{ ['--a' as string]: `${i * 18}deg`, animationDelay: `${b.dl}s` }} />)}
-        </div>
-      ))}
+      {objet !== 'tempete_insultes' && (
+        <div className="gc-intro"><span className="gc-intro-rayons" /><span className="gc-intro-icone">{objet === 'feu_artifice' ? '🎉' : OBJETS[objet]?.icone}</span></div>
+      )}
+      {objet === 'feu_artifice' && (
+        <>
+          {hasard.bouquets.map((b) => (
+            <span key={`f${b.k}`} className="gc-fusee" style={{ left: `${b.x}%`, ['--y' as string]: `${b.y}%`, ['--c' as string]: b.c, animationDelay: `${b.dl - 0.55}s` }} />
+          ))}
+          {hasard.bouquets.map((b) => (
+            <div key={b.k} className="gc-bouquet" style={{ left: `${b.x}%`, top: `${b.y}%`, ['--c' as string]: b.c, animationDelay: `${b.dl}s` }}>
+              {Array.from({ length: 24 }, (_, i) => <i key={i} style={{ ['--a' as string]: `${i * 15}deg`, animationDelay: `${b.dl}s` }} />)}
+            </div>
+          ))}
+          {hasard.paillettes.map((p) => <span key={`p${p.k}`} className="gc-paillette" style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s` }} />)}
+        </>
+      )}
       {objet === 'bordee' && (
         <>
+          {hasard.boulets.map((b) => <span key={`c${b.k}`} className="gc-canon" style={{ top: `${b.y}%`, animationDelay: `${b.dl}s` }} />)}
           {hasard.boulets.map((b) => (
             <span key={b.k} className="gc-boulet" style={{ top: `${b.y}%`, animationDelay: `${b.dl}s`, ['--cx' as string]: `${cible.x}px`, ['--cy' as string]: `${cible.y}px` }} />
+          ))}
+          {hasard.echardes.map((e) => (
+            <span key={`e${e.k}`} className="gc-echarde" style={{ left: cible.x, top: cible.y, animationDelay: `${e.dl}s`, ['--a' as string]: `${e.a}deg`, ['--d' as string]: `${e.d}px` }}>{e.e}</span>
           ))}
           {hasard.boulets.map((b) => <span key={`e${b.k}`} className="gc-explosion" style={{ left: cible.x + (b.k - 2) * 26, top: cible.y + ((b.k * 37) % 50) - 25, animationDelay: `${b.dl + 0.55}s` }}>💥</span>)}
           <div className="gc-fumee" style={{ left: cible.x, top: cible.y }} />
@@ -1232,8 +1278,9 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
       )}
       {objet === 'pluie_tresor' && (
         <>
+          <span className="gc-rayons" style={{ left: cible.x, top: cible.y }} />
           {hasard.pieces.map((p) => (
-            <span key={p.k} className="gc-piece" style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s`, ['--s' as string]: p.s, ['--rot' as string]: `${p.rot}deg` }} />
+            <span key={p.k} className={p.gemme ? 'gc-piece gemme' : 'gc-piece'} style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s`, ['--s' as string]: p.s, ['--rot' as string]: `${p.rot}deg` }}>{p.gemme}</span>
           ))}
           <span className="gc-coffre" style={{ left: cible.x, top: cible.y }}>💰</span>
         </>
@@ -1241,6 +1288,8 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
       {objet === 'navire_fantome' && (
         <>
           {hasard.brumes.map((k) => <div key={k} className={`gc-brume b${k}`} />)}
+          <div className="gc-eclair-vert" />
+          {hasard.spectres.map((p) => <span key={`s${p.k}`} className="gc-spectre" style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s` }}>👻</span>)}
           <div className="gc-navire">
             <svg viewBox="0 0 220 170" aria-hidden="true">
               <g fill="none" stroke="#bfffe6" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round">
@@ -1261,6 +1310,10 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
       )}
       {objet === 'tempete_insultes' && <TempeteInsultes cible={cible} />}
       {objet === 'kraken_poche' && (
+        <div className="gc-vague" />
+      )}
+      {objet === 'kraken_poche' && <span className="gc-encre" style={{ left: cible.x, top: cible.y }}>{[0, 1, 2, 3, 4, 5, 6].map((k) => <i key={k} style={{ ['--k' as string]: k }} />)}</span>}
+      {objet === 'kraken_poche' && (
         <div className="gc-kraken" style={{ left: cible.x, top: cible.y }}>
           {[-70, -35, 0, 35, 70].map((r, k) => (
             <div key={k} className="gc-tentacule" style={{ rotate: `${r}deg`, animationDelay: `${k * 0.12}s` }}><div className="tentacule-corps" style={{ animationDelay: `${k * 0.12}s` }}><Tentacule /></div></div>
@@ -1269,6 +1322,49 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
         </div>
       )}
       <p className="gc-legende">{legende}</p>
+    </div>
+  );
+}
+
+/** Durée d'affichage d'un cadeau lancé (ms). */
+export function dureeCadeau(objet: string): number {
+  if (objet === 'tempete_insultes') return 8800;
+  return OBJETS[objet]?.grand ? 5600 : 3400;
+}
+
+/** Le son d'un cadeau lancé, calé sur son animation. */
+export function jouerSonCadeau(objet: string) {
+  const sons: Record<string, () => void> = {
+    feu_artifice: () => [300, 700, 1100, 1500, 1900, 2300, 2700, 3100].forEach((ms) => setTimeout(son.impact, ms)),
+    bordee: () => [600, 1050, 1500, 1950, 2400].forEach((ms) => setTimeout(son.impact, ms + 550)),
+    pluie_tresor: () => [200, 500, 800, 1100, 1500, 1900, 2400, 2900, 3300].forEach((ms) => setTimeout(son.piece, ms)),
+    navire_fantome: () => sonBete.raie(),
+    kraken_poche: () => sonBete.kraken(),
+    tempete_insultes: () => sonBete.tempete(),
+  };
+  if (OBJETS[objet]?.grand) { sons[objet]?.(); vibrer(200); }
+  else setTimeout(() => son.impact(), 850);
+}
+
+/** Aperçu d'un cadeau dans la boutique : la même animation qu'en partie, lancée sur une cible factice. */
+export function ApercuCadeau({ objet, pseudo, photo, cadre, fin }: { objet: string; pseudo: string; photo: string | null; cadre?: string | null; fin: () => void }) {
+  const racine = useRef<HTMLDivElement>(null);
+  const [pret, setPret] = useState(false);
+  const t = useMemo(() => ({ w: window.innerWidth, h: window.innerHeight }), []);
+  useEffect(() => {
+    debloquerSon();
+    setPret(true);
+    jouerSonCadeau(objet);
+    const minuterie = setTimeout(fin, dureeCadeau(objet) + 200);
+    return () => clearTimeout(minuterie);
+  }, [objet, fin]);
+  return (
+    <div ref={racine} className="apercu-cadeau" onClick={fin} style={{ ['--gh' as string]: `${t.h / 100}px`, ['--gw' as string]: `${t.w / 100}px` }}>
+      <div className="apercu-table" />
+      <div className="apercu-joueur cible" data-joueur="cible"><Avatar photo={null} taille={78} /><span>Ta cible</span></div>
+      <div className="apercu-joueur moi" data-joueur="moi"><Avatar photo={photo} taille={56} cadre={cadre} /><span>{pseudo}</span></div>
+      {pret && <Projectiles racine={racine} lancers={[{ id: 1, de: 'moi', a: 'cible', objet }]} reactions={[]} pseudo={(id) => (id === 'moi' ? pseudo : 'sa cible')} />}
+      <p className="apercu-aide">Touche l’écran pour fermer</p>
     </div>
   );
 }

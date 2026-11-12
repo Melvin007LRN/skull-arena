@@ -1,0 +1,242 @@
+/* =====================================================================
+   THÈME « NUIT ÉLÉGANTE » — menus sobres : verre sombre, filets dorés,
+   pas de néon. Chargé en dernier : il remplace le thème néon des menus
+   (la table de jeu garde son propre style).
+   La couleur d'accent suit le « thème du site » acheté en boutique.
+   ===================================================================== */
+:root {
+  --accent: #d6b25e;
+  --accent-clair: #f2d792;
+  --encre-nuit: #15110a;
+  --filet: rgba(214, 178, 94, .32);
+  --filet-doux: rgba(255, 255, 255, .09);
+  --verre-nuit: rgba(255, 255, 255, .045);
+  --texte-nuit: #ece7dc;
+  --texte-doux: #a8a296;
+}
+body[data-theme] { --accent: var(--theme); --accent-clair: color-mix(in srgb, var(--theme) 55%, #fff); --filet: color-mix(in srgb, var(--theme) 38%, transparent); }
+
+/* Fond : le décor flouté et assombri, derrière tous les menus */
+body:has(.ecran) { background: #07090d; }
+.ecran { position: relative; isolation: isolate; color: var(--texte-nuit); }
+.ecran::before {
+  content: ''; position: fixed; inset: -40px; z-index: -1; pointer-events: none;
+  background: url('/decor/decor-fond.webp') center / cover;
+  filter: blur(16px) brightness(.3) saturate(.75);
+}
+.ecran::after {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 120% 70% at 50% 0%, transparent 40%, rgba(5,7,11,.7) 100%);
+}
+
+/* Titres : capitales espacées, un petit filet doré dessous */
+.ecran .titre-pirate, .ecran .heros-pseudo, .ecran .carte-joueur-texte strong {
+  font-family: var(--gravure) !important; font-weight: 700 !important;
+  color: #f3ead7 !important; text-shadow: none !important; filter: none !important;
+  background: none !important; -webkit-background-clip: border-box !important; background-clip: border-box !important;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+.ecran .titre-pirate { font-size: 19px; margin-bottom: 10px; }
+.ecran .titre-pirate.grand, .ecran > .titre-pirate:first-of-type { font-size: 26px; }
+.ecran > h1.titre-pirate::after, .ecran h1.titre-pirate::after {
+  content: ''; display: block; width: 44px; height: 1px; margin: 10px auto 0; background: var(--accent);
+}
+.ecran .carte-joueur-texte strong { letter-spacing: .06em; }
+.ecran .sous-titre, .ecran .bloc-titre { color: var(--accent-clair) !important; text-shadow: none !important; letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+
+/* Panneaux : verre sombre, filet fin, aucune lueur */
+.ecran .parchemin, .ecran .neon, .ecran .page-contenu {
+  background: rgba(14, 16, 22, .72) !important;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--filet-doux) !important;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45) !important;
+  animation: none !important;
+}
+.ecran .parchemin::before { display: none; }
+.ecran .neon:active { box-shadow: 0 6px 18px rgba(0,0,0,.5) !important; border-color: var(--filet) !important; }
+.ecran .profil-bloc .stat, .ecran .chiffre, .ecran .defis-jour li, .ecran .salon-ligne, .ecran .liste-salons li, .ecran .objet, .ecran .interrupteur, .ecran .ligne-compte {
+  border-color: var(--filet-doux) !important; background: var(--verre-nuit) !important; box-shadow: none !important;
+}
+
+/* Boutons : or plein (principal), contour doré (secondaire) */
+.ecran .bouton-or {
+  font-family: var(--corps) !important; font-weight: 800 !important; letter-spacing: .08em !important; text-transform: uppercase;
+  color: var(--encre-nuit) !important; text-shadow: none !important;
+  background: linear-gradient(180deg, var(--accent-clair), var(--accent)) !important;
+  border: 0 !important; box-shadow: 0 6px 16px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.45) !important;
+}
+.ecran .bouton-or .icone { stroke: var(--encre-nuit) !important; filter: none !important; }
+.ecran .bouton-or:disabled { filter: saturate(.2) brightness(.6) !important; }
+.ecran .bouton-sombre {
+  color: var(--accent-clair) !important; background: rgba(255,255,255,.04) !important;
+  border: 1px solid var(--filet) !important; box-shadow: none !important; text-shadow: none !important;
+}
+.ecran .bouton-danger {
+  color: #ffb4ad !important; background: rgba(120, 20, 20, .18) !important; border: 1px solid rgba(255, 90, 80, .45) !important;
+  box-shadow: none !important; text-shadow: none !important;
+}
+.ecran .lien { color: var(--accent-clair) !important; text-shadow: none !important; }
+.ecran .retour { color: var(--texte-doux) !important; text-shadow: none !important; font-family: var(--corps) !important; letter-spacing: 0 !important; text-transform: none !important; font-size: 15px; }
+.ecran .petit-texte { color: var(--texte-doux); }
+
+/* Onglets : un trait doré sous l'onglet actif, sans halo */
+.ecran .onglets button { color: var(--texte-doux) !important; text-shadow: none !important; box-shadow: none !important;
+  font-family: var(--corps) !important; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; font-weight: 700; }
+.ecran .onglets button.actif { color: #fff !important; border-bottom-color: var(--accent) !important; text-shadow: none !important; box-shadow: none !important; }
+.ecran .profil-onglets button { color: var(--texte-doux) !important; text-shadow: none !important; }
+.ecran .profil-onglets button.actif { color: #fff !important; background: rgba(255,255,255,.06) !important; border-color: var(--filet) !important; box-shadow: none !important; text-shadow: none !important; }
+.ecran .profil-onglets button.actif .icone { stroke: var(--accent-clair) !important; }
+
+/* Champs, interrupteurs, curseurs */
+.ecran input:not([type='checkbox']):not([type='range']), .ecran textarea, .ecran select {
+  background: rgba(0,0,0,.35) !important; border: 1px solid var(--filet-doux) !important; box-shadow: none !important; color: #fff !important;
+}
+.ecran input:focus, .ecran textarea:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent) !important; }
+.ecran .interrupteur-curseur { background: rgba(255,255,255,.08) !important; border: 1px solid var(--filet-doux) !important; box-shadow: none !important; }
+.ecran .interrupteur.actif .interrupteur-curseur { background: var(--accent) !important; border-color: var(--accent) !important; box-shadow: none !important; }
+.ecran .interrupteur.actif .interrupteur-curseur span { background: #fff !important; box-shadow: 0 1px 3px rgba(0,0,0,.4) !important; }
+.ecran .curseurs-volume { border-color: var(--filet-doux) !important; background: var(--verre-nuit) !important; }
+.ecran .curseur-volume input[type='range'] { background: linear-gradient(90deg, var(--accent) 0 var(--p), rgba(255,255,255,.1) var(--p) 100%) !important; }
+.ecran .curseur-volume input[type='range']::-webkit-slider-thumb { border: 2px solid var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.5); }
+.ecran .curseur-libelle small { color: var(--accent-clair) !important; }
+
+/* Icônes, médaillons, jauges, chiffres */
+.ecran .icone { stroke: var(--accent-clair) !important; filter: none !important; }
+.ecran .medaillon { background: rgba(255,255,255,.05) !important; border: 1px solid var(--filet) !important; box-shadow: none !important; }
+.ecran .medaillon.fait { border-color: #6fcf8a !important; }
+.ecran .barre-xp, .ecran .jauge { background: rgba(255,255,255,.08) !important; border: 0 !important; }
+.ecran .barre-xp > *, .ecran .jauge > i, .ecran .jauge > span > i { background: linear-gradient(90deg, var(--accent), var(--accent-clair)) !important; box-shadow: none !important; }
+.ecran .chiffre strong, .ecran .stat-valeur, .ecran .hexa { color: var(--accent-clair) !important; text-shadow: none !important; }
+.ecran .pastille-nombre { background: #e5484d !important; box-shadow: none !important; }
+.ecran .puce-boutique, .ecran .bourse { border: 1px solid var(--filet) !important; box-shadow: none !important; background: rgba(0,0,0,.45) !important; }
+
+/* Tuiles d'image de l'accueil : texte blanc net sur un dégradé sombre */
+.ecran .tuile-texte strong, .ecran .affiche-vedette.neon .affiche-titre {
+  color: #fff !important; text-shadow: 0 2px 10px rgba(0,0,0,.8) !important; filter: none !important;
+  background: none !important; -webkit-background-clip: border-box !important; background-clip: border-box !important;
+}
+.ecran .tuile-degrade, .ecran .affiche-vedette .affiche-degrade { background: linear-gradient(180deg, transparent 35%, rgba(5,7,11,.85) 100%) !important; }
+.ecran .etiquette-mode { background: rgba(0,0,0,.55) !important; border: 1px solid var(--filet) !important; box-shadow: none !important; color: var(--accent-clair) !important; }
+.ecran .affiche-vedette.neon, .ecran .tuile { overflow: hidden; }
+
+/* Grimoire */
+.ecran .page-numero { color: var(--accent) !important; }
+.ecran .page-texte strong { color: var(--accent-clair) !important; }
+.ecran .page-texte .exemple { border-left-color: var(--accent) !important; background: rgba(255,255,255,.04) !important; }
+.ecran .livre-points button { background: rgba(255,255,255,.18) !important; box-shadow: none !important; }
+.ecran .livre-points button.actif { background: var(--accent) !important; box-shadow: none !important; }
+
+/* Fenêtres par-dessus les menus */
+.voile > .fenetre, .voile > section { box-shadow: 0 20px 60px rgba(0,0,0,.6) !important; }
+
+@media (prefers-reduced-motion: reduce) { .ecran::before { filter: brightness(.3); } }
+
+/* =================== Boutique « Nuit élégante » =================== */
+.boutique-nuit { gap: 14px; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.b-haut { display: flex; align-items: center; justify-content: space-between; }
+.b-haut .retour { padding: 8px 0; }
+.b-solde { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 9px; border-radius: 99px;
+  background: rgba(255,255,255,.06); border: 1px solid var(--filet); color: var(--accent-clair); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }
+.boutique-nuit .piece-or { width: 18px; height: 18px; flex: none; }
+.b-prix { display: inline-flex; align-items: center; gap: 5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.b-prix .piece-or { width: 15px !important; height: 15px !important; }
+
+/* L'article à la une */
+.b-une { position: relative; display: block; width: 100%; height: 178px; padding: 0; border-radius: 18px; overflow: hidden; cursor: pointer;
+  border: 1px solid var(--filet); background: #05070b; text-align: left; color: #fff; }
+.b-une img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; transition: transform .6s ease; }
+.b-une:active img { transform: scale(1.04); }
+.b-une-voile { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5,7,11,.94) 0%, rgba(5,7,11,.6) 55%, rgba(5,7,11,.1)); }
+.b-une-texte { position: absolute; inset: 16px 16px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.b-une-texte small { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.b-une-texte strong { font-family: var(--gravure); font-size: 24px; letter-spacing: .04em; line-height: 1.1; }
+.b-une-texte em { font-style: normal; font-size: 12px; color: #d8d3c8; max-width: 70%; }
+.b-une-texte .b-prix { margin-top: auto; padding: 7px 14px; border-radius: 99px; background: var(--accent); color: var(--encre-nuit); font-size: 14px; }
+
+/* Les rayons */
+.b-rayons { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.b-rayons button { width: 100%; height: 88px; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 1px; padding: 10px;
+  border-radius: 14px; border: 1px solid var(--filet-doux); background: rgba(14,16,22,.7); color: var(--texte-nuit); cursor: pointer; text-align: left; position: relative;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: border-color .15s, transform .1s; }
+.b-rayons button:active { transform: scale(.97); border-color: var(--filet); }
+.b-rayon-icone { position: absolute; top: 9px; left: 10px; font-size: 24px; line-height: 1; }
+.b-rayons strong { font-size: 13px; }
+.b-rayons small { font-size: 10px; color: var(--texte-doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+.b-section { display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px; }
+.b-section h2 { margin: 0; font-family: var(--gravure); font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #f3ead7; }
+.b-section .lien { padding: 4px 0; font-size: 13px; text-decoration: none; }
+.b-astuce { font-size: 11px; color: var(--accent-clair); }
+.b-gains { margin-top: 6px; font-size: 12px; }
+
+/* Les articles */
+.b-grille { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.b-article { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 6px 10px;
+  border-radius: 14px; border: 1px solid var(--filet-doux); background: rgba(14,16,22,.7); color: var(--texte-nuit); cursor: pointer;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: transform .1s, border-color .15s; }
+.b-article:active { transform: scale(.96); border-color: var(--filet); }
+.b-article strong { font-size: 12px; line-height: 1.15; min-height: 28px; display: flex; align-items: center; text-align: center; }
+.b-article .b-prix { padding: 4px 10px; border-radius: 99px; border: 1px solid var(--filet); color: var(--accent-clair); font-size: 12px; }
+.b-article.grand { background: linear-gradient(180deg, rgba(214,178,94,.08), rgba(14,16,22,.7)); }
+.b-article.ultime { border-color: rgba(184,102,255,.45); background: linear-gradient(180deg, rgba(150,80,230,.16), rgba(14,16,22,.75)); }
+.b-qte { position: absolute; top: 6px; right: 6px; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 99px; background: rgba(214,178,94,.18); color: var(--accent-clair); }
+.b-medaillon { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 31px; line-height: 1;
+  background: radial-gradient(circle, rgba(214,178,94,.16), rgba(214,178,94,0) 70%); border: 1px solid var(--filet); }
+.b-medaillon.xl { width: 104px; height: 104px; font-size: 56px; margin: 4px auto 0; animation: b-flotte 2.8s ease-in-out infinite; }
+.b-medaillon.ultime { border-color: rgba(184,102,255,.6); background: radial-gradient(circle, rgba(184,102,255,.28), transparent 70%); }
+@keyframes b-flotte { 50% { transform: translateY(-5px) rotate(-3deg); } }
+
+/* Barre du bas */
+.b-nav { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 40; width: 100%; max-width: 480px; display: flex;
+  padding: 8px 24px calc(10px + env(safe-area-inset-bottom)); background: rgba(8,10,14,.9); border-top: 1px solid var(--filet-doux);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.b-nav button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; border: 0; background: none; color: #8e8a80; font-size: 11px; font-weight: 700; cursor: pointer; position: relative; }
+.b-nav button i { font-style: normal; font-size: 22px; line-height: 1; filter: grayscale(.6); opacity: .8; }
+.b-nav button.actif { color: var(--accent-clair); }
+.b-nav button.actif i { filter: none; opacity: 1; }
+.b-nav button b { position: absolute; top: 2px; left: calc(50% + 8px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: var(--encre-nuit); font-size: 10px; display: grid; place-items: center; }
+
+/* Message (achat réussi ou erreur) */
+.b-toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; margin: 0; max-width: calc(100% - 32px);
+  padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; background: rgba(20,22,28,.96); border: 1px solid var(--filet); color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: b-toast .3s cubic-bezier(.2,1.3,.4,1) both; text-align: center; }
+.b-toast.ko { border-color: rgba(255,90,80,.5); color: #ffc2bc; }
+@keyframes b-toast { from { opacity: 0; transform: translate(-50%, 12px) scale(.96); } }
+
+/* Fiche d'un objet (feuille qui monte du bas) */
+.b-voile { align-items: flex-end !important; }
+.b-fiche { position: relative; width: 100%; max-width: 480px; margin: 0 auto; padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0; background: #11141b; border: 1px solid var(--filet-doux); border-bottom: 0; color: var(--texte-nuit);
+  display: flex; flex-direction: column; align-items: stretch; gap: 10px; text-align: center; animation: b-monte .32s cubic-bezier(.2,1,.3,1) both; }
+@keyframes b-monte { from { transform: translateY(100%); } }
+.b-fiche h2 { margin: 2px 0 0; font-family: var(--gravure); font-size: 22px; letter-spacing: .06em; color: #fff; }
+.b-fiche p { margin: 0; font-size: 14px; line-height: 1.45; color: #cfc9bd; }
+.b-fiche .b-possede { font-size: 13px; color: var(--texte-doux); }
+.b-fiche .b-possede strong { color: var(--accent-clair); }
+.b-etiquette { align-self: center; padding: 3px 10px; border-radius: 99px; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; background: rgba(214,178,94,.15); color: var(--accent-clair); }
+.b-fermer { position: absolute; top: 10px; right: 12px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.07); color: #fff; font-size: 22px; line-height: 1; cursor: pointer; }
+.b-achats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.b-achats .bouton-or { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 60px; padding: 8px; font-size: 13px !important; }
+.b-achats .bouton-or em { font-style: normal; font-size: 10px; opacity: .75; }
+.b-achats .b-lot { background: linear-gradient(180deg, #fff1c9, var(--accent-clair)) !important; }
+
+/* Rayons de personnalisation et grilles existantes, version sobre */
+.boutique-nuit .rayon-perso { padding: 16px 12px; }
+.boutique-nuit .grille-perso > li, .boutique-nuit .grille-neons li, .boutique-nuit .grille-cadres li {
+  border: 1px solid var(--filet-doux) !important; background: rgba(255,255,255,.035) !important; box-shadow: none !important; border-radius: 14px; }
+.boutique-nuit .grille-perso > li.equipe, .boutique-nuit .grille-neons li.equipe, .boutique-nuit .grille-cadres li.equipe { border-color: var(--accent) !important; }
+.boutique-nuit .grille-perso .bouton-or.petit, .boutique-nuit .grille-neons .bouton-or.petit, .boutique-nuit .grille-cadres .bouton-or.petit { min-height: 36px; padding: 6px 12px; font-size: 12px !important; }
+.boutique-nuit .apercu-neon { background: rgba(0,0,0,.5); }
+
+/* =================== Aperçu d'un cadeau (boutique) =================== */
+.apercu-cadeau { position: fixed; inset: 0; z-index: 200; overflow: hidden; cursor: pointer; animation: b-toast .25s ease both; }
+.apercu-table { position: absolute; inset: 0; background: url('/decor/fond-table.webp') center / cover; filter: brightness(.55); }
+.apercu-joueur { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 4px; transform: translate(-50%, -50%); }
+.apercu-joueur span { font-size: 12px; font-weight: 800; color: #fff; padding: 2px 8px; border-radius: 99px; background: rgba(0,0,0,.6); }
+.apercu-joueur.cible { left: 50%; top: 42%; }
+.apercu-joueur.moi { left: 16%; top: 84%; }
+.apercu-cadeau .projectiles { position: absolute; inset: 0; }
+.apercu-cadeau .grand-cadeau { position: absolute; inset: 0; }
+.apercu-aide { position: absolute; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); margin: 0; text-align: center; font-size: 12px; color: #ffffff99; }
+.b-voile { padding: 0 !important; z-index: 50 !important; }

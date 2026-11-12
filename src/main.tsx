@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 import './style.css';
 import './perso.css';
+import './nuit.css';
 import { preparerInstallation } from './lib/installation.ts';
 
 preparerInstallation();

@@ -2,13 +2,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
 import { appel, usePartie, type MembreSalon } from '../lib/jeu.ts';
-import { TableJeu } from './TableJeu.tsx';
+import { dureeCadeau, jouerSonCadeau, TableJeu } from './TableJeu.tsx';
 import { creerPaquet } from '../engine/cards.ts';
 import { niveau } from '../lib/profil.ts';
 import { usePhrases } from '../lib/phrases.ts';
-import { chargerCadresPossedes, chargerInventaire, OBJETS, utiliserObjet } from '../lib/boutique.ts';
+import { chargerCadresPossedes, chargerInventaire, utiliserObjet } from '../lib/boutique.ts';
 import { extrasChat, TOUTES_PHRASES_PREMIUM } from '../lib/perso.ts';
-import { son, sonBete, vibrer } from '../lib/sons.ts';
 import './jeu.css';
 
 const ANTI_SPAM_MS = 3000;
@@ -109,20 +108,8 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lancers', filter: `partie_id=eq.${partieId}` }, ({ new: l }) => {
         const ligne = l as { id: number; de: string; a: string; objet: string };
         setLancers((x) => [...x.slice(-5), ligne]);
-        const grand = OBJETS[ligne.objet]?.grand;
-        if (grand) {
-          const sons: Record<string, () => void> = {
-            feu_artifice: () => [0, 450, 900, 1350, 1800, 2250].forEach((ms) => setTimeout(son.impact, ms)),
-            bordee: () => [500, 1000, 1500, 2000, 2500].forEach((ms) => setTimeout(son.impact, ms + 550)),
-            pluie_tresor: () => [200, 500, 800, 1100, 1500, 1900, 2400].forEach((ms) => setTimeout(son.piece, ms)),
-            navire_fantome: () => sonBete.raie(),
-            kraken_poche: () => sonBete.kraken(),
-            tempete_insultes: () => sonBete.tempete(),
-          };
-          sons[ligne.objet]?.();
-          vibrer(200);
-        } else setTimeout(() => son.impact(), 850);
-        setTimeout(() => setLancers((x) => x.filter((y) => y.id !== ligne.id)), grand ? (ligne.objet === 'tempete_insultes' ? 8800 : 5000) : 3200);
+        jouerSonCadeau(ligne.objet);
+        setTimeout(() => setLancers((x) => x.filter((y) => y.id !== ligne.id)), dureeCadeau(ligne.objet));
       })
       .subscribe();
     return () => { supabase.removeChannel(canal); };

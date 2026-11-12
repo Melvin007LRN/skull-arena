@@ -19,7 +19,7 @@ export const CATEGORIES: Record<Categorie, InfoCategorie> = {
   titre: { nom: 'Titres', icone: '📜', description: 'Affiché sous ton pseudo : profil, fiche, salon et podium.', onglet: 'pirate', equipable: true },
   banniere: { nom: 'Bannières', icone: '🏴', description: 'Le fond de ta carte de pirate, sur ton profil et ta fiche.', onglet: 'pirate', equipable: true },
   compagnon: { nom: 'Compagnons', icone: '🦜', description: 'Un petit animal perché sur ton avatar, partout et en partie.', onglet: 'pirate', equipable: true },
-  theme: { nom: 'Thème du site', icone: '🎨', description: 'La couleur néon de tous les écrans du site (toi seul la vois).', onglet: 'pirate', equipable: true },
+  theme: { nom: 'Thème du site', icone: '🎨', description: 'La couleur d’accent de tous les menus du site (toi seul la vois).', onglet: 'pirate', equipable: true },
   phrase: { nom: 'Phrases rapides', icone: '💬', description: 'Des phrases en plus dans le chat de la table. Tous tes packs s’ajoutent.', onglet: 'chat', equipable: false },
   emote: { nom: 'Emotes', icone: '😎', description: 'Des réactions en plus au-dessus de ton avatar. Tous tes packs s’ajoutent.', onglet: 'chat', equipable: false },
 };
