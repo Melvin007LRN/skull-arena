@@ -1,4 +1,5 @@
 // Branche l'écran de jeu sur le serveur : état en temps réel, coups, réveil des robots, phrases rapides.
+import { EcranAttente } from '../composants/Attente.tsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
 import { appel, usePartie, type MembreSalon } from '../lib/jeu.ts';
@@ -236,7 +237,7 @@ export function EcranJeu({ partieId, membres, moi, hote, retourAccueil }: {
   }, [salonId, sortir]);
 
   if (!vue || !main) {
-    return <div className="jeu"><div className="jeu-decor" /><p className="jeu-chargement">Distribution des cartes…</p></div>;
+    return <EcranAttente texte="Distribution des cartes" decor="taverne" />;
   }
 
   return (

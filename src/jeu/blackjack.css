@@ -18,9 +18,9 @@
 
 /* La table : même verre fumé et même néon rouge que les parties classiques, en demi-ovale */
 .bj2-tapis { position: absolute; left: -3%; right: -3%; top: 29%; bottom: -62%; z-index: 2; border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 30%, rgba(0,0,0,.22) 0%, rgba(0,0,0,.42) 55%, rgba(0,0,0,.7) 100%);
-  -webkit-backdrop-filter: grayscale(1) brightness(.62) contrast(1.15); backdrop-filter: grayscale(1) brightness(.62) contrast(1.15);
-  border: 2px solid #ff2a4a; box-shadow: 0 0 6px #ff2a4a, 0 0 22px #ff2a4a88, inset 0 0 26px #ff2a4a44, 0 -10px 30px #000a; }
+  background: radial-gradient(ellipse at 50% 30%, rgba(4,4,8,.55) 0%, rgba(2,2,6,.72) 55%, rgba(0,0,0,.88) 100%);
+  -webkit-backdrop-filter: grayscale(1) brightness(.38) contrast(1.1); backdrop-filter: grayscale(1) brightness(.38) contrast(1.1);
+  border: 2px solid #ff2a4a; box-shadow: 0 0 6px #ff2a4a, 0 0 22px #ff2a4a88, inset 0 0 40px #000, inset 0 0 26px #ff2a4a33, 0 -10px 30px #000a; }
 .bj2-tapis::after { content: ''; position: absolute; inset: 4% 6%; border-radius: 50%; border: 1px solid #ff2a4a44; }
 .bj2-inscription { position: absolute; left: 50%; top: 48.5%; transform: translateX(-50%); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; white-space: nowrap; }
 .bj2-inscription span { font-family: var(--gravure); font-weight: 700; font-size: clamp(8px, calc(2.4 * var(--gh)), 12px); letter-spacing: .22em; text-transform: uppercase; color: #ffd97955; }
@@ -184,3 +184,6 @@
 .bj2-chat-saisie button:disabled { opacity: .4; }
 
 @media (prefers-reduced-motion: reduce) { .bj2-carte.vole, .bj2-pieces, .bj2-rayons { animation: none !important; } .bj2-pieces { display: none; } }
+
+.bj2-rejouer { min-width: 0; }
+.bj2-rejouer small { opacity: .8; font-weight: 700; margin-left: 4px; }

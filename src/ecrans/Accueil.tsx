@@ -63,8 +63,10 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           <strong>{(profil.louidors ?? 0).toLocaleString('fr-FR')}</strong>
           <span className="cr-plus">+</span>
         </button>
-        <button type="button" className="cr-rond" onClick={ouvrirReglages} aria-label="Réglages"><Icone nom="gouvernail" taille={20} /></button>
+        <button type="button" className="cr-rond" onClick={ouvrirReglages} aria-label="Réglages"><Icone nom="gouvernail" taille={24} /></button>
       </header>
+
+      <img className="cr-logo" src="/decor/logo.webp" alt="Skull Arena" />
 
       <section className="cr-scene">
         <div className="cr-rail gauche">
@@ -74,20 +76,22 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         <button type="button" className="cr-pirate" onClick={ouvrirProfil}>
           <span className="cr-socle" aria-hidden="true" />
           <Avatar photo={profil.photo_url} taille={150} cadre={profil.cadre} compagnon={profil.perso?.compagnon ?? null} />
-          <span className="cr-nom">{profil.pseudo}</span>
-          <Titre perso={profil.perso} className="cr-titre" />
+          <span className="cr-ruban">
+            <span className="cr-nom">{profil.pseudo}</span>
+            <Titre perso={profil.perso} className="cr-titre" />
+          </span>
           <span className="cr-grade">{grade(n)} · niveau {n}</span>
         </button>
         <div className="cr-rail droite">
-          <BoutonRail classe="r-actus" icone="grimoire" nom="Actus" onClick={ouvrirActualites} />
-          <BoutonRail classe="r-alertes" icone="cloche" nom="Alertes" onClick={() => setFenetre('alertes')} />
+          <BoutonRail classe="r-actus" icone="parchemin" nom="Actus" nouveau={!actualitesVues()} onClick={ouvrirActualites} />
+          <BoutonRail classe="r-alertes" icone="cloche" nom="Alertes" nouveau={demandes > 0} onClick={() => setFenetre('alertes')} />
         </div>
       </section>
 
       <section className="cr-jeu">
         <div className="cr-modes" role="tablist">
-          <button type="button" role="tab" aria-selected={jeu === 'skull'} className={jeu === 'skull' ? 'actif' : ''} onClick={() => choisir('skull')}>Skull King</button>
-          <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={`m-blackjack ${jeu === 'blackjack' ? 'actif' : ''}`} onClick={() => choisir('blackjack')}>Blackjack</button>
+          <button type="button" role="tab" aria-selected={jeu === 'skull'} className={jeu === 'skull' ? 'actif' : ''} onClick={() => choisir('skull')}><Icone nom="epees" taille={20} /> Skull King</button>
+          <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={`m-blackjack ${jeu === 'blackjack' ? 'actif' : ''}`} onClick={() => choisir('blackjack')}><Icone nom="cartes" taille={20} /> Blackjack</button>
         </div>
         <div className={`cr-affiche ${jeu}`}>
           <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : '/decor/art/jaune_14.webp'} alt="" />
@@ -99,18 +103,18 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           </span>
         </div>
         <button type="button" className={`bouton-or cr-jouer ${jeu === 'blackjack' ? 'cr-jouer-bj' : ''}`} onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : ouvrirBlackjack('public'))}>
-          <Icone nom="epees" taille={28} /> {jeu === 'skull' ? 'Jouer' : 'S’asseoir'}
+          <Icone nom={jeu === 'skull' ? 'epees' : 'cartes'} taille={40} /> <span>{jeu === 'skull' ? 'Jouer' : 'S’asseoir'}</span>
         </button>
         <div className="cr-secondaires">
           {jeu === 'skull' ? (
             <>
-              <button type="button" className="bouton-sombre c-bleu" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={18} /> Rejoindre</button>
-              <button type="button" className="bouton-sombre c-vert" onClick={() => ouvrirLobby('entrainement')}><Icone nom="cible" taille={18} /> Entraînement</button>
+              <button type="button" className="bouton-sombre c-bleu" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={22} /> Rejoindre</button>
+              <button type="button" className="bouton-sombre c-vert" onClick={() => ouvrirLobby('entrainement')}><Icone nom="mannequin" taille={22} /> Entraînement</button>
             </>
           ) : (
             <>
-              <button type="button" className="bouton-sombre c-turquoise" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={18} /> En solo</button>
-              <button type="button" className="bouton-sombre c-violet" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={18} /> Avec compagnons</button>
+              <button type="button" className="bouton-sombre c-turquoise" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={22} /> En solo</button>
+              <button type="button" className="bouton-sombre c-violet" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={22} /> Avec compagnons</button>
             </>
           )}
         </div>
@@ -153,12 +157,12 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
   );
 }
 
-function BoutonRail({ classe, icone, nom, badge, fait, onClick }: { classe: string; icone: string; nom: string; badge?: string; fait?: boolean; onClick: () => void }) {
+function BoutonRail({ classe, icone, nom, badge, fait, nouveau, onClick }: { classe: string; icone: string; nom: string; badge?: string; fait?: boolean; nouveau?: boolean; onClick: () => void }) {
   return (
     <button type="button" className={`cr-bouton-rail ${classe} ${fait ? 'fait' : ''}`} onClick={onClick}>
-      <span className="cr-bouton-rail-icone"><Icone nom={icone} taille={22} /></span>
+      <span className="cr-bouton-rail-icone"><Icone nom={icone} taille={36} /></span>
       <small>{nom}</small>
-      {badge && <b>{badge}</b>}
+      {badge ? <b>{badge}</b> : nouveau ? <i className="cr-nouveau" aria-label="Nouveau" /> : null}
     </button>
   );
 }
@@ -166,7 +170,7 @@ function BoutonRail({ classe, icone, nom, badge, fait, onClick }: { classe: stri
 function BoutonNav({ classe, icone, nom, actif, badge, point, onClick }: { classe: string; icone: string; nom: string; actif?: boolean; badge?: number; point?: boolean; onClick: () => void }) {
   return (
     <button type="button" className={`${classe} ${actif ? 'actif' : ''}`} onClick={onClick} aria-current={actif ? 'page' : undefined}>
-      <span className="cr-nav-icone"><Icone nom={icone} taille={actif ? 26 : 22} />{badge ? <b className="pastille-nombre">{badge}</b> : point ? <i className="cr-point" /> : null}</span>
+      <span className="cr-nav-icone"><Icone nom={icone} taille={actif ? 40 : 28} />{badge ? <b className="pastille-nombre">{badge}</b> : point ? <i className="cr-point" /> : null}</span>
       <small>{nom}</small>
     </button>
   );

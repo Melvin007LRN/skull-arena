@@ -1,4 +1,5 @@
 // Classements : la saison (mois en cours, remise à zéro chaque mois) et le classement permanent.
+import { Patience } from '../composants/Attente.tsx';
 import { useEffect, useState } from 'react';
 import {
   chargerClassement, chargerClassementSaison, grade, niveau, nomSaison, PARTIES_AVANT_CLASSEMENT, type Profil,
@@ -46,7 +47,7 @@ export function EcranClassement({ profil, retour }: { profil: Profil; retour: ()
       {erreur && <p className="message erreur">{erreur}</p>}
 
       <section className="parchemin">
-        {liste === null && !erreur && <p className="petit-texte centre">Chargement…</p>}
+        {liste === null && !erreur && <Patience />}
         {liste?.length === 0 && (
           <p className="petit-texte centre">
             {onglet === 'saison' ? 'Personne n’a encore gagné ce mois-ci. Remporte une partie et prends la tête !' : 'Personne n’est encore classé. Joue ta première partie !'}

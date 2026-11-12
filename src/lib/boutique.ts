@@ -1,29 +1,30 @@
 // Louidors, boutique, inventaire et cadres d'avatar.
 import { supabase } from './supabase.ts';
 import { niveau, type Profil } from './profil.ts';
+import { IMAGE_OBJET } from './images.ts';
 
 export interface Article { id: string; type: 'objet' | 'cadre' | 'couleur' | 'perso'; nom: string; icone: string; prix: number; ordre: number }
 
 /** Objets lançables en partie (icône affichée pendant le vol). */
 export const OBJETS: Record<string, { icone: string; nom: string; phrase: string; grand?: boolean }> = {
-  mouchoirs: { icone: '🧻', nom: 'Boîte de mouchoirs', phrase: 'tend des mouchoirs à' },
-  drapeau_blanc: { icone: '🏳️', nom: 'Drapeau blanc', phrase: 'agite le drapeau blanc devant' },
-  tomate: { icone: '🍅', nom: 'Tomate pourrie', phrase: 'lance une tomate sur' },
-  poisson: { icone: '🐟', nom: 'Poisson pourri', phrase: 'gifle avec un poisson' },
-  rhum: { icone: '🍺', nom: 'Chope de rhum', phrase: 'offre une chope à' },
-  rose: { icone: '🌹', nom: 'Rose', phrase: 'offre une rose à' },
-  perroquet: { icone: '🦜', nom: 'Perroquet moqueur', phrase: 'envoie son perroquet narguer' },
-  doigt: { icone: '🖕', nom: 'Doigt d’honneur', phrase: 'fait un doigt d’honneur à' },
-  boulet: { icone: '💣', nom: 'Boulet de canon', phrase: 'tire un boulet sur' },
-  couronne: { icone: '👑', nom: 'Couronne en carton', phrase: 'couronne' },
+  mouchoirs: { icone: IMAGE_OBJET.mouchoirs, nom: 'Boîte de mouchoirs', phrase: 'tend des mouchoirs à' },
+  drapeau_blanc: { icone: IMAGE_OBJET.drapeau_blanc, nom: 'Drapeau blanc', phrase: 'agite le drapeau blanc devant' },
+  tomate: { icone: IMAGE_OBJET.tomate, nom: 'Tomate pourrie', phrase: 'lance une tomate sur' },
+  poisson: { icone: IMAGE_OBJET.poisson, nom: 'Poisson pourri', phrase: 'gifle avec un poisson' },
+  rhum: { icone: IMAGE_OBJET.rhum, nom: 'Chope de rhum', phrase: 'offre une chope à' },
+  rose: { icone: IMAGE_OBJET.rose, nom: 'Rose', phrase: 'offre une rose à' },
+  perroquet: { icone: IMAGE_OBJET.perroquet, nom: 'Perroquet moqueur', phrase: 'envoie son perroquet narguer' },
+  doigt: { icone: IMAGE_OBJET.doigt, nom: 'Doigt d’honneur', phrase: 'fait un doigt d’honneur à' },
+  boulet: { icone: IMAGE_OBJET.boulet, nom: 'Boulet de canon', phrase: 'tire un boulet sur' },
+  couronne: { icone: IMAGE_OBJET.couronne, nom: 'Couronne en carton', phrase: 'couronne' },
   // Cadeaux spectaculaires : animation sur tout l'écran de la table
-  feu_artifice: { icone: '🎆', nom: 'Feu d’artifice', phrase: 'tire un feu d’artifice pour', grand: true },
-  bordee: { icone: '💥', nom: 'Bordée de canons', phrase: 'ouvre le feu sur', grand: true },
-  pluie_tresor: { icone: '💰', nom: 'Pluie de trésor', phrase: 'fait pleuvoir l’or sur', grand: true },
-  navire_fantome: { icone: '👻', nom: 'Navire fantôme', phrase: 'envoie le navire fantôme hanter', grand: true },
-  kraken_poche: { icone: '🐙', nom: 'Kraken de poche', phrase: 'lâche le Kraken sur', grand: true },
+  feu_artifice: { icone: IMAGE_OBJET.feu_artifice, nom: 'Feu d’artifice', phrase: 'tire un feu d’artifice pour', grand: true },
+  bordee: { icone: IMAGE_OBJET.bordee, nom: 'Bordée de canons', phrase: 'ouvre le feu sur', grand: true },
+  pluie_tresor: { icone: IMAGE_OBJET.pluie_tresor, nom: 'Pluie de trésor', phrase: 'fait pleuvoir l’or sur', grand: true },
+  navire_fantome: { icone: IMAGE_OBJET.navire_fantome, nom: 'Navire fantôme', phrase: 'envoie le navire fantôme hanter', grand: true },
+  kraken_poche: { icone: IMAGE_OBJET.kraken_poche, nom: 'Kraken de poche', phrase: 'lâche le Kraken sur', grand: true },
   // L'ultime : 8 secondes de tempête et une pluie d'insultes
-  tempete_insultes: { icone: '🌩️', nom: 'Tempête d’insultes', phrase: 'déchaîne la Tempête d’insultes sur', grand: true },
+  tempete_insultes: { icone: IMAGE_OBJET.tempete_insultes, nom: 'Tempête d’insultes', phrase: 'déchaîne la Tempête d’insultes sur', grand: true },
 };
 
 /** Cadres gagnés (jamais vendus) avec leur condition. */

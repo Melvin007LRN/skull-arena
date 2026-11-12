@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { EcranAttente } from './composants/Attente.tsx';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, messageErreur } from './lib/supabase.ts';
 import { chargerProfil, type Profil } from './lib/profil.ts';
@@ -221,11 +222,7 @@ function ToastInvitation({ moi, entrer }: { moi: string; entrer: (salonId: strin
 }
 
 function Chargement() {
-  return (
-    <main className="ecran ecran-centre">
-      <img className="logo-grand pulse" src="/decor/logo.webp" alt="Skull Arena" />
-    </main>
-  );
+  return <EcranAttente texte="Larguez les amarres" decor="pont" />;
 }
 
 function Message({ texte, action, surAction }: { texte: string; action: string; surAction: () => void }) {

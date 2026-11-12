@@ -1,11 +1,14 @@
 // Briques visuelles des personnalisations : dos de cartes, tapis, bannières, titres, éclats d'effets et pluies.
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { article, type ModeEclats, type Perso } from '../lib/perso.ts';
+import { IMAGE_ARTICLE } from '../lib/images.ts';
+import { Visuel } from './Visuel.tsx';
 
 /** Dos de carte : l'image par défaut, ou un dos dessiné. */
 export function DosCarte({ modele, style, className = '' }: { modele?: string | null; style?: CSSProperties; className?: string }) {
   const a = article(modele);
   if (!a) return <img className={className} src="/decor/dos-carte.webp" alt="" style={style} draggable={false} />;
+  if (IMAGE_ARTICLE[a.id]) return <img className={`dos-image ${className}`} src={IMAGE_ARTICLE[a.id]} alt="" style={style} draggable={false} />;
   return (
     <span className={`dos-perso ${a.id} ${className}`} style={style} aria-hidden="true">
       <i>{a.emojis?.[0]}</i>
@@ -43,7 +46,7 @@ export function Eclats({ x, y, emojis, mode = 'gerbe', couleur, retard = 0, nomb
       {couleur && <span className="flash-perso" style={{ left: x, top: y, ['--flash' as string]: couleur, animationDelay: `${retard}s` }} />}
       {parts.map((p) => (
         <span key={p.k} className={`eclat eclat-${mode}`} style={{ left: x, top: y, animationDelay: `${retard + p.dl}s`,
-          ['--tx' as string]: `${p.tx}px`, ['--ty' as string]: `${p.ty}px`, ['--s' as string]: p.s, ['--r' as string]: `${p.r}deg`, ['--px' as string]: `${p.px}px`, ['--k' as string]: p.k }}>{p.e}</span>
+          ['--tx' as string]: `${p.tx}px`, ['--ty' as string]: `${p.ty}px`, ['--s' as string]: p.s, ['--r' as string]: `${p.r}deg`, ['--px' as string]: `${p.px}px`, ['--k' as string]: p.k }}><Visuel v={p.e} /></span>
       ))}
     </span>
   );
@@ -58,7 +61,7 @@ export function PluieEmojis({ emojis, nombre = 46 }: { emojis: string[]; nombre?
   return (
     <div className="pluie-emojis" aria-hidden="true">
       {gouttes.map((g) => (
-        <span key={g.k} style={{ left: `${g.gauche}%`, fontSize: g.taille, animationDelay: `${g.retard}s`, animationDuration: `${g.duree}s`, ['--tour' as string]: `${g.tour}deg` }}>{g.e}</span>
+        <span key={g.k} style={{ left: `${g.gauche}%`, fontSize: g.taille, animationDelay: `${g.retard}s`, animationDuration: `${g.duree}s`, ['--tour' as string]: `${g.tour}deg` }}><Visuel v={g.e} /></span>
       ))}
     </div>
   );

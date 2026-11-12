@@ -1,7 +1,7 @@
 // Actualités : la fenêtre qui présente une grosse mise à jour, une seule fois par version (et rouvrable depuis l'accueil).
 import { useEffect, useState } from 'react';
 
-const VERSION = '2026-11-blackjack-2';
+const VERSION = '2026-11-images';
 const EVENEMENT = 'skull-actualites';
 
 /** La présentation de cette version a-t-elle déjà été vue ? */
@@ -11,16 +11,14 @@ export function actualitesVues(): boolean { try { return localStorage.getItem('s
 export function ouvrirActualites() { window.dispatchEvent(new Event(EVENEMENT)); }
 
 const PAGES: Array<{ icone: string; titre: string; texte: string; points: string[] }> = [
-  { icone: '🏴‍☠️', titre: 'La grande mise à jour', texte: 'Le navire a été radoubé de la quille au grand mât. Voici ce qui change.',
-    points: ['Nouvel accueil, tout sur un seul écran', 'Le Blackjack du Capitaine', 'Boutique et menus redessinés', 'Des parties plus vivantes'] },
-  { icone: '🃏', titre: 'Le Blackjack du Capitaine', texte: 'Un nouveau jeu face au croupier pirate : bats-le sans dépasser 21.',
-    points: ['Une vraie table en paysage, 5 places', 'Séparer, doubler, assurance', 'Paris annexes : Paires parfaites et 21+3', 'Chat entre joueurs, plus ton niveau monte plus tu mises gros'] },
-  { icone: '⚓', titre: 'Un accueil plus clair', texte: 'Ton pirate au centre, le gros bouton Jouer en bas, et tout le reste à un doigt.',
-    points: ['Choisis ton jeu : Skull King ou Blackjack', 'Défis du jour et avis de recherche en un geste', 'Barre de navigation en bas'] },
-  { icone: '🛍️', titre: 'Boutique et menus', texte: 'Un style plus sobre et plus élégant, sans néon dans les menus.',
-    points: ['Une vitrine et des rayons faciles à parcourir', '« Voir l’animation » avant d’acheter', 'Des cadeaux animés bien plus spectaculaires'] },
-  { icone: '✨', titre: 'Des parties plus vivantes', texte: 'Chaque pli, chaque bonus et chaque fin de manche se ressentent.',
-    points: ['Le pli gagné vole vers son vainqueur', 'Des scores qui défilent et une harpe qui monte', 'Un podium animé à chaque fin de manche', 'Option de salon : bonus toujours comptés'] },
+  { icone: '/decor/logo.webp', titre: 'Le navire fait peau neuve', texte: 'Fini les emojis : toute l’appli est maintenant peinte à la main, dans le style des cartes.',
+    points: ['Un nouvel accueil, décor du port au coucher du soleil', 'Des icônes peintes partout', 'Un décor différent pour chaque écran', 'Des écrans d’attente soignés'] },
+  { icone: '/img/objet_bordee.webp', titre: 'Cadeaux et personnalisations', texte: 'Tous les cadeaux de la boutique ont leur vraie illustration, en vitrine comme en plein vol.',
+    points: ['16 cadeaux peints, du poisson pourri à la Tempête d’insultes', '7 tapis de table et 6 bannières illustrés', '9 compagnons qui se perchent sur ton avatar', 'Effets de pli et célébrations en images'] },
+  { icone: '/img/nav_blackjack.webp', titre: 'Blackjack : plus clair', texte: 'La table est centrée comme une partie classique, le croupier face à toi.',
+    points: ['Tapis plus sombre, tu es toujours au centre', 'Une seule barre de commandes en bas', '« Rejouer » remet ta dernière mise en un geste', 'Le chat reste en paysage quand tu écris'] },
+  { icone: '/img/badge_centurion.webp', titre: 'Badges et coffres', texte: 'Tes badges, ta pièce de Louidor et tes coffres de niveau ont aussi leur illustration.',
+    points: ['Badges Centurion, Devin, Régicide, Fantôme et Légende', 'Coffres de niveau à ouvrir tous les 5 niveaux', 'Encore plus d’images à venir'] },
 ];
 
 export function Actualites() {
@@ -41,7 +39,7 @@ export function Actualites() {
         <button type="button" className="b-fermer" onClick={fermer} aria-label="Fermer">×</button>
         <small className="actu-etiquette">Actualités</small>
         <div className="actu-page" key={page}>
-          <span className="actu-icone">{p.icone}</span>
+          {p.icone.startsWith('/') ? <img className={`actu-image ${page === 0 ? 'logo' : ''}`} src={p.icone} alt="" /> : <span className="actu-icone">{p.icone}</span>}
           <h2>{p.titre}</h2>
           <p>{p.texte}</p>
           <ul>{p.points.map((x) => <li key={x}>{x}</li>)}</ul>

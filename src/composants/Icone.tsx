@@ -1,5 +1,6 @@
 // Icônes maison : traits dorés façon gravure (remplacent les émojis, qui changent d'aspect selon le téléphone).
 import type { CSSProperties } from 'react';
+import { IMAGE_ICONE } from '../lib/images.ts';
 
 const TRACES: Record<string, string> = {
   epees: 'M4 4l10 10M4 4h3.5M4 4v3.5M20 4L10 14M20 4h-3.5M20 4v3.5M12.5 15.5l-2-2M11.5 12.5l-2 2M7 17l-3 3M17 17l3 3M13.5 15.5l2 2-1 1-2-2M10.5 15.5l-2 2 1 1 2-2',
@@ -27,7 +28,13 @@ const TRACES: Record<string, string> = {
 
 export type NomIcone = keyof typeof TRACES;
 
-export function Icone({ nom, taille = 22, className = '', style }: { nom: NomIcone | string; taille?: number; className?: string; style?: CSSProperties }) {
+export function Icone({ nom, taille = 22, className = '', style, trait }: { nom: NomIcone | string; taille?: number; className?: string; style?: CSSProperties; trait?: boolean }) {
+  // Image peinte quand elle existe (un peu plus grande : l'objet est détouré, sans marge)
+  const img = !trait ? IMAGE_ICONE[nom] : undefined;
+  if (img) {
+    const t = Math.round(taille * 1.3);
+    return <img className={`icone icone-img ${className}`} src={img} width={t} height={t} alt="" aria-hidden="true" style={style} draggable={false} decoding="async" />;
+  }
   return (
     <svg className={`icone ${className}`} width={taille} height={taille} viewBox="0 0 24 24" aria-hidden="true" style={style}
       fill="none" stroke="url(#degrade-or)" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
@@ -40,7 +47,7 @@ export function Icone({ nom, taille = 22, className = '', style }: { nom: NomIco
 export function Medaillon({ nom, taille = 40, className = '' }: { nom: NomIcone | string; taille?: number; className?: string }) {
   return (
     <span className={`medaillon ${className}`} style={{ width: taille, height: taille }}>
-      <Icone nom={nom} taille={Math.round(taille * 0.52)} />
+      <Icone nom={nom} taille={Math.round(taille * 0.6)} />
     </span>
   );
 }

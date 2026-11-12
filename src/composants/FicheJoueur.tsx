@@ -1,4 +1,6 @@
 // Fiche d'un joueur (visible par tous) : stats, badges, dernières parties, et actions (ami, message, inviter, signaler, bloquer).
+import { Visuel } from './Visuel.tsx';
+import { Patience } from './Attente.tsx';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
 import {
@@ -47,7 +49,7 @@ export function FicheJoueur({ joueur, moi, fermer, salonInvitation }: { joueur: 
     <div className="voile fiche-voile" onClick={fermer}>
       <section className="parchemin fenetre fiche-joueur" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="fiche-fermer" onClick={fermer} aria-label="Fermer">✕</button>
-        {p === undefined && <p className="petit-texte centre">Chargement…</p>}
+        {p === undefined && <Patience />}
         {p === null && <p className="message erreur">Ce pirate est introuvable.</p>}
         {p && (() => {
           const n = niveau(p.xp);
@@ -77,7 +79,7 @@ export function FicheJoueur({ joueur, moi, fermer, salonInvitation }: { joueur: 
               <div className="fiche-badges">
                 {BADGES.map((b) => {
                   const ok = progressionBadge(p, b.id).obtenu;
-                  return <span key={b.id} className={ok ? 'obtenu' : ''} title={`${b.nom} · ${b.condition}`}>{b.icone}</span>;
+                  return <span key={b.id} className={ok ? 'obtenu' : ''} title={`${b.nom} · ${b.condition}`}><Visuel v={b.icone} /></span>;
                 })}
               </div>
               {historique.length > 0 && (
@@ -96,7 +98,7 @@ export function FicheJoueur({ joueur, moi, fermer, salonInvitation }: { joueur: 
 
               {!estMoi && !bloque && (
                 <div className="fiche-actions">
-                  {lien === 'ami' && <button type="button" className="bouton-or petit" onClick={() => { fermer(); ouvrirMessages(joueur); }}>💬 Message</button>}
+                  {lien === 'ami' && <button type="button" className="bouton-or petit" onClick={() => { fermer(); ouvrirMessages(joueur); }}><img className="ico-texte" src="/img/jeu_chat.webp" alt="" /> Message</button>}
                   {lien === 'ami' && salonInvitation && enLigne.has(joueur) && (
                     <button type="button" className="bouton-or petit" onClick={() => faire(() => inviterAmi(joueur, salonInvitation), 'Invitation envoyée !')}>🏴‍☠️ Inviter</button>
                   )}
@@ -166,7 +168,7 @@ export function Conversation({ ami, moi, fermer }: { ami: string; moi: string; f
           <button type="button" className="fiche-fermer" onClick={fermer} aria-label="Fermer">✕</button>
         </header>
         <div className="conv-messages">
-          {messages === null && <p className="petit-texte centre">Chargement…</p>}
+          {messages === null && <Patience />}
           {messages?.length === 0 && <p className="petit-texte centre">Aucun message. Lance la conversation !</p>}
           {messages?.map((m) => (
             <p key={m.id} className={`bulle-msg ${m.de === moi ? 'moi' : ''}`}>

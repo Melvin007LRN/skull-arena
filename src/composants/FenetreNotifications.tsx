@@ -33,13 +33,13 @@ export function FenetreNotifications() {
   return (
     <div className="voile fenetre-notif-voile" onClick={fermer}>
       <section className="parchemin fenetre fenetre-notif neon" onClick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="titre-notif">
-        <span className="notif-grosse-cloche" aria-hidden="true">🔔</span>
+        <span className="notif-grosse-cloche" aria-hidden="true"><img src="/img/etat_alerte.webp" alt="" /></span>
         <h2 id="titre-notif" className="titre-pirate">Ne rate plus rien !</h2>
         <p className="notif-intro">Active les notifications pour être prévenu sur ton téléphone, <strong>même appli fermée</strong>, quand un ami :</p>
         <ul className="notif-raisons">
-          <li><span>💬</span>t’envoie un message</li>
+          <li><span><img className="ico-texte" src="/img/jeu_chat.webp" alt="" /></span>t’envoie un message</li>
           <li><span>🏴‍☠️</span>t’invite à sa table</li>
-          <li><span>🤝</span>te demande en ami</li>
+          <li><span><img className="ico-texte" src="/img/nav_amis.webp" alt="" /></span>te demande en ami</li>
         </ul>
 
         {reussi ? (
@@ -86,7 +86,7 @@ export function FenetreNotifications() {
                 if (ok) { setReussi(true); setTimeout(fermer, 1800); }
                 else setErreur('Tu as refusé : tu pourras les activer plus tard dans les Réglages du navire.');
               } catch (e) { setErreur((e as Error).message || 'Activation impossible, réessaie.'); }
-            }}>🔔 Activer les notifications</button>
+            }}><img className="ico-texte" src="/img/etat_alerte.webp" alt="" /> Activer les notifications</button>
             <p className="petit-texte centre">Ton téléphone va te demander l’autorisation : touche <strong>Autoriser</strong>.</p>
           </>
         )}

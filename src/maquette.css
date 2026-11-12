@@ -1,0 +1,239 @@
+/* =====================================================================
+   IMAGES PEINTES + ACCUEIL FAÇON MAQUETTE + HARMONISATION
+   Chargé en dernier. Les emojis laissent la place aux images peintes,
+   chaque écran a son décor, et l'accueil reprend la maquette du capitaine.
+   ===================================================================== */
+
+/* ---------- Images peintes : réglages communs ---------- */
+img.visuel { display: inline-block; width: 1.25em; height: 1.25em; object-fit: contain; vertical-align: -.28em; filter: drop-shadow(0 2px 3px rgba(0,0,0,.55)); }
+.visuel-texte { width: 1.4em !important; height: 1.4em !important; }
+.icone-img { display: inline-block; flex: none; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+.medaillon .icone-img { filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+/* La pièce de Louidor partout */
+.piece-or { background: url('/img/louidor.webp') center / contain no-repeat !important; box-shadow: none !important; border-radius: 0 !important; }
+/* Cadeaux : vitrine, fiche, vol et impact */
+.b-medaillon img.visuel { width: 78%; height: 78%; vertical-align: 0; }
+.b-rayon-icone img.visuel { width: 38px; height: 38px; }
+.b-puces img.visuel { width: 20px; height: 20px; margin-right: 5px; }
+.grille-lancer button img.visuel { width: 34px; height: 34px; }
+.projectile img.visuel, .impact-objet img.visuel, .impact-couronne img.visuel, .impact-orbite img.visuel { width: 1.4em; height: 1.4em; }
+.eclat img.visuel, .pluie-emojis img.visuel, .gc-piece img.visuel { width: 1.3em; height: 1.3em; }
+.gc-intro-icone img.visuel, .gc-coffre img.visuel, .gc-navire-fantome img.visuel, .gc-kraken-tete img.visuel, .gc-hante img.visuel, .gc-spectre img.visuel { width: 1.2em; height: 1.2em; }
+/* Boutons de la table de jeu */
+.rail-img { width: 78%; height: 78%; object-fit: contain; filter: drop-shadow(0 1px 2px #000); pointer-events: none; }
+.bouton-objets, .bouton-bulle { display: grid !important; place-items: center; padding: 0 !important; }
+.bouton-objets .rail-img, .bouton-bulle .rail-img { width: 74%; height: 74%; }
+/* Compagnon perché */
+.avatar-compagnon-img { object-fit: contain; }
+/* Aperçus de la boutique */
+.apercu-img { width: 40px !important; height: 40px !important; }
+.apercu-dos img.dos-image { width: 50px; border-radius: 5px; box-shadow: 0 3px 8px #000c; }
+.adv-dos img.dos-image { position: absolute; left: 0; top: 0; width: 34px; transform-origin: 50% 100%; border-radius: 3px; }
+img.dos-image { object-fit: cover; aspect-ratio: 5 / 7; }
+
+/* ---------- Tapis de table et bannières : les vraies peintures ---------- */
+.tapis-fond.tapis_velours { background: #120612 url('/img/tapis_velours.webp') center / cover !important; }
+.tapis-fond.tapis_lagon { background: #04221f url('/img/tapis_lagon.webp') center / cover !important; }
+.tapis-fond.tapis_pont { background: #2a1a0c url('/img/tapis_pont.webp') center / cover !important; }
+.tapis-fond.tapis_carte { background: #3a2a14 url('/img/tapis_carte.webp') center / cover !important; }
+.tapis-fond.tapis_abysses { background: #01060d url('/img/tapis_abysses.webp') center / cover !important; }
+.tapis-fond.tapis_tresor { background: #2a1a04 url('/img/tapis_tresor.webp') center / cover !important; animation: none !important; }
+.tapis-fond.tapis_capitaine { background: #1a0e06 url('/img/tapis_capitaine.webp') center / cover !important; }
+/* sur la table, le tapis reste un peu assombri pour que les cartes ressortent */
+.jeu-table.tapis-fond { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.jeu-table.tapis-fond .jeu-table-boussole { background: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.15), rgba(0,0,0,.55) 100%) !important; }
+.banniere-perso.banniere_coucher { background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('/img/banniere_coucher.webp') center / cover !important; }
+.banniere-perso.banniere_tempete { background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('/img/banniere_tempete.webp') center / cover !important; }
+.banniere-perso.banniere_abysses { background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('/img/banniere_abysses.webp') center / cover !important; }
+.banniere-perso.banniere_aurore { background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('/img/banniere_aurore.webp') center / cover !important; }
+.banniere-perso.banniere_tresor { background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('/img/banniere_tresor.webp') center / cover !important; }
+.banniere-perso.banniere_legende { background: linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.5)), url('/img/banniere_legende.webp') center / cover !important; }
+
+/* ---------- Un décor par écran (flouté derrière les menus) ---------- */
+.ecran::before { filter: blur(6px) brightness(.38) saturate(.9) !important; }
+.ecran-boutique::before { background-image: url('/img/decor_port.webp') !important; }
+.ecran-lobby::before, .ecran-attente::before, .ecran-bj-entree::before { background-image: url('/img/decor_taverne.webp') !important; }
+.ecran-classement::before { background-image: url('/img/decor_carte.webp') !important; }
+.ecran-profil::before, .ecran-reglages::before, .ecran-amis::before { background-image: url('/img/decor_cabine.webp') !important; }
+.ecran-regles::before, .ecran-legal::before { background-image: url('/img/decor_bibliotheque.webp') !important; }
+.ecran-connexion::before { background-image: url('/img/decor_ile.webp') !important; filter: blur(2px) brightness(.5) !important; }
+.ecran-admin::before { background-image: url('/img/decor_pont.webp') !important; }
+
+/* Emblème peint au-dessus du titre de chaque écran */
+.ecran > h1.titre-pirate::before { display: block; width: 64px; height: 64px; margin: 0 auto 6px; background: center / contain no-repeat; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+.ecran-boutique > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_boutique.webp'); }
+.ecran-classement > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_classement.webp'); }
+.ecran-lobby > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_jouer.webp'); }
+.ecran-regles > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_regles.webp'); }
+.ecran-reglages > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_reglages.webp'); }
+.ecran-amis > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_amis.webp'); }
+.ecran-attente > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_salon.webp'); }
+.ecran-legal > h1.titre-pirate::before { content: ''; background-image: url('/img/nav_actualites.webp'); }
+.ecran-admin > h1.titre-pirate::before { content: ''; background-image: url('/img/etat_verrou.webp'); }
+.ecran-bj-entree > h1.titre-pirate::before { display: none; }
+.bj-entree-logo { display: block; width: 86px; height: 86px; margin: 4px auto -4px; object-fit: contain; filter: drop-shadow(0 8px 14px rgba(0,0,0,.6)); }
+
+/* =================== Écrans d'attente et de transition =================== */
+.attente-plein { position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px;
+  color: #f3ead7; text-align: center; background: #07090d; isolation: isolate; }
+.attente-plein::before { content: ''; position: absolute; inset: -30px; z-index: -2; background: var(--decor) center / cover; filter: blur(4px) brightness(.45) saturate(.9); }
+.attente-plein::after { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(ellipse 80% 60% at 50% 45%, transparent 30%, rgba(4,6,10,.85) 100%); }
+.attente-logo { width: min(68vw, 300px); height: auto; filter: drop-shadow(0 12px 26px rgba(0,0,0,.75)); animation: attente-logo 3.2s ease-in-out infinite; }
+@keyframes attente-logo { 50% { transform: translateY(-6px) scale(1.02); } }
+.attente-piece { display: inline-grid; place-items: center; width: 54px; height: 54px; perspective: 400px; }
+.attente-piece img { width: 100%; height: 100%; object-fit: contain; animation: attente-piece 1.4s linear infinite; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+.attente-piece.petite { width: 22px; height: 22px; vertical-align: middle; margin-right: 8px; }
+@keyframes attente-piece { to { transform: rotateY(360deg); } }
+.attente-texte { margin: 0; font-family: var(--gravure); font-weight: 700; font-size: 17px; letter-spacing: .14em; text-transform: uppercase; text-shadow: 0 2px 8px #000; }
+.attente-sous { margin: -6px 0 0; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #d6b25e; }
+.attente-points i { font-style: normal; animation: attente-point 1.2s infinite both; }
+.attente-points i:nth-child(2) { animation-delay: .2s; } .attente-points i:nth-child(3) { animation-delay: .4s; }
+@keyframes attente-point { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
+.patience { display: flex; align-items: center; justify-content: center; margin: 14px 0; font-size: 13px; color: var(--texte-doux, #a8a296); letter-spacing: .04em; }
+.bj2-attente { flex-direction: column; gap: 10px; display: flex !important; align-items: center; justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .attente-logo, .attente-piece img { animation: none; } }
+
+/* =================== ACCUEIL : la maquette =================== */
+.ecran-accueil.cr::before { background: url('/img/decor_accueil.webp') center 30% / cover !important; filter: none !important; inset: 0 !important; }
+.ecran-accueil.cr::after { background:
+  linear-gradient(180deg, rgba(6,8,12,.55) 0%, rgba(6,8,12,.05) 18%, rgba(6,8,12,0) 40%, rgba(6,8,12,.45) 62%, rgba(6,8,12,.88) 100%) !important; }
+.ecran-accueil.cr { gap: 6px; }
+.cr-halo { opacity: .6; }
+
+/* Barre du haut */
+.cr-niveau { width: 44px; height: 48px; font-size: 20px; font-family: var(--gravure); color: #2a1604;
+  background: linear-gradient(180deg, #fff1b8, #f2c14e 45%, #b9791c); filter: drop-shadow(0 3px 4px rgba(0,0,0,.6)); text-shadow: 0 1px 0 rgba(255,255,255,.5); }
+.cr-joueur-texte strong { font-family: var(--gravure); font-size: 17px; text-shadow: 0 2px 4px #000; }
+.cr-xp { width: 118px; height: 8px; border: 1px solid rgba(214,178,94,.6); background: rgba(0,0,0,.6); }
+.cr-xp i { background: linear-gradient(90deg, #2b8cff, #8fd0ff); box-shadow: 0 0 8px #4aa8ff; }
+.cr-or { padding: 4px 4px 4px 6px; background: linear-gradient(180deg, rgba(30,20,8,.92), rgba(12,8,4,.92)); border: 1.5px solid #c99a3d; box-shadow: 0 3px 8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,140,.25); color: #ffe7a6; }
+.cr-or .piece-or { width: 26px; height: 26px; }
+.cr-or strong { font-family: var(--gravure); font-weight: 700; font-size: 16px; }
+.cr-plus { width: 26px; height: 26px; background: linear-gradient(180deg, #ffe9a0, #e0a83a 55%, #a86c14); color: #3a2205; font-size: 18px; box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 2px 3px rgba(0,0,0,.5); }
+.cr-rond { width: 46px; height: 46px; background: radial-gradient(circle at 50% 35%, #3a2a16, #120c06); border: 2px solid #c99a3d; box-shadow: 0 3px 8px rgba(0,0,0,.6), inset 0 0 0 2px rgba(0,0,0,.5); }
+
+/* Logo */
+.cr-logo { display: block; align-self: center; height: clamp(54px, 10dvh, 118px); width: auto; max-width: 70%; object-fit: contain; margin: -4px 0 -6px;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,.75)); pointer-events: none; }
+
+/* Boutons latéraux : tuiles cadrées d'or */
+.cr-scene { grid-template-columns: 74px 1fr 74px; }
+.cr-rail { gap: 18px; }
+.cr-bouton-rail-icone { width: 62px; height: 62px; border-radius: 14px;
+  background: radial-gradient(circle at 50% 30%, #3b2a17, #160e07 75%); border: 2px solid #c99a3d;
+  box-shadow: 0 6px 14px rgba(0,0,0,.65), inset 0 0 0 2px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,220,140,.3); }
+.cr-bouton-rail small { font-family: var(--gravure); font-size: 13px; font-weight: 700; letter-spacing: .02em; text-shadow: 0 2px 4px #000, 0 0 2px #000; }
+.cr-bouton-rail b { top: -8px; right: -6px; padding: 2px 7px; font-size: 11px; background: linear-gradient(180deg, #ff5a4f, #b81d17); border: 1.5px solid #ffd0a0; box-shadow: 0 2px 4px rgba(0,0,0,.6); }
+.cr-bouton-rail.fait b { background: linear-gradient(180deg, #4cc477, #1d6b38); }
+.cr-nouveau { position: absolute; top: -4px; right: -2px; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a80, #d61f1f); border: 2px solid #2a1606; box-shadow: 0 0 8px #ff3b30; }
+.cr-bouton-rail:active .cr-bouton-rail-icone { transform: scale(.94); }
+
+/* Le pirate dans son gouvernail doré */
+.cr-pirate .avatar { border-radius: 50%; }
+.cr-pirate .avatar::before { content: ''; position: absolute; inset: -11%; border-radius: 50%; z-index: -1; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, #e8bd55 0 3.5deg, transparent 3.5deg 45deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 58%, #000 58.5%); mask-image: radial-gradient(circle, transparent 58%, #000 58.5%);
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,.7)); }
+.cr-pirate .avatar::after { content: ''; position: absolute; inset: -5%; border-radius: 50%; z-index: -1; pointer-events: none;
+  border: 5px solid transparent; background: linear-gradient(160deg, #fff0b0, #d9a23a 40%, #8a5a14 70%, #f2cc6a) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; box-shadow: 0 0 22px rgba(255,190,80,.35); }
+.cr-socle { opacity: .8; }
+
+/* Ruban du nom */
+.cr-ruban { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: 12px; padding: 4px 26px 5px; min-width: 210px; max-width: 92%;
+  background: linear-gradient(180deg, #4a2410, #2a1206); border: 2px solid #c99a3d; border-radius: 6px;
+  box-shadow: 0 6px 14px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,140,.25);
+  clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%); }
+.cr-ruban .cr-nom { margin: 0; font-size: clamp(20px, 6vw, 28px); color: #fff3d0; text-shadow: 0 2px 0 #000, 0 0 12px rgba(255,200,100,.35); }
+.cr-ruban .cr-titre { margin-top: 1px; padding: 1px 10px; font-family: var(--gravure); font-style: normal; font-weight: 700; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: #ffd979; background: linear-gradient(180deg, #8a1c14, #5a0d08); border-radius: 3px; }
+.cr-grade { margin-top: 4px; font-family: var(--gravure); font-weight: 700; color: #e8dcc0; text-shadow: 0 1px 3px #000; }
+
+/* Choix du jeu : deux plaques, l'active en or */
+.cr-modes { padding: 0; gap: 0; border: 2px solid #c99a3d; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #1c140c, #0c0805); box-shadow: 0 4px 12px rgba(0,0,0,.6); }
+.cr-modes button { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 6px; border-radius: 0; font-family: var(--gravure); font-weight: 700; font-size: 16px; color: #e8dcc0; }
+.cr-modes button.actif { color: #fff6dc; background: linear-gradient(180deg, #e59a3b, #a8551a 55%, #6e300c); box-shadow: inset 0 1px 0 rgba(255,230,170,.6), inset 0 -2px 0 rgba(0,0,0,.3); text-shadow: 0 2px 2px rgba(0,0,0,.5); }
+.cr-modes .icone-img { width: 26px; height: 26px; }
+
+/* Affiche du jeu */
+.cr-affiche { height: 78px; border: 2px solid rgba(201,154,61,.75); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.55); }
+.cr-affiche img { object-position: 50% 22%; left: 30%; width: 70%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%); mask-image: linear-gradient(90deg, transparent, #000 35%); }
+.cr-affiche::after { background: linear-gradient(90deg, rgba(8,10,16,.96) 30%, rgba(8,10,16,.2) 75%, transparent); }
+.cr-affiche-texte strong { font-family: var(--gravure); font-variant: small-caps; font-size: 22px; color: #fff3d0; }
+
+/* Le gros bouton JOUER */
+.ecran .bouton-or.cr-jouer { position: relative; min-height: 76px; border-radius: 16px; gap: 12px; color: #2a1604 !important; font-family: var(--gravure) !important; font-weight: 900 !important;
+  font-size: clamp(28px, 9vw, 40px) !important; letter-spacing: .06em !important; text-shadow: 0 1px 0 rgba(255,240,190,.7) !important;
+  background: linear-gradient(180deg, #fff2b5 0%, #f6c84a 30%, #d9951f 70%, #b06a10 100%) !important;
+  border: 3px solid #8a5410 !important; outline: 2px solid #f4d27a; outline-offset: -7px;
+  box-shadow: 0 8px 0 #5a3408, 0 12px 26px rgba(0,0,0,.6), 0 0 30px rgba(255,190,70,.45), inset 0 2px 0 rgba(255,255,255,.7) !important; }
+.ecran .bouton-or.cr-jouer:active { transform: translateY(5px); box-shadow: 0 3px 0 #5a3408, 0 6px 14px rgba(0,0,0,.6) !important; }
+.cr-jouer .icone-img { width: 52px; height: 52px; margin: -10px 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+.ecran .bouton-or.cr-jouer.cr-jouer-bj { background: linear-gradient(180deg, #ffb0a8 0%, #e5484d 32%, #a51c1f 72%, #6e0d0f 100%) !important; color: #fff6dc !important;
+  border-color: #5a0a0a !important; outline-color: #ffb0a0; text-shadow: 0 2px 2px rgba(0,0,0,.5) !important; box-shadow: 0 8px 0 #3d0606, 0 12px 26px rgba(0,0,0,.6), 0 0 30px rgba(255,70,70,.4), inset 0 2px 0 rgba(255,255,255,.45) !important; }
+
+/* Boutons secondaires : bleu et vert en relief */
+.cr-secondaires .bouton-sombre { min-height: 50px; border-radius: 14px; font-family: var(--gravure) !important; font-weight: 700 !important; font-size: 16px !important; color: #fff !important;
+  border: 2px solid #c99a3d !important; text-shadow: 0 2px 2px rgba(0,0,0,.5) !important; }
+.cr-secondaires .icone-img { width: 30px; height: 30px; margin: -6px 0; }
+
+/* Barre de navigation en bois sombre */
+.cr-nav { background: linear-gradient(180deg, rgba(36,24,12,.97), rgba(14,9,4,.98)); border-top: 2px solid #c99a3d; box-shadow: 0 -6px 18px rgba(0,0,0,.6); max-width: 560px; }
+.cr-nav button { color: #e8dcc0; font-family: var(--gravure); font-size: 11px; font-weight: 700; gap: 3px; }
+.cr-nav button + button { border-left: 1px solid rgba(201,154,61,.25); }
+.cr-nav-icone { width: 40px; height: 40px; }
+.cr-nav button.actif .cr-nav-icone { width: 66px; height: 66px; transform: translateY(-20px); border-radius: 16px;
+  background: radial-gradient(circle at 50% 35%, #3b2a17, #120b05); border: 2px solid #e8bd55; box-shadow: 0 0 18px rgba(255,190,80,.45), 0 6px 14px rgba(0,0,0,.7);
+  clip-path: polygon(50% 0, 100% 22%, 100% 78%, 50% 100%, 0 78%, 0 22%); }
+.cr-nav button.actif small { margin-top: -18px; color: #ffd979; }
+
+@media (max-height: 760px) {
+  .cr-logo { height: clamp(40px, 7dvh, 70px); }
+  .cr-bouton-rail-icone { width: 52px; height: 52px; }
+  .cr-rail { gap: 12px; }
+  .ecran .bouton-or.cr-jouer { min-height: 64px; }
+}
+@media (max-height: 640px) {
+  .cr-logo { display: none; }
+  .cr-ruban { margin-top: 6px; padding: 2px 18px 3px; }
+}
+
+/* ---------- Profil : badges et coffres de niveau ---------- */
+.medaille img.visuel, .badge-icone img.visuel { width: 80%; height: 80%; vertical-align: 0; }
+.medaille:not(.obtenue) img.visuel, .badge.verrouille .badge-icone img.visuel { filter: grayscale(1) brightness(.6); }
+.coffre-niveau { position: relative; }
+.coffre-img { width: 58px; height: 58px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
+.coffre-img.verrou { filter: grayscale(.8) brightness(.55); }
+.coffre-cadenas { position: absolute; top: 26px; left: 50%; width: 30px; height: 30px; margin-left: -15px; object-fit: contain; filter: drop-shadow(0 2px 3px #000); }
+.bouton-tenue { display: flex !important; align-items: center; justify-content: center; gap: 8px; }
+
+/* ---------- Actualités ---------- */
+.actu-image { display: block; width: 110px; height: 110px; margin: 10px auto 6px; object-fit: contain; filter: drop-shadow(0 8px 14px rgba(0,0,0,.6)); animation: b-flotte 3s ease-in-out infinite; }
+.actu-image.logo { width: min(240px, 70%); height: auto; }
+
+/* ---------- Accueil : derniers réglages pour coller à la maquette ---------- */
+.cr-bouton-rail .cr-bouton-rail-icone { background: radial-gradient(circle at 50% 30%, #3b2a17, #160e07 75%) !important; border: 2px solid #c99a3d !important; }
+.cr-modes button.actif { background: linear-gradient(180deg, #e59a3b, #a8551a 55%, #6e300c) !important; color: #fff6dc !important; box-shadow: inset 0 1px 0 rgba(255,230,170,.6) !important; }
+.cr-modes button.actif.m-blackjack { background: linear-gradient(180deg, #e5484d, #a51c1f 55%, #6e0d0f) !important; }
+.cr-ruban { clip-path: none; border-radius: 4px; padding: 3px 20px 4px; min-width: 200px; }
+.cr-ruban::before, .cr-ruban::after { content: ''; position: absolute; top: 8px; bottom: -6px; width: 18px; z-index: -1; background: #3a1a08; border: 2px solid #c99a3d; }
+.cr-ruban::before { left: -12px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); }
+.cr-ruban::after { right: -12px; clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
+.cr-ruban .cr-titre { white-space: nowrap; font-size: 10px; }
+.cr-pirate .avatar { width: clamp(80px, calc(100dvh - 650px), 176px) !important; height: clamp(80px, calc(100dvh - 650px), 176px) !important; }
+.cr-socle { top: calc(clamp(80px, calc(100dvh - 650px), 176px) - 16px) !important; }
+.cr-logo { height: clamp(48px, 9dvh, 96px); }
+@media (max-height: 780px) {
+  .cr-pirate .avatar { width: clamp(76px, calc(100dvh - 540px), 150px) !important; height: clamp(76px, calc(100dvh - 540px), 150px) !important; }
+  .cr-socle { top: calc(clamp(76px, calc(100dvh - 540px), 150px) - 16px) !important; }
+}
+
+/* ---------- Petites icônes peintes dans le texte ---------- */
+img.ico-texte { display: inline-block; width: 1.35em; height: 1.35em; object-fit: contain; vertical-align: -.32em; margin: 0 .1em; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.notif-grosse-cloche img { width: 72px; height: 72px; object-fit: contain; }
+.b-nav i img { width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.bj2-rond-img { width: 26px; height: 26px; object-fit: contain; }
+/* Tuiles des rayons : l'image peinte en grand, à droite */
+.b-rayons .b-rayon-icone { left: auto !important; right: 6px; top: 6px !important; }
+.b-rayons .b-rayon-icone img.visuel { width: 44px; height: 44px; }
+.avatar-compagnon-img { filter: drop-shadow(0 0 2px rgba(255,225,160,.75)) drop-shadow(0 3px 4px rgba(0,0,0,.8)) !important; }

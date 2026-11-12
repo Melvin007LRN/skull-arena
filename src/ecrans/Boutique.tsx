@@ -1,5 +1,6 @@
 // La boutique du port : une vitrine (l'article à la une + les rayons), puis chaque rayon en détail.
 // Objets à lancer en partie, personnalisations, couleurs de pseudo et cadres d'avatar, payés en Louidors.
+import { Visuel } from '../composants/Visuel.tsx';
 import { useCallback, useEffect, useState } from 'react';
 import { messageErreur } from '../lib/supabase.ts';
 import type { Profil } from '../lib/profil.ts';
@@ -18,20 +19,20 @@ type Vue = 'vitrine' | Rayon | 'coffre';
 
 /** Toutes les catégories de la boutique, dans l'ordre, chacune avec sa couleur. */
 const RAYONS: Array<{ id: Rayon; icone: string; nom: string; sous: string; couleur: string }> = [
-  { id: 'cadeaux', icone: '🎁', nom: 'Cadeaux', sous: 'à lancer en partie', couleur: '#e5484d' },
-  { id: 'cadres', icone: '🖼️', nom: 'Cadres', sous: 'autour de ton avatar', couleur: '#e3b04b' },
-  { id: 'pseudo', icone: '✨', nom: 'Pseudo', sous: 'couleur de ton nom', couleur: '#ff4fd8' },
-  { id: 'dos', icone: '🂠', nom: 'Dos de cartes', sous: 'vus par la table', couleur: '#3f7be0' },
-  { id: 'tapis', icone: '🟫', nom: 'Tapis', sous: 'le fond de ta table', couleur: '#2f9e55' },
-  { id: 'pli', icone: '💫', nom: 'Effets de pli', sous: 'quand tu gagnes un pli', couleur: '#1f9fb8' },
-  { id: 'entree', icone: '🚪', nom: 'Entrées', sous: 'ton arrivée en partie', couleur: '#d9772b' },
-  { id: 'victoire', icone: '🏆', nom: 'Célébrations', sous: 'quand tu gagnes', couleur: '#e3b04b' },
-  { id: 'titre', icone: '📜', nom: 'Titres', sous: 'sous ton pseudo', couleur: '#c9a36b' },
-  { id: 'banniere', icone: '🏴', nom: 'Bannières', sous: 'fond de ta fiche', couleur: '#8a4fd6' },
-  { id: 'compagnon', icone: '🦜', nom: 'Compagnons', sous: 'sur ton avatar', couleur: '#4cc477' },
-  { id: 'theme', icone: '🎨', nom: 'Thèmes', sous: 'couleur des menus', couleur: '#ff7a1a' },
-  { id: 'phrase', icone: '💬', nom: 'Phrases', sous: 'pour le chat', couleur: '#8fb4ff' },
-  { id: 'emote', icone: '😎', nom: 'Emotes', sous: 'réactions', couleur: '#f0c419' },
+  { id: 'cadeaux', icone: '/img/jeu_cadeau.webp', nom: 'Cadeaux', sous: 'à lancer en partie', couleur: '#e5484d' },
+  { id: 'cadres', icone: '/img/nav_profil.webp', nom: 'Cadres', sous: 'autour de ton avatar', couleur: '#e3b04b' },
+  { id: 'pseudo', icone: '/img/pli_etoiles.webp', nom: 'Pseudo', sous: 'couleur de ton nom', couleur: '#ff4fd8' },
+  { id: 'dos', icone: '/img/dos_parchemin.webp', nom: 'Dos de cartes', sous: 'vus par la table', couleur: '#3f7be0' },
+  { id: 'tapis', icone: '/img/tapis_capitaine.webp', nom: 'Tapis', sous: 'le fond de ta table', couleur: '#2f9e55' },
+  { id: 'pli', icone: '/img/pli_eclair.webp', nom: 'Effets de pli', sous: 'quand tu gagnes un pli', couleur: '#1f9fb8' },
+  { id: 'entree', icone: '/img/entree_canon.webp', nom: 'Entrées', sous: 'ton arrivée en partie', couleur: '#d9772b' },
+  { id: 'victoire', icone: '/img/nav_classement.webp', nom: 'Célébrations', sous: 'quand tu gagnes', couleur: '#e3b04b' },
+  { id: 'titre', icone: '/img/nav_actualites.webp', nom: 'Titres', sous: 'sous ton pseudo', couleur: '#c9a36b' },
+  { id: 'banniere', icone: '/img/nav_jouer.webp', nom: 'Bannières', sous: 'fond de ta fiche', couleur: '#8a4fd6' },
+  { id: 'compagnon', icone: '/img/compagnon_perroquet.webp', nom: 'Compagnons', sous: 'sur ton avatar', couleur: '#4cc477' },
+  { id: 'theme', icone: '/img/fx_gemme.webp', nom: 'Thèmes', sous: 'couleur des menus', couleur: '#ff7a1a' },
+  { id: 'phrase', icone: '/img/jeu_chat.webp', nom: 'Phrases', sous: 'pour le chat', couleur: '#8fb4ff' },
+  { id: 'emote', icone: '/img/objet_perroquet.webp', nom: 'Emotes', sous: 'réactions', couleur: '#f0c419' },
 ];
 
 /** Ce que fait chaque objet, en une phrase. */
@@ -111,7 +112,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
     <li key={o.id}>
       <button type="button" className={`b-article ${OBJETS[o.id]?.grand ? 'grand' : ''} ${o.id === 'tempete_insultes' ? 'ultime' : ''}`} onClick={() => setFiche(o)}>
         {(inventaire[o.id] ?? 0) > 0 && <span className="b-qte">×{inventaire[o.id]}</span>}
-        <span className="b-medaillon">{o.icone}</span>
+        <span className="b-medaillon"><Visuel v={OBJETS[o.id]?.icone ?? o.icone} /></span>
         <strong>{o.nom}</strong>
         <Prix montant={o.prix} />
       </button>
@@ -132,7 +133,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
           {RAYONS.map((r) => (
             <button key={r.id} type="button" className={vue === r.id ? 'actif' : ''} style={{ ['--rc' as string]: r.couleur }} onClick={() => aller(r.id)}
               ref={(el) => { if (el && vue === r.id && el.parentElement) { const b = el.parentElement; b.scrollLeft = el.offsetLeft - b.clientWidth / 2 + el.clientWidth / 2; } }}>
-              <span>{r.icone}</span>{r.nom}
+              <Visuel v={r.icone} />{r.nom}
             </button>
           ))}
         </nav>
@@ -145,7 +146,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
               <img src="/cartes/kraken.webp" alt="" />
               <span className="b-une-voile" />
               <span className="b-une-texte">
-                <small>{vedette.icone} À la une · Ultime</small>
+                <small>À la une · Ultime</small>
                 <strong>{vedette.nom}</strong>
                 <em>{DESCRIPTIONS[vedette.id]?.split(':')[0] ?? 'Le cadeau le plus spectaculaire du port'}</em>
                 <Prix montant={vedette.prix} />
@@ -156,7 +157,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
             {RAYONS.map((r) => (
               <li key={r.id}>
                 <button type="button" style={{ ['--rc' as string]: r.couleur }} onClick={() => aller(r.id)}>
-                  <span className="b-rayon-icone">{r.icone}</span>
+                  <span className="b-rayon-icone"><Visuel v={r.icone} /></span>
                   <strong>{r.nom}</strong>
                   <small>{r.sous}</small>
                 </button>
@@ -173,7 +174,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
 
       {vue === 'cadeaux' && (
         <>
-          <p className="petit-texte centre">Touche un objet pour voir son animation. En partie, lance-le avec le bouton 🎁.</p>
+          <p className="petit-texte centre">Touche un objet pour voir son animation. En partie, lance-le avec le bouton <img className="ico-texte" src="/img/jeu_cadeau.webp" alt="" />.</p>
           <div className="b-section"><h2>Petits objets</h2><span className="b-astuce">Lot de 5 : 1 offert</span></div>
           <ul className="b-grille">{petits.map(carteObjet)}</ul>
           <div className="b-section"><h2>Spectaculaires</h2><span className="b-astuce">Vus par toute la table</span></div>
@@ -203,7 +204,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                         onClick={() => faire(() => equiperNeon(c.id), `${c.nom} équipé !`)}>{neonActuel === c.id ? 'Équipé' : 'Équiper'}</button>
                     : <button type="button" className="bouton-or petit" disabled={enCours || !peutPayer(c.prix)}
                         onClick={() => confirm(`Acheter le ${c.nom} pour ${c.prix} Louidors ?`) && faire(() => acheter(c.id), `${c.nom} acheté ! Équipe-le pour l’afficher.`)}><Prix montant={c.prix} /></button>}
-                  <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(c)}>🎁 Offrir</button>
+                  <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(c)}><img className="ico-texte" src="/img/jeu_cadeau.webp" alt="" /> Offrir</button>
                 </li>
               );
             })}
@@ -225,7 +226,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                         onClick={() => faire(() => equiperCadre(c.id), `${c.nom} équipé !`)}>{actuel === c.id ? 'Équipé' : 'Équiper'}</button>
                     : <button type="button" className="bouton-or petit" disabled={enCours || !peutPayer(c.prix)}
                         onClick={() => confirm(`Acheter le ${c.nom} pour ${c.prix} Louidors ?`) && faire(() => acheter(c.id), `${c.nom} acheté !`)}><Prix montant={c.prix} /></button>}
-                  <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(c)}>🎁 Offrir</button>
+                  <button type="button" className="lien offrir" disabled={enCours} onClick={() => setAOffrir(c)}><img className="ico-texte" src="/img/jeu_cadeau.webp" alt="" /> Offrir</button>
                 </li>
               );
             })}
@@ -241,7 +242,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                   {ok
                     ? <button type="button" className={actuel === c.id ? 'bouton-sombre petit' : 'bouton-or petit'} disabled={enCours || actuel === c.id}
                         onClick={() => faire(() => equiperCadre(c.id), `${c.nom} équipé !`)}>{actuel === c.id ? 'Équipé' : 'Équiper'}</button>
-                    : <small>🔒 {c.condition}</small>}
+                    : <small><img className="ico-texte" src="/img/etat_verrou.webp" alt="" /> {c.condition}</small>}
                 </li>
               );
             })}
@@ -274,8 +275,8 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
       )}
 
       <nav className="b-nav">
-        <button type="button" className={vue !== 'coffre' ? 'actif' : ''} onClick={() => aller('vitrine')}><i>🏪</i>Boutique</button>
-        <button type="button" className={vue === 'coffre' ? 'actif' : ''} onClick={() => aller('coffre')}><i>🎒</i>Mon coffre{nbCoffre > 0 && <b>{nbCoffre}</b>}</button>
+        <button type="button" className={vue !== 'coffre' ? 'actif' : ''} onClick={() => aller('vitrine')}><i><img src="/img/nav_boutique.webp" alt="" /></i>Boutique</button>
+        <button type="button" className={vue === 'coffre' ? 'actif' : ''} onClick={() => aller('coffre')}><i><img src="/img/nav_coffre.webp" alt="" /></i>Mon coffre{nbCoffre > 0 && <b>{nbCoffre}</b>}</button>
       </nav>
 
       {message && <p className={`b-toast ${message.ok ? 'ok' : 'ko'}`} role="status">{message.texte}</p>}
@@ -284,7 +285,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
         <div className="voile b-voile" onClick={() => setFiche(null)}>
           <section className="b-fiche" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="b-fermer" onClick={() => setFiche(null)} aria-label="Fermer">×</button>
-            <span className={`b-medaillon xl ${fiche.id === 'tempete_insultes' ? 'ultime' : ''}`}>{fiche.icone}</span>
+            <span className={`b-medaillon xl ${fiche.id === 'tempete_insultes' ? 'ultime' : ''}`}><Visuel v={OBJETS[fiche.id]?.icone ?? fiche.icone} /></span>
             {OBJETS[fiche.id]?.grand && <small className="b-etiquette">{fiche.id === 'tempete_insultes' ? 'Ultime' : 'Spectaculaire'}</small>}
             <h2>{fiche.nom}</h2>
             <p>{DESCRIPTIONS[fiche.id] ?? ''}</p>
@@ -300,7 +301,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
                 <span>Lot ×5 <em>1 offert</em></span><Prix montant={fiche.prix * 4} />
               </button>
             </div>
-            <button type="button" className="lien" disabled={enCours} onClick={() => { const f = fiche; setFiche(null); setAOffrir(f); }}>🎁 Offrir à un compagnon</button>
+            <button type="button" className="lien" disabled={enCours} onClick={() => { const f = fiche; setFiche(null); setAOffrir(f); }}><img className="ico-texte" src="/img/jeu_cadeau.webp" alt="" /> Offrir à un compagnon</button>
           </section>
         </div>
       )}
@@ -313,7 +314,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
             if (!confirm(`Offrir « ${aOffrir.nom} » à ${pseudo} pour ${aOffrir.prix} Louidors ?`)) return;
             const a = aOffrir;
             setAOffrir(null);
-            faire(() => offrir(a.id, ami), `${a.nom} offert à ${pseudo} ! 🎁`);
+            faire(() => offrir(a.id, ami), `${a.nom} offert à ${pseudo} !`);
           }} />
       )}
     </main>

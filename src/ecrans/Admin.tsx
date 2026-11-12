@@ -1,4 +1,5 @@
 // Espace Admin : joueurs (bannir, pseudo, photo) et phrases rapides.
+import { Patience } from '../composants/Attente.tsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
 import { grade, niveau, PSEUDO_REGEX, type Profil } from '../lib/profil.ts';
@@ -183,7 +184,7 @@ function Signalements({ action }: { action: Action }) {
   return (
     <section className="parchemin">
       <label className="case"><input type="checkbox" checked={voirTraites} onChange={(e) => setVoirTraites(e.target.checked)} /><span>Afficher aussi les signalements traités</span></label>
-      {liste === null ? <p className="petit-texte centre">Chargement…</p>
+      {liste === null ? <Patience />
         : visibles.length === 0 ? <p className="petit-texte centre">Aucun signalement en attente. Tout est calme à bord ⚓</p>
         : (
           <ul className="admin-phrases">

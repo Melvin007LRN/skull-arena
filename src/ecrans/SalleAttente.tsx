@@ -1,4 +1,5 @@
 // Salle d'attente : les joueurs s'installent autour de la table, se déclarent prêts, l'hôte lance.
+import { Patience } from '../composants/Attente.tsx';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { appel, partagerInvitation, type MembreSalon, type Salon } from '../lib/jeu.ts';
 import { Titre } from '../composants/Perso.tsx';
@@ -80,7 +81,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
         {info && <p className="message info">{info}</p>}
         {panneauAmis && (
           <div className="panneau-inviter">
-            {amis === null ? <p className="petit-texte centre">Chargement…</p>
+            {amis === null ? <Patience />
               : amisDispo.length === 0 ? <p className="petit-texte centre">Aucun ami à inviter. Ajoute des compagnons depuis l’accueil (« Mes compagnons »).</p>
               : (
                 <ul className="liste-amis">
@@ -112,7 +113,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
             return suisHote ? (
               <button key={i} type="button" className="siege vide" style={style} disabled={enCours}
                 onClick={() => faire(() => appel('ajouter_robot', { salon_id: salon.id }))} aria-label="Ajouter un robot">
-                <span>+🤖</span>
+                <span>+<img className="ico-texte" src="/img/nav_entrainement.webp" alt="" /></span>
               </button>
             ) : <div key={i} className="siege vide" style={style}><span>+</span></div>;
           }
@@ -137,7 +138,7 @@ export function SalleAttente({ salon, membres, moi, quitter }: {
       </section>
 
       <section className="parchemin chat-salon">
-        <p className="sous-titre">💬 Le pont · discute avant le départ</p>
+        <p className="sous-titre"><img className="ico-texte" src="/img/jeu_chat.webp" alt="" /> Le pont · discute avant le départ</p>
         <div className="chat-messages">
           {chat.messages.filter((m) => !bloques.has(m.de)).length === 0 && <p className="petit-texte centre">Aucun message pour l’instant.</p>}
           {chat.messages.filter((m) => !bloques.has(m.de)).map((m) => (

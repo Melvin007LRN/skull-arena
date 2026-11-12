@@ -1,6 +1,8 @@
 // Écran de jeu final (paysage) : décor, table ronde dorée, adversaires en arc, main en éventail,
 // glisser vers l'arène, fenêtres parchemin, animations et phrases rapides.
 // Ce composant ne parle pas au serveur : il reçoit la partie et renvoie les intentions du joueur.
+import { Visuel } from '../composants/Visuel.tsx';
+import { FX, IMAGE_OBJET } from '../lib/images.ts';
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE, type ReactNode, type RefObject } from 'react';
 import type { VueJeu, MembreSalon } from '../lib/jeu.ts';
 import type { VuePrivee } from '../engine/vues.ts';
@@ -573,8 +575,8 @@ export function TableJeu(p: PropsTable) {
           <small>⚔ Mise</small>
           <strong>{miseDe(moi) ?? (miseLocale?.manche === vue.manche ? miseLocale.mise : vue.aMise[moi] ? '✓' : '?')}</strong>
         </div>
-        <button type="button" className="rail-rond rail-scores" onClick={() => setScoresOuverts(true)} aria-label="Scores">📊</button>
-        <button type="button" className="rail-rond rail-reglages" onClick={() => setMenuOuvert((m) => !m)} aria-label="Réglages">⚙</button>
+        <button type="button" className="rail-rond rail-scores" onClick={() => setScoresOuverts(true)} aria-label="Scores"><img className="rail-img" src="/img/jeu_scores.webp" alt="" /></button>
+        <button type="button" className="rail-rond rail-reglages" onClick={() => setMenuOuvert((m) => !m)} aria-label="Réglages"><img className="rail-img" src="/img/jeu_reglages.webp" alt="" /></button>
         {menuOuvert && (
           <div className="jeu-menu">
             <button type="button" onClick={() => setMusiqueOn(musique.basculer())}>{musiqueOn ? '🎵 Musique : oui' : '🔇 Musique : non'}</button>
@@ -663,7 +665,7 @@ export function TableJeu(p: PropsTable) {
               <div className="adv-nom">
                 <span className="adv-medaillon">☠</span>
                 <span className={neonNom(j).className} style={neonNom(j).style}>{pseudo(j)}</span>
-                {vue.remplaces?.includes(j) && <span className="adv-robot-mini" title="Un robot joue à sa place">🤖</span>}
+                {vue.remplaces?.includes(j) && <span className="adv-robot-mini" title="Un robot joue à sa place"><img className="ico-texte" src="/img/nav_entrainement.webp" alt="" /></span>}
               </div>
               {p.hote === moi && !vue.robots?.includes(j) && !vue.definitifs?.includes(j) && !finie && !connecte(j) && (
                 <button type="button" className="adv-exclure" aria-label={`Exclure ${pseudo(j)}`}
@@ -738,7 +740,7 @@ export function TableJeu(p: PropsTable) {
 
       {/* Phrases rapides */}
       {p.lancerObjet && !finie && (
-        <button type="button" className="bouton-objets" onClick={() => { setPanneauObjets((o) => !o); setObjetChoisi(null); setChatOuvert(false); }} aria-label="Lancer un objet">🎁</button>
+        <button type="button" className="bouton-objets" onClick={() => { setPanneauObjets((o) => !o); setObjetChoisi(null); setChatOuvert(false); }} aria-label="Lancer un objet"><img className="rail-img" src="/img/jeu_cadeau.webp" alt="" /></button>
       )}
       {panneauObjets && (
         <div className="panneau-phrases panneau-objets">
@@ -750,7 +752,7 @@ export function TableJeu(p: PropsTable) {
                   const nb = p.inventaire?.[id] ?? 0;
                   return (
                     <button key={id} type="button" disabled={nb === 0} onClick={() => setObjetChoisi(id)} title={o.nom}>
-                      <span>{o.icone}</span><small>{nb}</small>
+                      <Visuel v={o.icone} /><small>{nb}</small>
                     </button>
                   );
                 })}
@@ -759,7 +761,7 @@ export function TableJeu(p: PropsTable) {
             </>
           ) : (
             <>
-              <small>{OBJETS[objetChoisi].icone} {OBJETS[objetChoisi].nom} · sur qui ?</small>
+              <small><Visuel v={OBJETS[objetChoisi].icone} className="visuel-texte" /> {OBJETS[objetChoisi].nom} · sur qui ?</small>
               {autres.map((j) => (
                 <button key={j} type="button" onClick={async () => { setPanneauObjets(false); await p.lancerObjet!(objetChoisi, j); setObjetChoisi(null); }}>{pseudo(j)}</button>
               ))}
@@ -769,7 +771,7 @@ export function TableJeu(p: PropsTable) {
         </div>
       )}
 
-      <button type="button" className="bouton-bulle" onClick={() => { setChatOuvert((c) => !c); setPanneauObjets(false); }} aria-label="Phrases rapides">💬</button>
+      <button type="button" className="bouton-bulle" onClick={() => { setChatOuvert((c) => !c); setPanneauObjets(false); }} aria-label="Phrases rapides"><img className="rail-img" src="/img/jeu_chat.webp" alt="" /></button>
       {chatOuvert && (
         <div className="panneau-phrases">
           {p.envoyerReaction && (
@@ -796,7 +798,7 @@ export function TableJeu(p: PropsTable) {
 
       {/* Bandeaux */}
       {vue.remplaces?.includes(moi) && !vue.definitifs?.includes(moi) && (
-        <p className="bandeau">🤖 Un robot a joué pendant ton absence. Tu reprends la main au début de la prochaine manche.</p>
+        <p className="bandeau"><img className="ico-texte" src="/img/nav_entrainement.webp" alt="" /> Un robot a joué pendant ton absence. Tu reprends la main au début de la prochaine manche.</p>
       )}
       {vue.definitifs?.includes(moi) && !finie && <p className="bandeau rouge">Un robot joue à ta place jusqu’à la fin de cette partie.</p>}
       {p.erreur && <p className="bandeau rouge">{p.erreur}</p>}
@@ -1118,7 +1120,7 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
         const ici = { left: b.x, top: b.y };
         return (
           <div key={l.id} className={imp.special === 'fumee' ? 'impact-secousse' : undefined}>
-            {[2, 1, 0].map((k) => <span key={k} className={`projectile ${k ? 'trainee' : ''}`} style={{ ...vol, animationDelay: `${k * 0.045}s`, ['--o' as string]: 1 - k * 0.32 }}>{o.icone}</span>)}
+            {[2, 1, 0].map((k) => <span key={k} className={`projectile ${k ? 'trainee' : ''}`} style={{ ...vol, animationDelay: `${k * 0.045}s`, ['--o' as string]: 1 - k * 0.32 }}><Visuel v={o.icone} /></span>)}
             <span className="impact-onde" style={{ ...ici, ['--flash' as string]: imp.flash ?? '#ffffff' }} />
             {imp.flash && <span className="impact-flash" style={{ ...ici, ['--flash' as string]: imp.flash }} />}
             {imp.special === 'tache' && (
@@ -1130,9 +1132,9 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
               <span className="impact-larmes" style={ici}>{[0, 1, 2, 3, 4, 5].map((k) => <i key={k} style={{ ['--k' as string]: k }}>💧</i>)}</span>
             )}
             {imp.special === 'fumee' && <span className="impact-fumee" style={ici}>{[0, 1, 2, 3].map((k) => <i key={k} style={{ ['--k' as string]: k }} />)}</span>}
-            {imp.special === 'couronne' ? <span className="impact-couronne" style={ici}>{o.icone}</span>
-              : imp.special === 'orbite' ? <span className="impact-orbite" style={ici}><i>{o.icone}</i></span>
-              : <span className={`impact-objet ${imp.special === 'drapeau' ? 'agite' : ''}`} style={ici}>{o.icone}</span>}
+            {imp.special === 'couronne' ? <span className="impact-couronne" style={ici}><Visuel v={o.icone} /></span>
+              : imp.special === 'orbite' ? <span className="impact-orbite" style={ici}><i><Visuel v={o.icone} /></i></span>
+              : <span className={`impact-objet ${imp.special === 'drapeau' ? 'agite' : ''}`} style={ici}><Visuel v={o.icone} /></span>}
             <Eclats x={b.x} y={b.y} emojis={imp.eclats} mode={imp.mode} />
             {imp.texte && <span className="impact-texte" style={{ ...ici, ['--flash' as string]: imp.flash ?? '#ff2a4a' }}>{imp.texte}</span>}
             <span className="legende-objet" style={ici}>{legende}</span>
@@ -1151,16 +1153,16 @@ function Projectiles({ racine, lancers, reactions, pseudo }: {
 type ModeEclats = 'gerbe' | 'pluie' | 'tourbillon' | 'explosion';
 type Impact = { eclats: string[]; mode: ModeEclats; texte?: string; flash?: string; special?: 'tache' | 'larmes' | 'fumee' | 'couronne' | 'orbite' | 'drapeau'; couleur?: string };
 const IMPACTS: Record<string, Impact> = {
-  mouchoirs: { eclats: ['🧻', '🤧', '💧'], mode: 'pluie', texte: 'SNIF !', flash: '#8fd3ff', special: 'larmes' },
+  mouchoirs: { eclats: [IMAGE_OBJET.mouchoirs, '🤧', '💧'], mode: 'pluie', texte: 'SNIF !', flash: '#8fd3ff', special: 'larmes' },
   drapeau_blanc: { eclats: ['🕊️', '🕊️', '🪶'], mode: 'tourbillon', texte: 'JE ME RENDS !', flash: '#ffffff', special: 'drapeau' },
-  tomate: { eclats: ['🍅', '💦', '🍅'], mode: 'gerbe', texte: 'SPLATCH !', flash: '#ff2a2a', special: 'tache', couleur: '#d4161b' },
-  poisson: { eclats: ['🐟', '💦', '🫧'], mode: 'gerbe', texte: 'SPLAF !', flash: '#6fd3ff', special: 'tache', couleur: '#7fb7a8' },
-  rhum: { eclats: ['🍺', '🫧', '🍻'], mode: 'gerbe', texte: 'SANTÉ !', flash: '#ffcc33', special: 'tache', couleur: '#f3c55a' },
-  rose: { eclats: ['🌹', '🌸', '💗', '🌸'], mode: 'pluie', texte: '♥', flash: '#ff4fd8' },
+  tomate: { eclats: [FX.eclaboussure, '💦', IMAGE_OBJET.tomate], mode: 'gerbe', texte: 'SPLATCH !', flash: '#ff2a2a', special: 'tache', couleur: '#d4161b' },
+  poisson: { eclats: [IMAGE_OBJET.poisson, '💦', '🫧'], mode: 'gerbe', texte: 'SPLAF !', flash: '#6fd3ff', special: 'tache', couleur: '#7fb7a8' },
+  rhum: { eclats: [IMAGE_OBJET.rhum, '🫧', '🍻'], mode: 'gerbe', texte: 'SANTÉ !', flash: '#ffcc33', special: 'tache', couleur: '#f3c55a' },
+  rose: { eclats: [FX.rose, '🌸', '💗', FX.rose], mode: 'pluie', texte: '♥', flash: '#ff4fd8' },
   perroquet: { eclats: ['🪶', '🪶', '💬'], mode: 'tourbillon', texte: 'COÔÔA !', flash: '#2dff7a', special: 'orbite' },
   doigt: { eclats: ['💢', '💢', '😤'], mode: 'gerbe', texte: 'HÉ !', flash: '#ff7a1a' },
-  boulet: { eclats: ['💥', '🔥', '💨', '🔥'], mode: 'explosion', texte: 'BOUM !', flash: '#ff7a1a', special: 'fumee' },
-  couronne: { eclats: ['✨', '⭐', '✨', '🎉'], mode: 'tourbillon', texte: 'VIVE LE ROI !', flash: '#ffcc33', special: 'couronne' },
+  boulet: { eclats: ['💥', FX.flamme, FX.fumee, '🔥'], mode: 'explosion', texte: 'BOUM !', flash: '#ff7a1a', special: 'fumee' },
+  couronne: { eclats: ['✨', FX.etoiles, '✨', FX.gemme], mode: 'tourbillon', texte: 'VIVE LE ROI !', flash: '#ffcc33', special: 'couronne' },
 };
 
 function Eclats({ x, y, emojis, mode }: { x: number; y: number; emojis: string[]; mode: ModeEclats }) {
@@ -1173,7 +1175,7 @@ function Eclats({ x, y, emojis, mode }: { x: number; y: number; emojis: string[]
     <>
       {parts.map((p) => (
         <span key={p.k} className={`eclat eclat-${mode}`} style={{ left: x, top: y, animationDelay: `${0.8 + p.dl}s`,
-          ['--tx' as string]: `${p.tx}px`, ['--ty' as string]: `${p.ty}px`, ['--s' as string]: p.s, ['--r' as string]: `${p.r}deg`, ['--px' as string]: `${p.px}px`, ['--k' as string]: p.k }}>{p.e}</span>
+          ['--tx' as string]: `${p.tx}px`, ['--ty' as string]: `${p.ty}px`, ['--s' as string]: p.s, ['--r' as string]: `${p.r}deg`, ['--px' as string]: `${p.px}px`, ['--k' as string]: p.k }}><Visuel v={p.e} /></span>
       ))}
     </>
   );
@@ -1241,7 +1243,7 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
     return {
       bouquets: Array.from({ length: 8 }, (_, k) => ({ k, x: r(12, 88), y: r(12, 50), dl: 0.9 + k * 0.4 + r(0, 0.15), c: ['#ff2a4a', '#ffcc33', '#2dff7a', '#2ee6ff', '#b866ff', '#ff4fd8', '#ffffff', '#ff7a1a'][k % 8] })),
       paillettes: Array.from({ length: 36 }, (_, k) => ({ k, x: r(0, 100), dl: 3.6 + r(0, 1), du: r(1.2, 2) })),
-      pieces: Array.from({ length: 56 }, (_, k) => ({ k, x: r(0, 100), dl: 0.4 + r(0, 3), du: r(1.4, 2.4), s: r(0.6, 1.3), rot: r(-540, 540), gemme: k % 6 === 0 ? ['💎', '💍', '🪙'][k % 3] : null })),
+      pieces: Array.from({ length: 56 }, (_, k) => ({ k, x: r(0, 100), dl: 0.4 + r(0, 3), du: r(1.4, 2.4), s: r(0.6, 1.3), rot: r(-540, 540), gemme: k % 6 === 0 ? [FX.gemme, FX.gemme, FX.piece][k % 3] : null })),
       boulets: Array.from({ length: 5 }, (_, k) => ({ k, y: r(20, 80), dl: 0.6 + k * 0.45 })),
       echardes: Array.from({ length: 14 }, (_, k) => ({ k, a: r(0, 360), d: r(60, 150), dl: 1.15 + (k % 5) * 0.45, e: ['🪵', '🔥', '💨'][k % 3] })),
       spectres: Array.from({ length: 5 }, (_, k) => ({ k, x: r(8, 92), dl: 1 + k * 0.55, du: r(2.2, 3) })),
@@ -1252,7 +1254,7 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
     <div className={`grand-cadeau gc-${objet}`} aria-hidden="true" style={{ ['--cx' as string]: `${cible.x}px`, ['--cy' as string]: `${cible.y}px` }}>
       <div className="gc-voile" />
       {objet !== 'tempete_insultes' && (
-        <div className="gc-intro"><span className="gc-intro-rayons" /><span className="gc-intro-icone">{objet === 'feu_artifice' ? '🎉' : OBJETS[objet]?.icone}</span></div>
+        <div className="gc-intro"><span className="gc-intro-rayons" /><span className="gc-intro-icone"><Visuel v={OBJETS[objet]?.icone} /></span></div>
       )}
       {objet === 'feu_artifice' && (
         <>
@@ -1284,16 +1286,16 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
         <>
           <span className="gc-rayons" style={{ left: cible.x, top: cible.y }} />
           {hasard.pieces.map((p) => (
-            <span key={p.k} className={p.gemme ? 'gc-piece gemme' : 'gc-piece'} style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s`, ['--s' as string]: p.s, ['--rot' as string]: `${p.rot}deg` }}>{p.gemme}</span>
+            <span key={p.k} className={p.gemme ? 'gc-piece gemme' : 'gc-piece'} style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s`, ['--s' as string]: p.s, ['--rot' as string]: `${p.rot}deg` }}><Visuel v={p.gemme} /></span>
           ))}
-          <span className="gc-coffre" style={{ left: cible.x, top: cible.y }}>💰</span>
+          <span className="gc-coffre" style={{ left: cible.x, top: cible.y }}><Visuel v={IMAGE_OBJET.pluie_tresor} /></span>
         </>
       )}
       {objet === 'navire_fantome' && (
         <>
           {hasard.brumes.map((k) => <div key={k} className={`gc-brume b${k}`} />)}
           <div className="gc-eclair-vert" />
-          {hasard.spectres.map((p) => <span key={`s${p.k}`} className="gc-spectre" style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s` }}>👻</span>)}
+          {hasard.spectres.map((p) => <span key={`s${p.k}`} className="gc-spectre" style={{ left: `${p.x}%`, animationDelay: `${p.dl}s`, animationDuration: `${p.du}s` }}><Visuel v={FX.fantome} /></span>)}
           <div className="gc-navire">
             <svg viewBox="0 0 220 170" aria-hidden="true">
               <g fill="none" stroke="#bfffe6" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round">
@@ -1307,9 +1309,9 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
               </g>
               <g fill="#bfffe6"><circle cx="112" cy="40" r="5" /><circle cx="124" cy="40" r="5" /></g>
             </svg>
-            <span className="gc-navire-fantome">👻</span>
+            <span className="gc-navire-fantome"><Visuel v={IMAGE_OBJET.navire_fantome} /></span>
           </div>
-          <span className="gc-hante" style={{ left: cible.x, top: cible.y }}>👻</span>
+          <span className="gc-hante" style={{ left: cible.x, top: cible.y }}><Visuel v={FX.fantome} /></span>
         </>
       )}
       {objet === 'tempete_insultes' && <TempeteInsultes cible={cible} />}
@@ -1322,7 +1324,7 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
           {[-70, -35, 0, 35, 70].map((r, k) => (
             <div key={k} className="gc-tentacule" style={{ rotate: `${r}deg`, animationDelay: `${k * 0.12}s` }}><div className="tentacule-corps" style={{ animationDelay: `${k * 0.12}s` }}><Tentacule /></div></div>
           ))}
-          <span className="gc-kraken-tete">🐙</span>
+          <span className="gc-kraken-tete"><Visuel v={IMAGE_OBJET.kraken_poche} /></span>
         </div>
       )}
       <p className="gc-legende">{legende}</p>
@@ -1748,7 +1750,7 @@ function TableauScores({ vue, moi, pseudo, photo, cadre, record, fermer }: {
               </small>
             </div>
             <div className={`ts-record ${recordBattu ? 'battu' : ''}`}>
-              <p className="ts-etiquette">🏆 Record à battre</p>
+              <p className="ts-etiquette"><img className="ico-texte" src="/img/nav_classement.webp" alt="" /> Record à battre</p>
               {record ? (
                 <>
                   <span className="ts-score">{record.score} <small>pts</small></span>

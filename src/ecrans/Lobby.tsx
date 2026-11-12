@@ -105,7 +105,7 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
           <p className="sous-titre">Vitesse des robots</p>
           <div className="boutons-mise">
             <button type="button" className={!rapide ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setRapide(false)}>Normale</button>
-            <button type="button" className={rapide ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setRapide(true)}>Rapide ⚡</button>
+            <button type="button" className={rapide ? 'bouton-or petit' : 'bouton-sombre petit'} onClick={() => setRapide(true)}>Rapide <img className="ico-texte" src="/img/nav_partie_rapide.webp" alt="" /></button>
           </div>
           <p className="sous-titre">Cartes</p>
           <div className="boutons-mise">
@@ -143,10 +143,10 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
               <img src="/decor/art/skull_king.webp" alt="" style={{ objectPosition: '50% 22%' }} />
               <span className="tuile-degrade" />
               <span className="tuile-texte">
-                <span className="etiquette-mode">⚡ Partie rapide</span>
+                <span className="etiquette-mode"><img className="ico-texte" src="/img/nav_partie_rapide.webp" alt="" /> Partie rapide</span>
                 <strong>Trouver un équipage</strong>
                 <small>On t’assemble une table avec d’autres pirates en quelques secondes : dès 4 joueurs, ou à 2 et plus après 30 s d’attente.</small>
-                <span className="puces-mode"><em>🃏 Avec l’extension</em><em>🏆 Compte au classement</em></span>
+                <span className="puces-mode"><em><img className="ico-texte" src="/img/nav_blackjack.webp" alt="" /> Avec l’extension</em><em><img className="ico-texte" src="/img/nav_classement.webp" alt="" /> Compte au classement</em></span>
               </span>
             </button>
           )}
@@ -156,7 +156,7 @@ export function Lobby({ mode, retour, entrer }: { mode: 'jouer' | 'code' | 'entr
               <img src="/decor/art/butin_1.webp" alt="" style={{ objectPosition: '50% 30%' }} />
               <span className="tuile-degrade" />
               <span className="tuile-texte">
-                <span className="etiquette-mode">🔒 Privé</span>
+                <span className="etiquette-mode"><img className="ico-texte" src="/img/etat_verrou.webp" alt="" /> Privé</span>
                 <strong>Entre amis</strong>
                 <small>Partage un code ou un lien. Tu es le capitaine : robots, extension et départ.</small>
               </span>

@@ -2,6 +2,7 @@
 // Le prix fait foi côté serveur (table boutique) ; ce fichier décrit l'apparence de chaque article.
 import { supabase } from './supabase.ts';
 import { niveau, type Profil } from './profil.ts';
+import { FX } from './images.ts';
 
 export type Categorie = 'dos' | 'tapis' | 'pli' | 'entree' | 'victoire' | 'titre' | 'banniere' | 'compagnon' | 'theme' | 'phrase' | 'emote';
 /** Catégories qu'on « équipe » (une à la fois). Les phrases et emotes, elles, s'ajoutent toutes. */
@@ -62,27 +63,27 @@ export const ARTICLES: ArticlePerso[] = [
   { id: 'tapis_tresor', categorie: 'tapis', nom: 'Salle du trésor', prix: 2500, anime: true },
   { id: 'tapis_capitaine', categorie: 'tapis', nom: 'Table du Capitaine', gagne: g('Niveau 25', (p) => niveau(p.xp) >= 25) },
   // ---- Effets de pli ----
-  { id: 'pli_pieces', categorie: 'pli', nom: 'Pluie de pièces', prix: 300, emojis: ['🪙', '💰', '✨'], mode: 'pluie', couleur: '#ffcc33' },
-  { id: 'pli_eclair', categorie: 'pli', nom: 'Éclair', prix: 500, emojis: ['⚡', '✨'], mode: 'explosion', couleur: '#2ee6ff' },
-  { id: 'pli_flammes', categorie: 'pli', nom: 'Flammes', prix: 600, emojis: ['🔥', '💥'], mode: 'gerbe', couleur: '#ff7a1a' },
-  { id: 'pli_fumee', categorie: 'pli', nom: 'Fumée spectrale', prix: 800, emojis: ['👻', '💨'], mode: 'tourbillon', couleur: '#b866ff' },
-  { id: 'pli_cranes', categorie: 'pli', nom: 'Crânes', prix: 1200, emojis: ['💀', '☠️'], mode: 'explosion', couleur: '#ffffff' },
-  { id: 'pli_etoiles', categorie: 'pli', nom: 'Pluie d’étoiles', prix: 1500, emojis: ['⭐', '🌟', '✨'], mode: 'pluie', couleur: '#ffcc33' },
-  { id: 'pli_kraken', categorie: 'pli', nom: 'Tentacules', prix: 2500, emojis: ['🐙', '🌊', '🫧'], mode: 'tourbillon', couleur: '#b866ff' },
-  { id: 'pli_couronne', categorie: 'pli', nom: 'Couronnes', emojis: ['👑', '✨'], mode: 'tourbillon', couleur: '#ffcc33', gagne: g('25 victoires', (p) => p.victoires >= 25) },
+  { id: 'pli_pieces', categorie: 'pli', nom: 'Pluie de pièces', prix: 300, emojis: [FX.piece, FX.louidor, '✨'], mode: 'pluie', couleur: '#ffcc33' },
+  { id: 'pli_eclair', categorie: 'pli', nom: 'Éclair', prix: 500, emojis: [FX.eclair, '✨'], mode: 'explosion', couleur: '#2ee6ff' },
+  { id: 'pli_flammes', categorie: 'pli', nom: 'Flammes', prix: 600, emojis: [FX.flamme, '💥'], mode: 'gerbe', couleur: '#ff7a1a' },
+  { id: 'pli_fumee', categorie: 'pli', nom: 'Fumée spectrale', prix: 800, emojis: [FX.fantome, FX.fumee], mode: 'tourbillon', couleur: '#b866ff' },
+  { id: 'pli_cranes', categorie: 'pli', nom: 'Crânes', prix: 1200, emojis: [FX.crane, '☠️'], mode: 'explosion', couleur: '#ffffff' },
+  { id: 'pli_etoiles', categorie: 'pli', nom: 'Pluie d’étoiles', prix: 1500, emojis: [FX.etoiles, '🌟', '✨'], mode: 'pluie', couleur: '#ffcc33' },
+  { id: 'pli_kraken', categorie: 'pli', nom: 'Tentacules', prix: 2500, emojis: [FX.tentacule, '🌊', '🫧'], mode: 'tourbillon', couleur: '#b866ff' },
+  { id: 'pli_couronne', categorie: 'pli', nom: 'Couronnes', emojis: [FX.couronne, '✨'], mode: 'tourbillon', couleur: '#ffcc33', gagne: g('25 victoires', (p) => p.victoires >= 25) },
   // ---- Entrées ----
-  { id: 'entree_canon', categorie: 'entree', nom: 'Coup de canon', prix: 300, emojis: ['💥', '💨', '🔥'], mode: 'explosion', couleur: '#ff7a1a' },
-  { id: 'entree_brouillard', categorie: 'entree', nom: 'Brouillard', prix: 500, emojis: ['🌫️', '💨'], mode: 'tourbillon', couleur: '#cfefff' },
-  { id: 'entree_orage', categorie: 'entree', nom: 'Orage', prix: 800, emojis: ['⚡', '🌩️'], mode: 'explosion', couleur: '#2ee6ff' },
-  { id: 'entree_tresor', categorie: 'entree', nom: 'Coffre au trésor', prix: 1200, emojis: ['💰', '💎', '🪙'], mode: 'gerbe', couleur: '#ffcc33' },
-  { id: 'entree_kraken', categorie: 'entree', nom: 'Kraken', prix: 2000, emojis: ['🐙', '🌊'], mode: 'tourbillon', couleur: '#b866ff' },
-  { id: 'entree_roi', categorie: 'entree', nom: 'Entrée royale', emojis: ['👑', '✨', '🎺'], mode: 'gerbe', couleur: '#ffcc33', gagne: g('50 victoires', (p) => p.victoires >= 50) },
+  { id: 'entree_canon', categorie: 'entree', nom: 'Coup de canon', prix: 300, emojis: ['💥', FX.fumee, FX.flamme], mode: 'explosion', couleur: '#ff7a1a' },
+  { id: 'entree_brouillard', categorie: 'entree', nom: 'Brouillard', prix: 500, emojis: [FX.fumee, '💨'], mode: 'tourbillon', couleur: '#cfefff' },
+  { id: 'entree_orage', categorie: 'entree', nom: 'Orage', prix: 800, emojis: [FX.eclair, '🌩️'], mode: 'explosion', couleur: '#2ee6ff' },
+  { id: 'entree_tresor', categorie: 'entree', nom: 'Coffre au trésor', prix: 1200, emojis: [FX.piece, FX.gemme, FX.louidor], mode: 'gerbe', couleur: '#ffcc33' },
+  { id: 'entree_kraken', categorie: 'entree', nom: 'Kraken', prix: 2000, emojis: [FX.tentacule, '🌊'], mode: 'tourbillon', couleur: '#b866ff' },
+  { id: 'entree_roi', categorie: 'entree', nom: 'Entrée royale', emojis: [FX.couronne, '✨', '🎺'], mode: 'gerbe', couleur: '#ffcc33', gagne: g('50 victoires', (p) => p.victoires >= 50) },
   // ---- Célébrations de victoire ----
-  { id: 'victoire_roses', categorie: 'victoire', nom: 'Pluie de roses', prix: 600, emojis: ['🌹', '🌸'] },
-  { id: 'victoire_artifice', categorie: 'victoire', nom: 'Feu d’artifice', prix: 800, emojis: ['🎆', '🎇', '✨'] },
-  { id: 'victoire_couronnes', categorie: 'victoire', nom: 'Pluie de couronnes', prix: 1200, emojis: ['👑', '💎'] },
-  { id: 'victoire_fantome', categorie: 'victoire', nom: 'Armée fantôme', prix: 1500, emojis: ['👻', '💀'] },
-  { id: 'victoire_kraken', categorie: 'victoire', nom: 'Kraken triomphant', prix: 2000, emojis: ['🐙', '🌊', '🦑'] },
+  { id: 'victoire_roses', categorie: 'victoire', nom: 'Pluie de roses', prix: 600, emojis: [FX.rose, '🌸'] },
+  { id: 'victoire_artifice', categorie: 'victoire', nom: 'Feu d’artifice', prix: 800, emojis: [FX.fusee, '🎇', '✨'] },
+  { id: 'victoire_couronnes', categorie: 'victoire', nom: 'Pluie de couronnes', prix: 1200, emojis: [FX.couronne, FX.gemme] },
+  { id: 'victoire_fantome', categorie: 'victoire', nom: 'Armée fantôme', prix: 1500, emojis: [FX.fantome, FX.crane] },
+  { id: 'victoire_kraken', categorie: 'victoire', nom: 'Kraken triomphant', prix: 2000, emojis: [FX.tentacule, '🌊', '🦑'] },
   // ---- Titres ----
   { id: 'titre_loup', categorie: 'titre', nom: 'Loup de mer', prix: 200 },
   { id: 'titre_flibustier', categorie: 'titre', nom: 'Flibustier', prix: 300 },

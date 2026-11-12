@@ -1,5 +1,7 @@
 // Mon pirate : portrait encadré, grade et niveau, chiffres clés, puis onglets
 // Profil · Cadres · Badges · Stats · Historique. La gestion du compte est en bas de l'onglet Profil.
+import { Visuel } from '../composants/Visuel.tsx';
+import { Patience } from '../composants/Attente.tsx';
 import { styleNeon } from '../lib/neons.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, messageErreur } from '../lib/supabase.ts';
@@ -121,7 +123,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
         <>
           <CoffresNiveau profil={profil} recharger={recharger} />
           {ouvrirBoutique && (
-            <button type="button" className="bouton-sombre bouton-tenue" onClick={ouvrirBoutique}>🎨 Personnaliser mon pirate</button>
+            <button type="button" className="bouton-sombre bouton-tenue" onClick={ouvrirBoutique}><img className="icone-img" src="/img/nav_profil.webp" width={26} height={26} alt="" /> Personnaliser mon pirate</button>
           )}
           <section className="parchemin neon profil-bloc">
             <div className="bloc-titre"><h2 className="titre-pirate">Mes badges</h2><button type="button" className="lien" onClick={() => setOnglet('badges')}>{badgesObtenus}/{BADGES.length} · tout voir ›</button></div>
@@ -130,7 +132,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
                 const pr = progressionBadge(profil, b.id);
                 return (
                   <button key={b.id} type="button" className={`medaille ${pr.obtenu ? 'obtenue' : ''}`} onClick={() => setOnglet('badges')} title={b.nom}>
-                    <span>{b.icone}</span>
+                    <Visuel v={b.icone} />
                     {!pr.obtenu && pr.objectif > 1 && <i style={{ ['--p' as string]: `${(100 * pr.actuel) / pr.objectif}%` }} />}
                   </button>
                 );
@@ -154,7 +156,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
               const pr = progressionBadge(profil, b.id);
               return (
                 <li key={b.id} className={`badge ${pr.obtenu ? 'obtenu' : 'verrouille'}`}>
-                  <span className="badge-icone">{b.icone}</span>
+                  <span className="badge-icone"><Visuel v={b.icone} /></span>
                   <span className="badge-texte">
                     <strong>{b.nom}</strong>{pr.obtenu && <em> · obtenu !</em>}<br /><small>{b.condition}</small>
                     {!pr.obtenu && pr.objectif > 1 && (
@@ -192,7 +194,7 @@ function Chiffre({ icone, valeur, libelle }: { icone: string; valeur: number | s
 }
 
 function Historique({ lignes }: { lignes: LigneHistorique[] | null }) {
-  if (lignes === null) return <p className="petit-texte centre">Chargement…</p>;
+  if (lignes === null) return <Patience />;
   if (lignes.length === 0) return <p className="petit-texte centre">Aucune partie comptée pour l’instant. Les parties d’entraînement ne comptent pas.</p>;
   return (
     <ul className="historique">
@@ -395,15 +397,15 @@ function CoffresNiveau({ profil, recharger }: { profil: Profil; recharger: () =>
     <section className="parchemin neon profil-bloc coffres-niveau">
       <div className="bloc-titre"><h2 className="titre-pirate">Coffres de niveau</h2></div>
       {message && <p className={`message ${message.ok ? 'info' : 'erreur'}`}>{message.texte}</p>}
-      {ouverts === null ? <p className="petit-texte">Chargement…</p> : (
+      {ouverts === null ? <Patience /> : (
         <div className="coffres">
           {aOuvrir.map((p) => (
             <button key={p} type="button" className="coffre-niveau pret" disabled={enCours} onClick={() => ouvrir(p)}>
-              <span>🧰</span><strong>Niv. {p}</strong><small>Ouvrir · +{gainPalier(p)}</small>
+              <img className="coffre-img" src="/img/coffre_niveau.webp" alt="" /><strong>Niv. {p}</strong><small>Ouvrir · +{gainPalier(p)}</small>
             </button>
           ))}
           <div className="coffre-niveau">
-            <span>🔒</span><strong>Niv. {prochain}</strong><small>+{gainPalier(prochain)} Louidors</small>
+            <img className="coffre-img verrou" src="/img/coffre_niveau.webp" alt="" /><img className="coffre-cadenas" src="/img/etat_verrou.webp" alt="" /><strong>Niv. {prochain}</strong><small>+{gainPalier(prochain)} Louidors</small>
           </div>
         </div>
       )}

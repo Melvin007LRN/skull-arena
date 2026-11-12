@@ -1,4 +1,5 @@
 // Mes compagnons : ajouter un pirate par son pseudo, répondre aux demandes, voir qui est en ligne.
+import { Patience } from '../composants/Attente.tsx';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { messageErreur } from '../lib/supabase.ts';
 import { demanderAmi, repondreAmi, retirerAmi, useAmis, useEnLigne, type Ami } from '../lib/amis.ts';
@@ -73,7 +74,7 @@ export function EcranAmis({ moi, retour }: { moi: string; retour: () => void }) 
 
       <section className="parchemin">
         <h2 className="titre-pirate">Équipage{compagnons.length > 0 ? ` (${compagnons.length})` : ''}</h2>
-        {amis === null ? <p className="petit-texte centre">Chargement…</p>
+        {amis === null ? <Patience />
           : compagnons.length === 0 ? <p className="petit-texte centre">Pas encore de compagnons. Ajoute tes amis avec leur pseudo, puis invite-les dans ton salon depuis la salle d’attente.</p>
           : (
             <ul className="liste-amis">
@@ -121,7 +122,7 @@ function LigneAmi({ ami, enLigne, children }: { ami: Ami; enLigne: boolean; chil
       <span className="ami-actions">
         {ami.statut === 'acceptee' && (
           <button type="button" className="bouton-or petit ami-msg" onClick={() => ouvrirMessages(ami.id)} aria-label={`Écrire à ${ami.pseudo}`}>
-            💬{nonLus > 0 && <b className="pastille-nombre">{nonLus}</b>}
+            <img className="ico-texte" src="/img/jeu_chat.webp" alt="" />{nonLus > 0 && <b className="pastille-nombre">{nonLus}</b>}
           </button>
         )}
         {children}

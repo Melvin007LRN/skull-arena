@@ -1,6 +1,7 @@
 // Le Blackjack du Capitaine : une table ovale en paysage, comme les parties classiques, face au croupier.
 // 5 sièges, distribution carte par carte, paris annexes (Paires parfaites, 21+3, Assurance),
 // séparation et double, animations de victoire et chat transparent sur le côté.
+import { EcranAttente } from '../composants/Attente.tsx';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Profil } from '../lib/profil.ts';
 import { niveau as niveauDe } from '../lib/profil.ts';
@@ -39,10 +40,12 @@ export function EcranBlackjack({ profil, mode, retour, recharger }: {
 
   useEffect(() => { if (mode !== 'amis') entrer(mode); }, [mode, entrer]);
 
+  if (!table && mode !== 'amis' && !erreur) return <EcranAttente texte="On t’installe à la table" decor="taverne" sous="Blackjack du Capitaine" />;
   if (!table) {
     return (
       <main className="ecran ecran-bj-entree">
         <button type="button" className="retour" onClick={retour}>‹ Retour</button>
+        <img className="bj-entree-logo" src="/img/nav_blackjack.webp" alt="" />
         <h1 className="titre-pirate grand">Blackjack</h1>
         {mode === 'amis' ? (
           <section className="parchemin bj-entree">
@@ -53,7 +56,7 @@ export function EcranBlackjack({ profil, mode, retour, recharger }: {
               <button type="button" className="bouton-sombre" disabled={enCours || code.length !== 6} onClick={() => entrer('code', code)}>Rejoindre</button>
             </div>
           </section>
-        ) : <p className="petit-texte centre">{enCours ? 'On t’installe à la table…' : ''}</p>}
+        ) : null}
         {erreur && <p className="message erreur">{erreur}</p>}
         {erreur && mode !== 'amis' && <button type="button" className="bouton-or" onClick={() => entrer(mode)}>Réessayer</button>}
       </main>
@@ -71,6 +74,9 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
   const [message, setMessage] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const [chatOuvert, setChatOuvert] = useState(false);
+  const [dernierPari, setDernierPari] = useState<Record<Zone, number> | null>(() => {
+    try { const v = JSON.parse(localStorage.getItem('bj-dernier-pari') ?? 'null'); return v && v.mise > 0 ? v : null; } catch { return null; }
+  });
   const maintenant = useHorloge();
   const taille = useTailleEcran();
   const precedent = useRef<EtatBJ | null>(null);
@@ -122,8 +128,17 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
     finally { setEnCours(false); }
   }
 
-  const style = { ['--gh' as string]: `${H / 100}px`, ['--gw' as string]: `${L / 100}px` } as CSSProperties;
-  if (!etat) return <div className={`jeu bj2 ${pivote ? 'pivote' : ''}`} style={style}><div className="bj2-decor" /><p className="bj2-attente">Préparation de la table…</p></div>;
+  function miser(p: Record<Zone, number>) {
+    const choix = { mise: p.mise, paires: p.paires, vingtEtUn: p.vingtEtUn };
+    setDernierPari(choix);
+    try { localStorage.setItem('bj-dernier-pari', JSON.stringify(choix)); } catch { /* stockage indisponible */ }
+    son.piece();
+    envoyer('miser', { mise: p.mise, paires: p.paires, vingt_et_un: p.vingtEtUn });
+  }
+
+  // Taille figée en pixels : le clavier du chat ne déforme plus la table (elle reste en paysage).
+  const style = { ['--gh' as string]: `${H / 100}px`, ['--gw' as string]: `${L / 100}px`, ...(pivote ? { width: L, height: H } : {}) } as CSSProperties;
+  if (!etat) return <div className={`jeu bj2 ${pivote ? 'pivote' : ''}`} style={style}><div className="bj2-decor" /><p className="bj2-attente"><span className="attente-piece" aria-hidden="true"><img src="/img/louidor.webp" alt="" /></span>Le croupier mélange le sabot…</p></div>;
 
   const finDonne = etat.donneA ? etat.donneA + dureeDonne(etat.ordre?.length ?? 1) : 0;
   const enDistribution = maintenant < finDonne;
@@ -162,7 +177,7 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
         <span className="bj2-titre">{table.type === 'public' ? 'Table publique' : table.type === 'solo' ? 'Table solo' : `Table privée · ${table.code}`}</span>
       </div>
       <div className="bj2-haut droite">
-        {moi && <button type="button" className="bj2-rond" onClick={() => setChatOuvert(true)} aria-label="Écrire à la table">💬</button>}
+        {moi && <button type="button" className="bj2-rond" onClick={() => setChatOuvert(true)} aria-label="Écrire à la table"><img className="bj2-rond-img" src="/img/jeu_chat.webp" alt="" /></button>}
         <span className="bj2-solde"><span className="piece-or" aria-hidden="true" />{profil.louidors.toLocaleString('fr-FR')}</span>
       </div>
 
@@ -227,8 +242,12 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
                       onClick={() => ajouter(j)} aria-label={`Jeton de ${j}`}>{j >= 1000 ? `${j / 1000}k` : j}</button>
                   ))}
                 </div>
+                {totalParis === 0 && dernierPari && (
+                  <button type="button" className="bouton-sombre c-vert bj2-rejouer" disabled={enCours || dernierPari.mise > max || dernierPari.mise + dernierPari.paires + dernierPari.vingtEtUn > profil.louidors}
+                    onClick={() => miser(dernierPari)} aria-label="Rejouer la même mise">↻ Rejouer<small>{dernierPari.mise + dernierPari.paires + dernierPari.vingtEtUn}</small></button>
+                )}
                 <button type="button" className="bj2-effacer" disabled={totalParis === 0} onClick={() => { setParis({ mise: 0, paires: 0, vingtEtUn: 0 }); setZone('mise'); }} aria-label="Effacer les jetons">↺</button>
-                <button type="button" className="bouton-or bj2-miser" disabled={enCours || paris.mise < MISE_MIN_BJ} onClick={() => envoyer('miser', { mise: paris.mise, paires: paris.paires, vingt_et_un: paris.vingtEtUn })}>Miser{totalParis ? ` ${totalParis}` : ''}</button>
+                <button type="button" className="bouton-or bj2-miser" disabled={enCours || paris.mise < MISE_MIN_BJ} onClick={() => miser(paris)}>Miser{totalParis ? ` ${totalParis}` : ''}</button>
               </div>
             ))
           : enDistribution ? <p className="bj2-info">Le croupier distribue…</p>
@@ -359,7 +378,7 @@ function ChatBJ({ tableId, moi, ouvert, fermer }: { tableId: string; moi: string
       </div>
       {ouvert && (
         <form className="bj2-chat-saisie" onSubmit={(e) => { e.preventDefault(); envoyer(); }}>
-          <input autoFocus value={texte} onChange={(e) => setTexte(e.target.value)} maxLength={120} placeholder="Écris à la table…" enterKeyHint="send" autoComplete="off" />
+          <input autoFocus onFocus={() => setTimeout(() => window.scrollTo(0, 0), 50)} value={texte} onChange={(e) => setTexte(e.target.value)} maxLength={120} placeholder="Écris à la table…" enterKeyHint="send" autoComplete="off" />
           <button type="submit" disabled={!texte.trim()} aria-label="Envoyer">➤</button>
           <button type="button" onClick={fermer} aria-label="Fermer le chat">×</button>
         </form>
@@ -377,9 +396,11 @@ function useHorloge() {
 function useTailleEcran() {
   const [t, setT] = useState(() => ({ l: window.innerWidth, h: window.innerHeight }));
   useEffect(() => {
-    const f = () => setT({ l: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', f); window.addEventListener('orientationchange', f);
-    return () => { window.removeEventListener('resize', f); window.removeEventListener('orientationchange', f); };
+    // Pendant qu'on écrit, le clavier réduit l'écran : on garde la table en paysage sans la redessiner.
+    const f = () => { const a = document.activeElement; if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; setT({ l: window.innerWidth, h: window.innerHeight }); };
+    const sortie = () => setTimeout(f, 350);
+    window.addEventListener('resize', f); window.addEventListener('orientationchange', f); document.addEventListener('focusout', sortie);
+    return () => { window.removeEventListener('resize', f); window.removeEventListener('orientationchange', f); document.removeEventListener('focusout', sortie); };
   }, []);
   return t;
 }

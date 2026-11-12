@@ -56,11 +56,11 @@ export function precisionMises(p: Profil): number | null {
 }
 
 export const BADGES = [
-  { id: 'centurion', nom: 'Centurion', icone: '🏆', condition: '100 victoires' },
-  { id: 'devin', nom: 'Devin', icone: '🔮', condition: 'Réussir ses 10 mises sur une même partie' },
-  { id: 'regicide', nom: 'Régicide', icone: '👑', condition: 'Capturer 25 fois le Skull King avec une Sirène' },
-  { id: 'fantome', nom: 'Fantôme', icone: '🫥', condition: 'Réussir 10 fois une mise de 0 à la manche 10' },
-  { id: 'legende', nom: 'Légende des mers', icone: '💰', condition: 'Marquer 500 points ou plus en une partie' },
+  { id: 'centurion', nom: 'Centurion', icone: '/img/badge_centurion.webp', condition: '100 victoires' },
+  { id: 'devin', nom: 'Devin', icone: '/img/badge_devin.webp', condition: 'Réussir ses 10 mises sur une même partie' },
+  { id: 'regicide', nom: 'Régicide', icone: '/img/badge_regicide.webp', condition: 'Capturer 25 fois le Skull King avec une Sirène' },
+  { id: 'fantome', nom: 'Fantôme', icone: '/img/badge_fantome.webp', condition: 'Réussir 10 fois une mise de 0 à la manche 10' },
+  { id: 'legende', nom: 'Légende des mers', icone: '/img/badge_legende.webp', condition: 'Marquer 500 points ou plus en une partie' },
 ] as const;
 
 export type IdBadge = (typeof BADGES)[number]['id'];

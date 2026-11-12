@@ -1,5 +1,8 @@
 // Rayons de personnalisation de la boutique : Table (dos, tapis, effets), Pirate (titres, bannières, compagnons, thème), Chat (phrases, emotes).
 // Et la fenêtre « Offrir à un compagnon ».
+import { Patience } from '../composants/Attente.tsx';
+import { Visuel } from '../composants/Visuel.tsx';
+import { FX, IMAGE_ARTICLE } from '../lib/images.ts';
 import { useEffect, useState } from 'react';
 import type { Profil } from '../lib/profil.ts';
 import type { Article } from '../lib/boutique.ts';
@@ -33,7 +36,7 @@ export function RayonPerso({ onglet, seule, profil, articles, possedes, enCours,
         const actuel = info.equipable ? profil.perso?.[c as CategorieEquipable] ?? null : null;
         return (
           <section key={c} className="parchemin rayon-perso">
-            <h2 className="titre-pirate">{info.icone} {info.nom}</h2>
+            <h2 className="titre-pirate">{info.nom}</h2>
             <p className="petit-texte">{info.description}</p>
             <ul className={`grille-perso grille-${c}`}>
               {info.equipable && c !== 'titre' && (
@@ -53,7 +56,7 @@ export function RayonPerso({ onglet, seule, profil, articles, possedes, enCours,
                   <li key={a.id} className={`${equipe ? 'equipe' : ''} ${a.gagne && !gagne ? 'verrouille' : ''} ${a.anime ? 'anime' : ''}`}>
                     <Apercu a={a} profil={profil} jouerPluie={(e) => setPluie({ cle: Date.now(), emojis: e })} />
                     <strong>{a.nom}</strong>
-                    {a.gagne && !gagne ? <small>🔒 {a.gagne.condition}</small>
+                    {a.gagne && !gagne ? <small><img className="ico-texte" src="/img/etat_verrou.webp" alt="" /> {a.gagne.condition}</small>
                       : possede ? (
                         info.equipable
                           ? <button type="button" className={equipe ? 'bouton-sombre petit' : 'bouton-or petit'} disabled={enCours}
@@ -64,7 +67,7 @@ export function RayonPerso({ onglet, seule, profil, articles, possedes, enCours,
                         <button type="button" className="bouton-or petit" disabled={enCours || profil.louidors < art.prix} onClick={() => acheter(art)}>{art.prix} Louidors</button>
                       )}
                     {a.gagne ? <small className="gagne">🏅 À gagner</small>
-                      : art && <button type="button" className="lien offrir" disabled={enCours} onClick={() => offrirArticle(art)}>🎁 Offrir</button>}
+                      : art && <button type="button" className="lien offrir" disabled={enCours} onClick={() => offrirArticle(art)}><img className="ico-texte" src="/img/jeu_cadeau.webp" alt="" /> Offrir</button>}
                   </li>
                 );
               })}
@@ -104,13 +107,13 @@ export function Apercu({ a, profil, jouerPluie }: { a: ArticlePerso; profil: Pro
       return <span className="apercu-emotes">{a.emojis?.join(' ')}</span>;
     case 'victoire':
       return a.emojis
-        ? <button type="button" className="apercu-effet" onClick={() => jouerPluie?.(a.emojis!)}><span>{a.emojis.slice(0, 3).join('')}</span><small>▶ Voir</small></button>
-        : <span className="apercu-effet"><span>🪙</span><small>Pièces d’or</small></span>;
+        ? <button type="button" className="apercu-effet" onClick={() => jouerPluie?.(a.emojis!)}><span>{IMAGE_ARTICLE[a.id] ? <Visuel v={IMAGE_ARTICLE[a.id]} className="apercu-img" /> : a.emojis.slice(0, 3).join('')}</span><small>▶ Voir</small></button>
+        : <span className="apercu-effet"><span><Visuel v={FX.piece} className="apercu-img" /></span><small>Pièces d’or</small></span>;
     case 'pli':
     case 'entree':
       return a.emojis ? (
         <button type="button" className="apercu-effet" onClick={() => setCle(Date.now())}>
-          <span>{a.emojis[0]}</span><small>▶ Voir</small>
+          <span><Visuel v={IMAGE_ARTICLE[a.id] ?? a.emojis[0]} className="apercu-img" /></span><small>▶ Voir</small>
           {cle > 0 && <Eclats key={cle} x="50%" y="45%" emojis={a.emojis} mode={a.mode} couleur={a.couleur} />}
         </button>
       ) : <span className="apercu-effet"><span>—</span><small>Aucun effet</small></span>;
@@ -126,10 +129,10 @@ export function FenetreOffrir({ article, moi, enCours, fermer, offrir }: {
   return (
     <div className="voile" onClick={fermer}>
       <section className="parchemin fenetre fenetre-offrir" onClick={(e) => e.stopPropagation()}>
-        <h2 className="titre-pirate">🎁 Offrir</h2>
+        <h2 className="titre-pirate"><img className="ico-texte" src="/img/jeu_cadeau.webp" alt="" /> Offrir</h2>
         <p className="centre"><strong>{article.nom}</strong> · {article.prix} Louidors</p>
         <p className="petit-texte centre">Payé avec tes Louidors. Ton compagnon reçoit un message.</p>
-        {amis === null ? <p className="petit-texte centre">Chargement…</p>
+        {amis === null ? <Patience />
           : liste.length === 0 ? <p className="petit-texte centre">Ajoute d’abord des compagnons depuis l’accueil (« Mes compagnons »).</p>
           : (
             <ul className="liste-amis">

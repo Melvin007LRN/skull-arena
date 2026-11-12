@@ -12,7 +12,7 @@ export function ActiverNotifications({ compact = false }: { compact?: boolean })
 
   return (
     <div className="installer-appli neon">
-      <span className="notif-cloche" aria-hidden="true">🔔</span>
+      <span className="notif-cloche" aria-hidden="true"><img className="ico-texte" src="/img/etat_alerte.webp" alt="" /></span>
       <div className="installer-texte">
         <strong>Active les notifications</strong>
         <small>

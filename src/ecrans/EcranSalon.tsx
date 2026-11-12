@@ -1,4 +1,5 @@
 // Aiguillage d'un salon : salle d'attente tant que la partie n'a pas commencé, puis table de jeu.
+import { EcranAttente } from '../composants/Attente.tsx';
 import { useEffect } from 'react';
 import { useSalon } from '../lib/jeu.ts';
 import { SalleAttente } from './SalleAttente.tsx';
@@ -15,7 +16,7 @@ export function EcranSalon({ salonId, moi, sortir }: { salonId: string; moi: str
     return () => clearTimeout(t);
   }, [perdu, sortir]);
 
-  if (salon === undefined) return <main className="ecran ecran-centre"><p className="petit-texte">Montée à bord…</p></main>;
+  if (salon === undefined) return <EcranAttente texte="Montée à bord" decor="taverne" />;
   if (perdu) {
     return (
       <main className="ecran ecran-centre">
@@ -24,6 +25,6 @@ export function EcranSalon({ salonId, moi, sortir }: { salonId: string; moi: str
     );
   }
   if (salon.statut === 'attente') return <SalleAttente salon={salon} membres={membres} moi={moi} quitter={sortir} />;
-  if (!partieId) return <main className="ecran ecran-centre"><p className="petit-texte">Distribution des cartes…</p></main>;
+  if (!partieId) return <EcranAttente texte="Distribution des cartes" decor="taverne" />;
   return <EcranJeu key={partieId} partieId={partieId} membres={membres} moi={moi} hote={salon.hote} retourAccueil={sortir} />;
 }
