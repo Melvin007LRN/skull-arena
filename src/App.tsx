@@ -16,6 +16,8 @@ import { EcranAdmin } from './ecrans/Admin.tsx';
 import { EcranLegal, type PageLegale } from './ecrans/Legal.tsx';
 import { EcranAmis } from './ecrans/Amis.tsx';
 import { EcranBoutique } from './ecrans/Boutique.tsx';
+import { EcranBlackjack } from './jeu/Blackjack.tsx';
+import { Actualites } from './composants/Actualites.tsx';
 import { demarrerPresence, useInvitations } from './lib/amis.ts';
 import { ContexteSocial, demarrerNonLus } from './lib/social.ts';
 import { rattacherAbonnement } from './lib/notifications.ts';
@@ -33,7 +35,8 @@ type Ecran =
   | { nom: 'boutique' }
   | { nom: 'legal'; page: PageLegale; retour: Ecran }
   | { nom: 'lobby'; mode: 'jouer' | 'code' | 'entrainement' }
-  | { nom: 'salon'; id: string };
+  | { nom: 'salon'; id: string }
+  | { nom: 'blackjack'; mode: 'public' | 'solo' | 'amis' };
 
 const ACCUEIL: Ecran = { nom: 'accueil' };
 
@@ -147,6 +150,7 @@ export function App() {
   return (
     <ContexteSocial.Provider value={social}>
       {contenu}
+      {ecran.nom === 'accueil' && <Actualites />}
       {ecran.nom !== 'salon' && <ToastInvitation moi={profil.id} entrer={(id) => setEcran({ nom: 'salon', id })} />}
       {fiche && <FicheJoueur joueur={fiche} moi={profil.id} fermer={() => setFiche(null)} salonInvitation={ecran.nom === 'salon' ? ecran.id : null} />}
       {discussion && <Conversation ami={discussion} moi={profil.id} fermer={() => setDiscussion(null)} />}
@@ -163,6 +167,7 @@ export function App() {
   if (ecran.nom === 'classement') return <EcranClassement profil={profil} retour={versAccueil} />;
   if (ecran.nom === 'regles') return <EcranRegles retour={versAccueil} />;
   if (ecran.nom === 'boutique') return <EcranBoutique profil={profil} retour={versAccueil} recharger={recharger} />;
+  if (ecran.nom === 'blackjack') return <EcranBlackjack key={ecran.mode} profil={profil} mode={ecran.mode} retour={versAccueil} recharger={recharger} />;
   if (ecran.nom === 'amis') return <EcranAmis moi={profil.id} retour={versAccueil} />;
   if (ecran.nom === 'admin') return <EcranAdmin profil={profil} retour={() => setEcran({ nom: 'reglages' })} />;
   if (ecran.nom === 'legal') {
@@ -180,7 +185,7 @@ export function App() {
       ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} ouvrirClassement={() => setEcran({ nom: 'classement' })}
       ouvrirRegles={() => setEcran({ nom: 'regles' })} ouvrirReglages={() => setEcran({ nom: 'reglages' })}
       ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: ACCUEIL })} ouvrirAmis={() => setEcran({ nom: 'amis' })}
-      ouvrirBoutique={() => setEcran({ nom: 'boutique' })} />
+      ouvrirBoutique={() => setEcran({ nom: 'boutique' })} ouvrirBlackjack={(mode) => setEcran({ nom: 'blackjack', mode })} />
   );
   }
 }

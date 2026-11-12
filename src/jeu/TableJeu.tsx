@@ -424,8 +424,8 @@ export function TableJeu(p: PropsTable) {
     const rot = ((index * 37) % 13) - 6;
     if (cible && etape === 'gagnant') {
       // le pli glisse doucement vers le gagnant
-      x = x + (cible.x - x) * 0.25;
-      y = y + (cible.y + 12 - y) * 0.15;
+      x = x + (cible.x - x) * 0.5;
+      y = y + (cible.y + 12 - y) * 0.42;
     }
     // Position par transform (unités de conteneur) : le navigateur anime sur le GPU, sans recalcul de mise en page.
     if (!UNITES_CONTENEUR) {
@@ -657,6 +657,7 @@ export function TableJeu(p: PropsTable) {
                 {humain(j) && <span className={`pastille-co ${connecte(j) ? 'en-ligne' : 'hors-ligne'}`} title={connecte(j) ? 'Connecté' : 'Déconnecté'} />}
                 {vue.mises && (() => { const o = objectif(j); return <span className={`adv-ruban ${o ? `obj-${o.ton}` : ''}`} title={o?.texte}>{vue.plisGagnes[j]}/{miseDe(j)}</span>; })()}
                 <Badges j={j} />
+                {resultat?.gagnant === j && <span className="plus-un" key={`${vue.manche}-${vue.numeroPli}`}>+1</span>}
                 {!vue.mises && vue.phase === 'mise' && <span className={`adv-ruban ${vue.aMise[j] ? 'ok' : 'attente'}`}>{vue.aMise[j] ? '✓' : '…'}</span>}
               </div>
               <div className="adv-nom">
@@ -664,7 +665,7 @@ export function TableJeu(p: PropsTable) {
                 <span className={neonNom(j).className} style={neonNom(j).style}>{pseudo(j)}</span>
                 {vue.remplaces?.includes(j) && <span className="adv-robot-mini" title="Un robot joue à sa place">🤖</span>}
               </div>
-              {p.hote === moi && !vue.robots?.includes(j) && !vue.definitifs?.includes(j) && !finie && (
+              {p.hote === moi && !vue.robots?.includes(j) && !vue.definitifs?.includes(j) && !finie && !connecte(j) && (
                 <button type="button" className="adv-exclure" aria-label={`Exclure ${pseudo(j)}`}
                   onClick={() => { if (confirm(`Exclure ${pseudo(j)} ? Un robot finira la partie à sa place.`)) p.exclure(j); }}>✕</button>
               )}
@@ -688,6 +689,7 @@ export function TableJeu(p: PropsTable) {
         <Avatar photo={photo(moi)} taille={56} cadre={cadre(moi)} compagnon={compagnon(moi)} />
         <span className="adv-ruban">{vue.mises ? `${vue.plisGagnes[moi]}/${miseDe(moi)}` : vue.aMise[moi] ? '✓' : '…'}</span>
         <Badges j={moi} />
+        {resultat?.gagnant === moi && <span className="plus-un" key={`${vue.manche}-${vue.numeroPli}`}>+1</span>}
         {vue.joueurs.indexOf(moi) === vue.couronne && <span className="adv-couronne">👑</span>}
         <span className="moi-pastilles">
           {aMoi && !tigresse && !choixValeur && !choixJoker && vue.phase === 'jeu' && (
@@ -722,6 +724,7 @@ export function TableJeu(p: PropsTable) {
               onPointerCancel={() => { if (appui.current) clearTimeout(appui.current.minuterie); appui.current = null; setGlisse(null); }}
               onContextMenu={(e) => e.preventDefault()}>
               <img src={`/cartes/${id}.webp`} alt={id} draggable={false} />
+              {SPECIALES_HOLO.has(carteParId(id).type) && <span className="holo" aria-hidden="true" />}
             </button>
           );
         })}
@@ -918,6 +921,7 @@ export function TableJeu(p: PropsTable) {
       {/* Fin de manche / partie */}
       {!pliAffiche && !vue.annulee && vue.phase === 'fin_manche' && (
         <Fenetre titre={`Fin de la manche ${vue.manche}`} large>
+          <PodiumManche vue={vue} classement={classement} photo={photo} cadre={cadre} pseudo={pseudo} />
           <TableauManche vue={vue} classement={classement} moi={moi} pseudo={pseudo} />
           {vue.continuer.includes(moi) || piloteParRobot(moi)
             ? <p className="centre petit-texte">En attente des autres pirates…</p>
@@ -1326,6 +1330,9 @@ function GrandCadeau({ objet, cible, legende }: { objet: string; cible: { x: num
   );
 }
 
+/** Cartes qui brillent d'un reflet holographique dans la main. */
+const SPECIALES_HOLO = new Set(['skull_king', 'sirene', 'pirate', 'tigresse', 'second', 'kraken', 'baleine', 'raie', 'joker', 'davy']);
+
 /** Durée d'affichage d'un cadeau lancé (ms). */
 export function dureeCadeau(objet: string): number {
   if (objet === 'tempete_insultes') return 8800;
@@ -1658,11 +1665,35 @@ function LigneManche({ j, rang, vue, moi, pseudo }: { j: string; rang: number; v
     <tr className={`ligne-animee ${j === moi ? 'moi' : ''}`} style={{ animationDelay: `${rang * 140}ms` }}>
       <td>{pseudo(j)}</td>
       <td>{r?.mise}</td>
-      <td>{r?.plis} {r?.reussie ? '✓' : '✗'}</td>
+      <td>{r?.plis} <span className={`tampon ${r?.reussie ? 'ok' : 'non'}`} style={{ animationDelay: `${retard + 350}ms` }}>{r?.reussie ? '✓' : '✗'}</span></td>
       <td>{extra !== 0 ? `${extra > 0 ? '+' : ''}${extra}` : ''}</td>
       <td className={gain >= 0 ? 'positif' : 'negatif'}>{compte > 0 ? '+' : ''}{compte}</td>
       <td><strong>{avant + compte}</strong></td>
     </tr>
+  );
+}
+
+/** Podium de fin de manche : les trois premiers montent sur leur marche, couronne pour le meneur, notes de harpe. */
+function PodiumManche({ vue, classement, photo, cadre, pseudo }: {
+  vue: VueJeu; classement: string[]; photo: (id: string) => string | null; cadre: (id: string) => string | null | undefined; pseudo: (id: string) => string;
+}) {
+  useEffect(() => { son.podium(Math.min(3, classement.length)); }, [vue.manche, classement.length]);
+  const top = classement.slice(0, 3);
+  const ordre = top.length === 3 ? [1, 0, 2] : top.length === 2 ? [1, 0] : [0];
+  return (
+    <div className="podium-manche" aria-hidden="true">
+      {ordre.map((rang) => {
+        const j = top[rang];
+        return (
+          <div key={`${vue.manche}-${j}`} className={`podium-marche r${rang}`} style={{ animationDelay: `${(2 - rang) * 0.22}s` }}>
+            {rang === 0 && <span className="podium-couronne">👑</span>}
+            <Avatar photo={photo(j)} taille={rang === 0 ? 58 : 46} cadre={cadre(j)} />
+            <span className="podium-nom">{pseudo(j)}</span>
+            <span className="podium-bloc"><b>{rang + 1}</b><small>{vue.scores[j]}</small></span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

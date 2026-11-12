@@ -1,29 +1,18 @@
-// Accueil : une page d'ambiance à faire défiler. Chaque entrée du menu est une "affiche" illustrée
-// avec une phrase d'accroche. Les sections apparaissent en douceur au défilement.
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+// Accueil façon jeu mobile : un seul écran, sans défilement.
+// En haut le joueur et sa bourse, au centre son pirate, en bas le choix du jeu et le gros bouton JOUER,
+// et une barre de navigation. Les compléments (défis, avis de recherche, alertes) s'ouvrent en fenêtre.
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
-import { chargerRecordVictoires, chargerDefisDuJour, DEFIS, grade, niveau } from '../lib/profil.ts';
-import { Louidors } from './Boutique.tsx';
+import { chargerRecordVictoires, chargerDefisDuJour, DEFIS, grade, niveau, progressionNiveau } from '../lib/profil.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
 import { ActiverNotifications } from '../composants/ActiverNotifications.tsx';
 import { FenetreNotifications } from '../composants/FenetreNotifications.tsx';
 import { Icone, Medaillon } from '../composants/Icone.tsx';
+import { Titre } from '../composants/Perso.tsx';
 import { useAmis, useEnLigne } from '../lib/amis.ts';
-import { totalNonLus, useNonLus, useSocial } from '../lib/social.ts';
-
-interface Entree {
-  /** Couleur du néon de la tuile (assortie à son image). */
-  neon?: string;
-  id: string;
-  titre: string;
-  phrase: string;
-  image: string;
-  cadrage?: string; // object-position de l'illustration
-  vedette?: boolean;
-  action?: () => void;
-  icone?: string;
-}
+import { totalNonLus, useNonLus } from '../lib/social.ts';
+import { actualitesVues, ouvrirActualites } from '../composants/Actualites.tsx';
 
 /** Icône de chaque défi du jour. */
 const ICONES_DEFIS: Record<string, string> = {
@@ -31,226 +20,183 @@ const ICONES_DEFIS: Record<string, string> = {
   quatorze_noir: 'pavillon', regicide: 'couronne', chasseur: 'tete', bonus_50: 'coffre', deux_cents: 'feu',
 };
 
-const ACCROCHES = [
-  'Mise juste. Pille tout. Règne sur l’Arena.',
-  'Chaque pli est un abordage.',
-  'Le Skull King n’attend que toi.',
-];
+type Jeu = 'skull' | 'blackjack';
+type Fenetre = 'defis' | 'avis' | 'alertes' | null;
 
-export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirLegal, ouvrirAmis, ouvrirBoutique }: {
+export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirAmis, ouvrirBoutique, ouvrirBlackjack }: {
   profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
-  ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirBoutique: () => void; ouvrirLegal: (p: 'mentions' | 'confidentialite' | 'cgu') => void;
+  ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirBoutique: () => void;
+  ouvrirLegal?: (p: 'mentions' | 'confidentialite' | 'cgu') => void; ouvrirBlackjack: (mode: 'public' | 'solo' | 'amis') => void;
 }) {
-  // Avis de recherche : le pirate qui a le plus de victoires depuis toujours.
   const [numeroUn, setNumeroUn] = useState<{ id: string; pseudo: string; photo_url: string | null; cadre: string | null; victoires: number; parties_jouees: number } | null>(null);
   const [defis, setDefis] = useState<Array<{ id: string; reussi: boolean }>>([]);
+  const [jeu, setJeu] = useState<Jeu>(() => { try { return localStorage.getItem('skull-jeu') === 'blackjack' ? 'blackjack' : 'skull'; } catch { return 'skull'; } });
+  const [fenetre, setFenetre] = useState<Fenetre>(null);
   const { amis } = useAmis(profil.id);
   const enLigne = useEnLigne();
   const nonLus = useNonLus();
-  const { ouvrirProfil: voirJoueur, ouvrirMessages } = useSocial();
-  const compagnons = (amis ?? []).filter((a) => a.statut === 'acceptee')
-    .sort((a, b) => Number(enLigne.has(b.id)) - Number(enLigne.has(a.id)) || (nonLus[b.id] ?? 0) - (nonLus[a.id] ?? 0));
-  const demandesRecues = (amis ?? []).filter((a) => a.statut === 'attente' && a.recue).length;
-  const nbEnLigne = compagnons.filter((a) => enLigne.has(a.id)).length;
+  const demandes = (amis ?? []).filter((a) => a.statut === 'attente' && a.recue).length + totalNonLus(nonLus);
+  const amisEnLigne = (amis ?? []).filter((a) => a.statut === 'acceptee' && enLigne.has(a.id)).length;
   useEffect(() => {
     chargerRecordVictoires().then(setNumeroUn).catch(() => {});
     chargerDefisDuJour().then(setDefis).catch(() => {});
   }, []);
-  const [accroche, setAccroche] = useState(0);
-
-
-  useEffect(() => {
-    const t = setInterval(() => setAccroche((a) => (a + 1) % ACCROCHES.length), 4200);
-    return () => clearInterval(t);
-  }, []);
-
+  const choisir = (j: Jeu) => { setJeu(j); try { localStorage.setItem('skull-jeu', j); } catch { /* sans stockage */ } };
 
   const n = niveau(profil.xp);
-  const jouer: Entree = {
-    id: 'jouer', titre: 'Jouer', vedette: true, image: '/decor/art/skull_king.webp', cadrage: '50% 22%', action: () => ouvrirLobby('jouer'),
-    phrase: 'Lève l’ancre et défie jusqu’à 8 pirates en ligne. Que le meilleur menteur gagne.',
-  };
-  // Deux tuiles par ligne, dans cet ordre précis.
-  const tuiles: Entree[] = [
-    { id: 'code', neon: '#ff2a4a', titre: 'Rejoindre', image: '/decor/art/pirate_rosie.webp', cadrage: '50% 18%', action: () => ouvrirLobby('code'), phrase: 'Entre le code d’un ami', icone: 'longue-vue' },
-    { id: 'profil', neon: '#ff7a1a', titre: 'Mon pirate', image: '/decor/art/pirate_harry.webp', cadrage: '50% 20%', action: ouvrirProfil, phrase: 'Ta légende, tes trophées', icone: 'tete' },
-    { id: 'amis', neon: '#2dff7a', titre: 'Compagnons', image: '/decor/art/pirate_bendt.webp', cadrage: '50% 20%', action: ouvrirAmis, phrase: 'Amis et messages', icone: 'pavillon' },
-    { id: 'classement', neon: '#ffcc33', titre: 'Classement', image: '/decor/art/jaune_14.webp', cadrage: '50% 45%', action: ouvrirClassement, phrase: 'Saison et légendes', icone: 'couronne' },
-    { id: 'entrainement', neon: '#3d9bff', titre: 'Entraînement', image: '/decor/art/noir_7.webp', cadrage: '50% 30%', action: () => ouvrirLobby('entrainement'), phrase: 'Contre les robots', icone: 'cible' },
-    { id: 'regles', neon: '#2ee6ff', titre: 'Le grimoire', image: '/decor/art/sirene_1.webp', cadrage: '50% 25%', action: ouvrirRegles, phrase: 'Toutes les règles', icone: 'grimoire' },
-  ];
-
+  const prog = progressionNiveau(profil.xp);
+  const defisFaits = defis.filter((d) => d.reussi).length;
 
   return (
-    <main className="ecran ecran-accueil">
-      <div className="ambiance" aria-hidden="true">
-        <div className="ambiance-decor" />
-        <div className="ambiance-voile" />
-        <div className="ambiance-lanterne" />
-        <div className="ambiance-brume b1" />
-        <div className="ambiance-brume b2" />
-        <Braises />
-      </div>
+    <main className="ecran ecran-accueil cr">
+      <div className="cr-fond" aria-hidden="true"><div className="cr-halo" /><Braises /></div>
 
-      {/* Le logo reste en place et passe derrière le contenu quand on fait défiler (aucun calcul au défilement) */}
-      <header className="entete-logo">
-        <img src="/decor/logo.webp" alt="Skull Arena" />
-      </header>
-      <button type="button" className="puce-boutique" onClick={ouvrirBoutique} aria-label="La boutique du port">
-        <span className="piece-or" aria-hidden="true" />
-        <strong>{profil.louidors ?? 0}</strong>
-        <small>Boutique</small>
-      </button>
-
-      <p className="accroche" key={accroche}>{ACCROCHES[accroche]}</p>
-
-      <Apparition>
-        <button type="button" className="carte-joueur neon" onClick={ouvrirProfil}>
-          <Avatar photo={profil.photo_url} taille={68} cadre={profil.cadre} />
-          <span className="carte-joueur-texte">
-            <small>Bienvenue à bord,</small>
+      <header className="cr-haut">
+        <button type="button" className="cr-joueur" onClick={ouvrirProfil}>
+          <span className="cr-niveau">{n}</span>
+          <span className="cr-joueur-texte">
             <strong>{profil.pseudo}</strong>
-            <span>Niveau {n} · {grade(n)}</span>
-            <Louidors montant={profil.louidors ?? 0} />
-          </span>
-          <span className="fleche">›</span>
-        </button>
-      </Apparition>
-
-      <InstallerAppli compact />
-      <ActiverNotifications compact />
-      <FenetreNotifications />
-
-      <Apparition>
-        <button type="button" className="affiche affiche-vedette neon" onClick={jouer.action}>
-          <img className="affiche-image" src={jouer.image} alt="" style={{ objectPosition: jouer.cadrage }} />
-          <span className="affiche-degrade" />
-          {enLigne.size > 0 && <span className="affiche-en-ligne"><i />{enLigne.size} pirate{enLigne.size > 1 ? 's' : ''} en ligne</span>}
-          <span className="affiche-texte">
-            <span className="affiche-titre">{jouer.titre}</span>
-            <span className="affiche-phrase">{jouer.phrase}</span>
-            <span className="bouton-or affiche-bouton"><Icone nom="epees" taille={20} />À l’abordage</span>
+            <span className="cr-xp"><i style={{ width: `${Math.round(prog * 100)}%` }} /></span>
           </span>
         </button>
-      </Apparition>
+        <button type="button" className="cr-or" onClick={ouvrirBoutique} aria-label="Louidors, ouvrir la boutique">
+          <span className="piece-or" aria-hidden="true" />
+          <strong>{(profil.louidors ?? 0).toLocaleString('fr-FR')}</strong>
+          <span className="cr-plus">+</span>
+        </button>
+        <button type="button" className="cr-rond" onClick={ouvrirReglages} aria-label="Réglages"><Icone nom="gouvernail" taille={20} /></button>
+      </header>
 
-      <div className="grille-tuiles">
-        {tuiles.map((e, i) => (
-          <Apparition key={e.id} delai={(i % 2) * 70}>
-            <button type="button" className="tuile neon" onClick={e.action} style={e.neon ? { ['--n' as string]: e.neon } : undefined}>
-              <img src={e.image} alt="" loading="lazy" style={{ objectPosition: e.cadrage }} />
-              <span className="tuile-degrade" />
-              {e.icone && <Medaillon nom={e.icone} taille={36} className="tuile-medaillon" />}
-              <span className="tuile-texte">
-                <strong>{e.titre}</strong>
-                <small>{e.phrase}</small>
-              </span>
-              {e.id === 'amis' && demandesRecues + totalNonLus(nonLus) > 0 && <b className="pastille-nombre tuile-pastille">{demandesRecues + totalNonLus(nonLus)}</b>}
-            </button>
-          </Apparition>
-        ))}
-      </div>
+      <section className="cr-scene">
+        <div className="cr-rail gauche">
+          <BoutonRail icone="cible" nom="Défis" badge={defis.length ? `${defisFaits}/${defis.length}` : undefined} fait={defis.length > 0 && defisFaits === defis.length} onClick={() => setFenetre('defis')} />
+          <BoutonRail icone="tete" nom="Avis" onClick={() => setFenetre('avis')} />
+        </div>
+        <button type="button" className="cr-pirate" onClick={ouvrirProfil}>
+          <span className="cr-socle" aria-hidden="true" />
+          <Avatar photo={profil.photo_url} taille={150} cadre={profil.cadre} compagnon={profil.perso?.compagnon ?? null} />
+          <span className="cr-nom">{profil.pseudo}</span>
+          <Titre perso={profil.perso} className="cr-titre" />
+          <span className="cr-grade">{grade(n)} · niveau {n}</span>
+        </button>
+        <div className="cr-rail droite">
+          <BoutonRail icone="grimoire" nom="Actus" onClick={ouvrirActualites} />
+          <BoutonRail icone="cloche" nom="Alertes" onClick={() => setFenetre('alertes')} />
+        </div>
+      </section>
 
-      <Apparition>
-        <section className="amis-accueil neon">
-          <div className="amis-accueil-titre">
-            <span className="titre-bloc"><Medaillon nom="equipage" taille={34} /> Mon équipage <small>{nbEnLigne > 0 ? `· ${nbEnLigne} en ligne` : ''}</small></span>
-            <button type="button" className="lien" onClick={ouvrirAmis}>
-              Tout voir{demandesRecues + totalNonLus(nonLus) > 0 && <b className="pastille-nombre">{demandesRecues + totalNonLus(nonLus)}</b>}
-            </button>
-          </div>
-          {compagnons.length === 0 ? (
-            <button type="button" className="amis-vide" onClick={ouvrirAmis}>Ajoute tes amis pirates pour les voir ici, leur écrire et les inviter →</button>
+      <section className="cr-jeu">
+        <div className="cr-modes" role="tablist">
+          <button type="button" role="tab" aria-selected={jeu === 'skull'} className={jeu === 'skull' ? 'actif' : ''} onClick={() => choisir('skull')}>Skull King</button>
+          <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={jeu === 'blackjack' ? 'actif' : ''} onClick={() => choisir('blackjack')}>Blackjack</button>
+        </div>
+        <div className={`cr-affiche ${jeu}`}>
+          <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : '/decor/art/jaune_14.webp'} alt="" />
+          <span className="cr-affiche-texte">
+            <strong>{jeu === 'skull' ? 'Skull King' : 'Blackjack du Capitaine'}</strong>
+            <small>{jeu === 'skull'
+              ? (enLigne.size > 0 ? `${enLigne.size} pirate${enLigne.size > 1 ? 's' : ''} en ligne · 2 à 8 joueurs` : '2 à 8 joueurs · mise juste, pille tout')
+              : 'Table publique de 5 places · mise tes Louidors'}</small>
+          </span>
+        </div>
+        <button type="button" className="bouton-or cr-jouer" onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : ouvrirBlackjack('public'))}>
+          <Icone nom="epees" taille={24} /> {jeu === 'skull' ? 'Jouer' : 'S’asseoir'}
+        </button>
+        <div className="cr-secondaires">
+          {jeu === 'skull' ? (
+            <>
+              <button type="button" className="bouton-sombre" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={18} /> Rejoindre</button>
+              <button type="button" className="bouton-sombre" onClick={() => ouvrirLobby('entrainement')}><Icone nom="cible" taille={18} /> Entraînement</button>
+            </>
           ) : (
-            <div className="amis-rangee">
-              {compagnons.map((a) => (
-                <button key={a.id} type="button" className={`ami-bulle ${enLigne.has(a.id) ? 'en-ligne' : ''}`}
-                  onClick={() => ((nonLus[a.id] ?? 0) > 0 ? ouvrirMessages(a.id) : voirJoueur(a.id))}>
-                  <span className="ami-avatar">
-                    <Avatar photo={a.photo_url} taille={54} cadre={a.cadre} />
-                    <span className={`pastille-co ${enLigne.has(a.id) ? 'en-ligne' : 'hors-ligne'}`} />
-                    {(nonLus[a.id] ?? 0) > 0 && <b className="pastille-nombre">{nonLus[a.id]}</b>}
-                  </span>
-                  <small>{a.pseudo}</small>
-                </button>
-              ))}
-            </div>
+            <>
+              <button type="button" className="bouton-sombre" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={18} /> En solo</button>
+              <button type="button" className="bouton-sombre" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={18} /> Avec compagnons</button>
+            </>
           )}
-        </section>
-      </Apparition>
+        </div>
+      </section>
 
-      {defis.length > 0 && (
-        <Apparition>
-          <section className="defis-jour neon">
-            <p className="defis-titre"><Medaillon nom="boussole" taille={34} /> Défis du jour</p>
-            <ul>
+      <nav className="cr-nav">
+        <BoutonNav icone="coffre" nom="Boutique" onClick={ouvrirBoutique} />
+        <BoutonNav icone="equipage" nom="Équipage" onClick={ouvrirAmis} badge={demandes || undefined} point={amisEnLigne > 0} />
+        <BoutonNav icone="epees" nom="Jouer" actif onClick={() => {}} />
+        <BoutonNav icone="trophee" nom="Classement" onClick={ouvrirClassement} />
+        <BoutonNav icone="grimoire" nom="Règles" onClick={ouvrirRegles} />
+      </nav>
+
+      {actualitesVues() && <FenetreNotifications />}
+
+      {fenetre === 'defis' && (
+        <Fenetre titre="Défis du jour" fermer={() => setFenetre(null)}>
+          {defis.length === 0 ? <p className="petit-texte centre">Les défis arrivent à minuit.</p> : (
+            <ul className="cr-defis">
               {defis.map((d) => (
                 <li key={d.id} className={d.reussi ? 'reussi' : ''}>
                   <Medaillon nom={d.reussi ? 'trophee' : ICONES_DEFIS[d.id] ?? 'ancre'} taille={34} className={`defi-medaillon ${d.reussi ? 'fait' : ''}`} />
-                  <span className="defi-texte">{DEFIS[d.id]?.texte ?? d.id}</span>
-                  <span className="defi-gain">{d.reussi ? '✓ Réussi' : '+20 XP · +15'}</span>
+                  <span>{DEFIS[d.id]?.texte ?? d.id}</span>
+                  <b>{d.reussi ? '✓' : '+20 XP · +15'}</b>
                 </li>
               ))}
             </ul>
-            <small>En partie en ligne uniquement · nouveaux défis chaque jour à minuit</small>
-          </section>
-        </Apparition>
+          )}
+          <p className="petit-texte centre">En partie en ligne uniquement · nouveaux défis chaque jour à minuit.</p>
+        </Fenetre>
       )}
 
+      {fenetre === 'avis' && (
+        <Fenetre titre="Avis de recherche" fermer={() => setFenetre(null)}>
+          <section className="avis-recherche">
+            <p className="avis-titre">AVIS DE RECHERCHE</p>
+            <p className="avis-sous-titre">Mort ou vif</p>
+            <div className="avis-portrait"><Avatar photo={numeroUn?.photo_url ?? null} taille={120} cadre={numeroUn?.cadre} /></div>
+            <p className="avis-nom">{numeroUn ? numeroUn.pseudo : 'Le pirate à abattre'}</p>
+            <p className="avis-detail">
+              {numeroUn
+                ? <>Recordman de victoires de tous les temps · <strong>{numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}</strong> en {numeroUn.parties_jouees} partie{numeroUn.parties_jouees > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
+                : 'Le pirate qui a le plus de victoires sera affiché ici.'}
+            </p>
+          </section>
+        </Fenetre>
+      )}
 
-      <Apparition>
-        <section className="avis-recherche">
-          <p className="avis-titre">AVIS DE RECHERCHE</p>
-          <p className="avis-sous-titre">Mort ou vif</p>
-          <div className="avis-portrait"><Avatar photo={numeroUn?.photo_url ?? null} taille={130} cadre={numeroUn?.cadre} /></div>
-          <p className="avis-nom">{numeroUn ? numeroUn.pseudo : 'Le pirate à abattre'}</p>
-          <p className="avis-detail">
-            {numeroUn
-              ? <>Recordman de victoires de tous les temps · <strong>{numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}</strong> en {numeroUn.parties_jouees} partie{numeroUn.parties_jouees > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
-              : 'Le pirate qui a le plus de victoires sera affiché ici. Détrône-le et prends sa place.'}
-          </p>
-        </section>
-      </Apparition>
-
-      <Apparition>
-        <button type="button" className="lien-reglages neon" onClick={ouvrirReglages}>
-          <Icone nom="gouvernail" taille={20} /> Réglages du navire
-        </button>
-      </Apparition>
-
-      <footer className="pied">
-        <p>« Un bon pirate ne promet que ce qu’il peut prendre. »</p>
-        <nav className="pied-liens">
-          <button type="button" onClick={() => ouvrirLegal('mentions')}>Mentions légales</button>
-          <button type="button" onClick={() => ouvrirLegal('confidentialite')}>Confidentialité</button>
-          <button type="button" onClick={() => ouvrirLegal('cgu')}>Conditions</button>
-        </nav>
-      </footer>
-
+      {fenetre === 'alertes' && (
+        <Fenetre titre="Alertes" fermer={() => setFenetre(null)}>
+          <ActiverNotifications />
+          <InstallerAppli />
+        </Fenetre>
+      )}
     </main>
   );
 }
 
-/** Fait apparaître son contenu en fondu quand il entre à l'écran. */
-function Apparition({ children, delai = 0 }: { children: ReactNode; delai?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (!('IntersectionObserver' in window)) return setVisible(true);
-    const obs = new IntersectionObserver(([entree]) => {
-      if (entree.isIntersecting) {
-        setVisible(true);
-        obs.disconnect();
-      }
-    }, { threshold: 0.15 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+function BoutonRail({ icone, nom, badge, fait, onClick }: { icone: string; nom: string; badge?: string; fait?: boolean; onClick: () => void }) {
   return (
-    <div ref={ref} className={`apparition ${visible ? 'visible' : ''}`} style={{ transitionDelay: `${delai}ms` }}>
-      {children}
+    <button type="button" className={`cr-bouton-rail ${fait ? 'fait' : ''}`} onClick={onClick}>
+      <span className="cr-bouton-rail-icone"><Icone nom={icone} taille={22} /></span>
+      <small>{nom}</small>
+      {badge && <b>{badge}</b>}
+    </button>
+  );
+}
+
+function BoutonNav({ icone, nom, actif, badge, point, onClick }: { icone: string; nom: string; actif?: boolean; badge?: number; point?: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className={actif ? 'actif' : ''} onClick={onClick} aria-current={actif ? 'page' : undefined}>
+      <span className="cr-nav-icone"><Icone nom={icone} taille={actif ? 26 : 22} />{badge ? <b className="pastille-nombre">{badge}</b> : point ? <i className="cr-point" /> : null}</span>
+      <small>{nom}</small>
+    </button>
+  );
+}
+
+function Fenetre({ titre, fermer, children }: { titre: string; fermer: () => void; children: ReactNode }) {
+  return (
+    <div className="voile b-voile" onClick={fermer}>
+      <section className="b-fiche cr-fenetre" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="b-fermer" onClick={fermer} aria-label="Fermer">×</button>
+        <h2>{titre}</h2>
+        {children}
+      </section>
     </div>
   );
 }
@@ -259,13 +205,10 @@ function Apparition({ children, delai = 0 }: { children: ReactNode; delai?: numb
 function Braises() {
   return (
     <div className="braises">
-      {Array.from({ length: 18 }, (_, i) => (
+      {Array.from({ length: 14 }, (_, i) => (
         <span key={i} style={{
-          left: `${(i * 53) % 100}%`,
-          animationDelay: `${(i * 0.73) % 9}s`,
-          animationDuration: `${9 + (i % 5) * 2}s`,
-          width: `${2 + (i % 3)}px`,
-          height: `${2 + (i % 3)}px`,
+          left: `${(i * 53) % 100}%`, animationDelay: `${(i * 0.73) % 9}s`, animationDuration: `${9 + (i % 5) * 2}s`,
+          width: `${2 + (i % 3)}px`, height: `${2 + (i % 3)}px`,
         }} />
       ))}
     </div>

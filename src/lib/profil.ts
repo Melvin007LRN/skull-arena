@@ -32,6 +32,11 @@ export function niveau(xp: number): number {
   return 1 + Math.floor(Math.max(xp, 0) / 100);
 }
 
+/** Avancement dans le niveau en cours, de 0 à 1. */
+export function progressionNiveau(xp: number): number {
+  return (Math.max(xp, 0) % 100) / 100;
+}
+
 export function grade(n: number): string {
   if (n >= 200) return 'Légende';
   if (n >= 100) return 'Amiral';

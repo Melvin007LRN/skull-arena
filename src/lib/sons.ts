@@ -256,6 +256,15 @@ export const son = {
   baleineForte: () => { vague(0, 0.16, 1.8); coup(150, 95, 0.2, 1.4, 0.1); harpe(H.D4, 0.3, 0.14); harpe(H.A4, 0.45, 0.12); },
   /** Pièces d'or */
   piece: () => { tintement(0); tintement(0.06, 0.09); },
+  /** Podium : un arpège de harpe qui monte, une note par marche, puis l'accord du vainqueur */
+  podium: (marches: number) => {
+    debloquerSon();
+    const notes = [H.D4, H.F4, H.A4, H.D5, H.F5, H.A5];
+    notes.forEach((f, k) => harpe(f, 0.05 + k * 0.11, 0.15));
+    for (let m = 0; m < marches; m++) harpe([H.A4, H.C5, H.D5][m], 0.8 + (marches - 1 - m) * 0.22, 0.17);
+    accord('D4', 'A4', 'D5', 'F5').forEach((f, k) => harpe(f, 1.55 + k * 0.025, 0.12));
+    tintement(1.6, 0.08);
+  },
 };
 
 // ---------- Musique : chant de marins à la harpe (domaine public), avec le ressac en fond ----------
