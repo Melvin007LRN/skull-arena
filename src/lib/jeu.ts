@@ -222,6 +222,6 @@ export async function partagerInvitation(code: string): Promise<'partage' | 'cop
       return 'partage';
     } catch { /* annulé : on copie à la place */ }
   }
-  await navigator.clipboard?.writeText(`${texte}\n${url}`);
+  try { await navigator.clipboard?.writeText(`${texte}\n${url}`); } catch { /* copie refusée par le navigateur */ }
   return 'copie';
 }

@@ -8,21 +8,30 @@ import {
 } from '../lib/boutique.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { NEONS, styleNeon } from '../lib/neons.ts';
-import { offrir } from '../lib/perso.ts';
+import { offrir, type Categorie } from '../lib/perso.ts';
 import { FenetreOffrir, RayonPerso } from './BoutiquePerso.tsx';
 import { ApercuCadeau } from '../jeu/TableJeu.tsx';
 import '../jeu/jeu.css';
 
-type Rayon = 'cadeaux' | 'table' | 'pirate' | 'pseudo' | 'cadres' | 'chat';
+type Rayon = 'cadeaux' | 'cadres' | 'pseudo' | Categorie;
 type Vue = 'vitrine' | Rayon | 'coffre';
 
-const RAYONS: Array<{ id: Rayon; icone: string; nom: string; sous: string }> = [
-  { id: 'cadeaux', icone: '🎁', nom: 'Cadeaux', sous: 'à lancer en partie' },
-  { id: 'table', icone: '🃏', nom: 'Ta table', sous: 'dos · tapis · effets' },
-  { id: 'pirate', icone: '🏴‍☠️', nom: 'Ton pirate', sous: 'titres · compagnons' },
-  { id: 'pseudo', icone: '✨', nom: 'Pseudo', sous: 'couleurs' },
-  { id: 'cadres', icone: '🖼️', nom: 'Cadres', sous: 'd’avatar' },
-  { id: 'chat', icone: '💬', nom: 'Chat', sous: 'phrases · emotes' },
+/** Toutes les catégories de la boutique, dans l'ordre, chacune avec sa couleur. */
+const RAYONS: Array<{ id: Rayon; icone: string; nom: string; sous: string; couleur: string }> = [
+  { id: 'cadeaux', icone: '🎁', nom: 'Cadeaux', sous: 'à lancer en partie', couleur: '#e5484d' },
+  { id: 'cadres', icone: '🖼️', nom: 'Cadres', sous: 'autour de ton avatar', couleur: '#e3b04b' },
+  { id: 'pseudo', icone: '✨', nom: 'Pseudo', sous: 'couleur de ton nom', couleur: '#ff4fd8' },
+  { id: 'dos', icone: '🂠', nom: 'Dos de cartes', sous: 'vus par la table', couleur: '#3f7be0' },
+  { id: 'tapis', icone: '🟫', nom: 'Tapis', sous: 'le fond de ta table', couleur: '#2f9e55' },
+  { id: 'pli', icone: '💫', nom: 'Effets de pli', sous: 'quand tu gagnes un pli', couleur: '#1f9fb8' },
+  { id: 'entree', icone: '🚪', nom: 'Entrées', sous: 'ton arrivée en partie', couleur: '#d9772b' },
+  { id: 'victoire', icone: '🏆', nom: 'Célébrations', sous: 'quand tu gagnes', couleur: '#e3b04b' },
+  { id: 'titre', icone: '📜', nom: 'Titres', sous: 'sous ton pseudo', couleur: '#c9a36b' },
+  { id: 'banniere', icone: '🏴', nom: 'Bannières', sous: 'fond de ta fiche', couleur: '#8a4fd6' },
+  { id: 'compagnon', icone: '🦜', nom: 'Compagnons', sous: 'sur ton avatar', couleur: '#4cc477' },
+  { id: 'theme', icone: '🎨', nom: 'Thèmes', sous: 'couleur des menus', couleur: '#ff7a1a' },
+  { id: 'phrase', icone: '💬', nom: 'Phrases', sous: 'pour le chat', couleur: '#8fb4ff' },
+  { id: 'emote', icone: '😎', nom: 'Emotes', sous: 'réactions', couleur: '#f0c419' },
 ];
 
 /** Ce que fait chaque objet, en une phrase. */
@@ -116,6 +125,18 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
         <span className="b-solde"><span className="piece-or" aria-hidden="true" />{profil.louidors.toLocaleString('fr-FR')}</span>
       </div>
       <h1 className="titre-pirate grand">{vue === 'vitrine' ? 'Boutique' : vue === 'coffre' ? 'Mon coffre' : rayon?.nom}</h1>
+      {rayon && <p className="petit-texte centre b-sous">{rayon.sous}</p>}
+
+      {vue !== 'vitrine' && vue !== 'coffre' && (
+        <nav className="b-puces" aria-label="Catégories">
+          {RAYONS.map((r) => (
+            <button key={r.id} type="button" className={vue === r.id ? 'actif' : ''} style={{ ['--rc' as string]: r.couleur }} onClick={() => aller(r.id)}
+              ref={(el) => { if (el && vue === r.id && el.parentElement) { const b = el.parentElement; b.scrollLeft = el.offsetLeft - b.clientWidth / 2 + el.clientWidth / 2; } }}>
+              <span>{r.icone}</span>{r.nom}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {vue === 'vitrine' && (
         <>
@@ -134,7 +155,7 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
           <ul className="b-rayons">
             {RAYONS.map((r) => (
               <li key={r.id}>
-                <button type="button" onClick={() => aller(r.id)}>
+                <button type="button" style={{ ['--rc' as string]: r.couleur }} onClick={() => aller(r.id)}>
                   <span className="b-rayon-icone">{r.icone}</span>
                   <strong>{r.nom}</strong>
                   <small>{r.sous}</small>
@@ -228,8 +249,8 @@ export function EcranBoutique({ profil, retour, recharger }: { profil: Profil; r
         </section>
       )}
 
-      {(vue === 'table' || vue === 'pirate' || vue === 'chat') && (
-        <RayonPerso onglet={vue} profil={profil} articles={articles} possedes={possedes} enCours={enCours} faire={faire}
+      {vue !== 'vitrine' && vue !== 'coffre' && vue !== 'cadeaux' && vue !== 'cadres' && vue !== 'pseudo' && (
+        <RayonPerso seule={vue} profil={profil} articles={articles} possedes={possedes} enCours={enCours} faire={faire}
           acheter={(a) => confirm(`Acheter « ${a.nom} » pour ${a.prix} Louidors ?`) && faire(() => acheter(a.id), `${a.nom} acheté !`)}
           offrirArticle={setAOffrir} />
       )}

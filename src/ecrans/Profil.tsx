@@ -361,7 +361,7 @@ function Compte({ profil, enCours, action, recharger }: { profil: Profil; enCour
         </div>
       )}
       <p className="petit-texte">{restants > 0 ? `${restants} changement${restants > 1 ? 's' : ''} de pseudo restant${restants > 1 ? 's' : ''}.` : 'Tu as utilisé tes 3 changements de pseudo.'}</p>
-      <button type="button" className="bouton-sombre" onClick={() => supabase.auth.signOut()}>Se déconnecter</button>
+      <button type="button" className="bouton-sombre c-rouge" onClick={() => supabase.auth.signOut()}>Se déconnecter</button>
       {!confirmSuppression ? (
         <button type="button" className="lien danger" onClick={() => setConfirmSuppression(true)}>Supprimer mon compte</button>
       ) : (

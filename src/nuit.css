@@ -20,7 +20,7 @@ body[data-theme] { --accent: var(--theme); --accent-clair: color-mix(in srgb, va
 body:has(.ecran) { background: #07090d; }
 .ecran { position: relative; isolation: isolate; color: var(--texte-nuit); }
 .ecran::before {
-  content: ''; position: fixed; inset: -40px; z-index: -1; pointer-events: none;
+  content: ''; position: fixed; transform: translateZ(0); inset: -40px; z-index: -1; pointer-events: none;
   background: url('/decor/decor-fond.webp') center / cover;
   filter: blur(16px) brightness(.3) saturate(.75);
 }
@@ -296,7 +296,7 @@ body:has(.ecran) { background: #07090d; }
 .cr-affiche-texte small { font-size: 12px; color: #d8d3c8; }
 .ecran .bouton-or.cr-jouer { min-height: 64px; font-size: 22px !important; letter-spacing: .14em !important; display: flex; align-items: center; justify-content: center; gap: 10px;
   border-radius: 16px; animation: cr-appel 2.4s ease-in-out infinite; }
-@keyframes cr-appel { 50% { transform: scale(1.025); box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 26px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255,255,255,.45); } }
+@keyframes cr-appel { 50% { box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 26px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255,255,255,.45); } }
 .cr-secondaires { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cr-secondaires .bouton-sombre { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-family: var(--corps) !important; font-weight: 700; }
 
@@ -352,3 +352,109 @@ body:has(.ecran) { background: #07090d; }
 .ecran-accueil.cr > .cr-scene { min-height: 230px; }
 .cr-pirate .avatar { width: clamp(120px, 23dvh, 210px) !important; height: clamp(120px, 23dvh, 210px) !important; }
 .cr-socle { top: calc(clamp(120px, 23dvh, 210px) - 16px); }
+
+/* =================== De la couleur sur les boutons =================== */
+/* Couleur des boutons secondaires selon l'écran (pleins, en relief, sans néon) */
+.ecran { --bc: #2f6fd6; --bc2: #1c4a9e; }
+.ecran-lobby, .ecran-attente { --bc: #1f9fb8; --bc2: #146a7c; }
+.ecran-profil { --bc: #d9772b; --bc2: #9c4f15; }
+.ecran-reglages, .ecran-admin, .ecran-legal { --bc: #3f7be0; --bc2: #24519f; }
+.ecran-amis { --bc: #2f9e55; --bc2: #1d6b38; }
+.ecran-classement { --bc: #d9772b; --bc2: #9c4f15; }
+.ecran-regles { --bc: #8a4fd6; --bc2: #5d2ea0; }
+.ecran-boutique { --bc: #1f9fb8; --bc2: #146a7c; }
+.ecran .bouton-sombre {
+  color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.45) !important; font-weight: 700;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bc) 88%, #fff), var(--bc) 45%, var(--bc2)) !important;
+  border: 1px solid color-mix(in srgb, var(--bc2) 70%, #000) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 3px 0 color-mix(in srgb, var(--bc2) 70%, #000), 0 6px 14px rgba(0,0,0,.35) !important;
+}
+.ecran .bouton-sombre:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 1px 0 color-mix(in srgb, var(--bc2) 70%, #000) !important; }
+.ecran .bouton-sombre:disabled { filter: saturate(.25) brightness(.65); }
+.ecran .bouton-danger { color: #fff !important; background: linear-gradient(180deg, #e5484d, #a3161b) !important; border: 1px solid #6e0c10 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 3px 0 #5a0a0d !important; }
+.ecran .bouton-or { box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 3px 0 #8a6420, 0 8px 18px rgba(0,0,0,.4) !important; }
+.ecran .bouton-or:active { transform: translateY(2px); }
+/* Couleurs choisies une à une */
+.ecran .bouton-sombre.c-bleu { --bc: #3f7be0; --bc2: #24519f; }
+.ecran .bouton-sombre.c-vert { --bc: #2f9e55; --bc2: #1d6b38; }
+.ecran .bouton-sombre.c-violet { --bc: #8a4fd6; --bc2: #5d2ea0; }
+.ecran .bouton-sombre.c-turquoise { --bc: #1f9fb8; --bc2: #146a7c; }
+.ecran .bouton-sombre.c-orange { --bc: #d9772b; --bc2: #9c4f15; }
+.ecran .bouton-sombre.c-rouge { --bc: #d63a44; --bc2: #8f1c24; }
+.ecran .bouton-sombre .icone, .ecran .bouton-danger .icone { stroke: #fff !important; }
+
+/* Accueil : tuiles latérales et barre du bas en couleur */
+.cr-bouton-rail-icone { background: linear-gradient(180deg, color-mix(in srgb, var(--rc, #3f7be0) 85%, #fff), var(--rc, #3f7be0) 50%, color-mix(in srgb, var(--rc, #3f7be0) 60%, #000)) !important;
+  border: 1px solid color-mix(in srgb, var(--rc, #3f7be0) 50%, #000) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 3px 0 color-mix(in srgb, var(--rc, #3f7be0) 45%, #000), 0 6px 12px rgba(0,0,0,.45) !important; }
+.cr-bouton-rail-icone .icone { stroke: #fff !important; }
+.cr-bouton-rail.r-defis { --rc: #e08a23; } .cr-bouton-rail.r-avis { --rc: #c93a3a; } .cr-bouton-rail.r-actus { --rc: #3f7be0; } .cr-bouton-rail.r-alertes { --rc: #8a4fd6; }
+.cr-nav button { --nc: #8e8a80; }
+.cr-nav button .icone { stroke: var(--nc) !important; }
+.cr-nav button.n-boutique { --nc: #e3b04b; } .cr-nav button.n-equipage { --nc: #4cc477; } .cr-nav button.n-classement { --nc: #f0913a; } .cr-nav button.n-regles { --nc: #8fb4ff; }
+.cr-nav button small { color: #b7b2a6; }
+.cr-nav button.actif small { color: var(--accent-clair); }
+.cr-nav button.actif .icone { stroke: var(--encre-nuit) !important; }
+.cr-nav button.actif .cr-nav-icone { background: linear-gradient(180deg, var(--accent-clair), var(--accent)) !important; border-color: #8a6420 !important; }
+.cr-modes button.actif { background: linear-gradient(180deg, #3f7be0, #24519f) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.3) !important; }
+.cr-modes button.actif.m-blackjack { background: linear-gradient(180deg, #d63a44, #8f1c24) !important; }
+
+/* Le gros bouton JOUER : plus grand, reflet qui passe, halo qui respire */
+.ecran .bouton-or.cr-jouer { position: relative; overflow: hidden; min-height: 78px; font-size: 28px !important; letter-spacing: .16em !important; border-radius: 20px;
+  background: linear-gradient(180deg, #fff2c4 0%, #f7cf63 38%, #e8a227 70%, #c97c12 100%) !important; color: #3a2204 !important;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.7), inset 0 -4px 0 rgba(120,60,0,.35), 0 4px 0 #8a5410, 0 10px 26px rgba(0,0,0,.5), 0 0 30px rgba(255,170,40,.35) !important; }
+.ecran .bouton-or.cr-jouer.bj { background: linear-gradient(180deg, #ffd0d0 0%, #f0616a 38%, #c92a35 72%, #8f1c24 100%) !important; color: #fff !important; text-shadow: 0 2px 2px rgba(0,0,0,.35);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.55), inset 0 -4px 0 rgba(80,0,0,.35), 0 4px 0 #5a0a0d, 0 10px 26px rgba(0,0,0,.5), 0 0 30px rgba(255,60,60,.35) !important; }
+.ecran .bouton-or.cr-jouer.bj .icone { stroke: #fff !important; }
+.ecran .bouton-or.cr-jouer::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: cr-reflet 3.2s ease-in-out infinite; }
+@keyframes cr-reflet { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+.cr-jouer-sous { display: block; font-size: 11px; letter-spacing: .1em; font-weight: 800; opacity: .75; margin-top: -2px; text-transform: none; }
+
+/* Boutique : tuiles de rayon en couleur */
+.b-rayons button { background: linear-gradient(160deg, color-mix(in srgb, var(--rc) 55%, #0e1016), #0e1016 85%) !important; border-color: color-mix(in srgb, var(--rc) 45%, transparent) !important; }
+@media (prefers-reduced-motion: reduce) { .ecran .bouton-or.cr-jouer::after { display: none; } }
+/* Barre des catégories de la boutique */
+.b-puces { position: sticky; top: 0; z-index: 15; display: flex; gap: 7px; overflow-x: auto; margin: -4px -16px 0; padding: 8px 16px; scrollbar-width: none;
+  background: linear-gradient(180deg, rgba(7,9,13,.95), rgba(7,9,13,.8)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.b-puces::-webkit-scrollbar { display: none; }
+.b-puces button { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 99px; cursor: pointer; white-space: nowrap;
+  font-size: 12px; font-weight: 800; color: #e8e3d8; background: color-mix(in srgb, var(--rc) 16%, rgba(255,255,255,.04)); border: 1px solid color-mix(in srgb, var(--rc) 40%, transparent); }
+.b-puces button.actif { color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 85%, #fff), var(--rc) 55%, color-mix(in srgb, var(--rc) 60%, #000));
+  border-color: color-mix(in srgb, var(--rc) 50%, #000); box-shadow: 0 2px 0 color-mix(in srgb, var(--rc) 45%, #000); text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.b-sous { margin-top: -10px; }
+.b-rayons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.b-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.b-rayons button { height: 80px; }
+.b-rayon-icone { font-size: 22px; }
+
+/* =================== Avis de recherche (affiche) =================== */
+.avis-voile { z-index: 85 !important; background: rgba(0,0,0,.78) !important; }
+.avis-affiche { position: relative; width: min(340px, 92vw); max-height: 92dvh; overflow: auto; padding: 26px 22px 18px; text-align: center; color: #3a2410;
+  background:
+    radial-gradient(ellipse at 20% 15%, rgba(255,255,255,.35), transparent 40%),
+    radial-gradient(ellipse at 80% 90%, rgba(120,70,20,.35), transparent 50%),
+    radial-gradient(circle at 50% 50%, #f1dfb4 0%, #e3c68d 60%, #c9a364 100%);
+  clip-path: polygon(0 2%, 6% 0, 14% 1.5%, 25% 0, 38% 1%, 50% 0, 63% 1.2%, 75% 0, 88% 1.5%, 100% 0, 99% 12%, 100% 26%, 98.5% 40%, 100% 55%, 99% 70%, 100% 85%, 99% 100%, 86% 98.5%, 72% 100%, 58% 98.8%, 44% 100%, 30% 98.6%, 16% 100%, 0 98.5%, 1% 85%, 0 70%, 1.2% 55%, 0 40%, 1% 25%, 0 12%);
+  box-shadow: inset 0 0 60px rgba(90,50,10,.45); filter: drop-shadow(0 30px 40px rgba(0,0,0,.6));
+  transform-origin: 50% 0; animation: avis-tombe .9s cubic-bezier(.3,1.4,.5,1) both; }
+@keyframes avis-tombe { 0% { opacity: 0; transform: translateY(-80px) rotate(-8deg); } 55% { opacity: 1; transform: translateY(0) rotate(3deg); } 75% { transform: rotate(-1.5deg); } 100% { transform: rotate(.6deg); } }
+.avis-clou { position: absolute; top: 8px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ddd, #555 60%, #222); box-shadow: 0 2px 3px rgba(0,0,0,.5); }
+.avis-wanted { margin: 4px 0 0; font-family: 'Cinzel Decorative', var(--gravure); font-weight: 900; font-size: 46px; line-height: 1; letter-spacing: .06em; color: #5a2a0c;
+  text-shadow: 0 1px 0 rgba(255,255,255,.4), 0 -1px 0 rgba(0,0,0,.25); }
+.avis-entete { margin: 4px 0 12px; font-family: var(--gravure); font-weight: 700; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #6b3c12; border-top: 2px solid #6b3c1266; border-bottom: 2px solid #6b3c1266; padding: 4px 0; }
+.avis-cadre { display: inline-block; padding: 8px; background: #2a1708; border-radius: 4px; box-shadow: inset 0 0 0 3px #8a5a22, 0 6px 12px rgba(60,30,5,.5); }
+.avis-cadre .avatar { filter: sepia(.55) contrast(1.1) brightness(.95); }
+.avis-pseudo { margin: 12px 0 2px; font-family: 'Cinzel Decorative', var(--gravure); font-weight: 900; font-size: 30px; line-height: 1.05; color: #2b1606; word-break: break-word; }
+.avis-crime { margin: 0 0 10px; font-size: 13px; font-style: italic; color: #5a3815; }
+.avis-prime { display: flex; flex-direction: column; align-items: center; margin: 0 0 10px; padding: 8px; border: 2px dashed #6b3c1288; border-radius: 6px; }
+.avis-prime small { font-family: var(--gravure); font-weight: 700; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #6b3c12; }
+.avis-prime strong { font-family: 'Cinzel Decorative', var(--gravure); font-size: 34px; line-height: 1.1; color: #8a1c10; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.avis-mot { margin: 0 0 12px; font-weight: 700; font-size: 13px; color: #3a2410; }
+.avis-boutons { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+.avis-bouton { min-height: 48px; border-radius: 10px; border: 0; cursor: pointer; font-family: var(--corps); font-weight: 900; font-size: 15px; letter-spacing: .04em; color: #fff;
+  background: linear-gradient(180deg, #d0453c, #8f1c14); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 3px 0 #5a0d08; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.avis-bouton.secondaire { background: linear-gradient(180deg, #8a6a40, #5a4022); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 3px 0 #3a2812; }
+.avis-bouton:active { transform: translateY(2px); }
+.ecran .bouton-or.cr-jouer { white-space: nowrap; font-size: clamp(20px, 6.6vw, 28px) !important; letter-spacing: .1em !important; flex-wrap: nowrap; }
+.boutique-nuit .rayon-perso > h2 { display: none; }

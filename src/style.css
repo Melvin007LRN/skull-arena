@@ -1084,7 +1084,8 @@ body { font-family: var(--corps); }
 button, a, input, label, .tuile, .affiche { touch-action: manipulation; }
 /* Chaque écran apparaît en douceur */
 .ecran { animation: ecran-entree 0.32s cubic-bezier(.2,.8,.3,1) backwards; }
-@keyframes ecran-entree { from { opacity: 0; transform: translateY(10px); } }
+/* Fondu seul : un déplacement ferait sauter le fond et les barres fixes de l'écran */
+@keyframes ecran-entree { from { opacity: 0; } }
 /* Fenêtres et voiles : fondu et léger zoom */
 .voile { animation: voile-entree 0.22s ease backwards; }
 .voile > .fenetre, .voile > section { animation: fenetre-entree 0.32s cubic-bezier(.2,.9,.3,1.15) backwards; }

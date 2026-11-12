@@ -86,7 +86,9 @@ async function rejoindre(moi: string, mode: string, code: string | null) {
     const t = ok(await db.from('bj_tables').select('id').eq('type', 'public').maybeSingle()) as { id: string } | null;
     id = t?.id ?? await creerTable('public', null);
   } else if (mode === 'solo') {
-    id = await creerTable('solo', moi);
+    // On reprend sa table solo si elle existe déjà (pas une nouvelle table à chaque fois).
+    const t = ok(await db.from('bj_tables').select('id').eq('type', 'solo').eq('hote', moi).order('cree_le', { ascending: false }).limit(1).maybeSingle()) as { id: string } | null;
+    id = t?.id ?? await creerTable('solo', moi);
   } else if (mode === 'privee') {
     id = await creerTable('privee', moi);
   } else {

@@ -10,8 +10,10 @@ import { ApercuTapis, Banniere, DosCarte, Eclats, PluieEmojis } from '../composa
 
 type Faire = (fn: () => Promise<unknown>, succes: string) => Promise<void>;
 
-export function RayonPerso({ onglet, profil, articles, possedes, enCours, faire, acheter, offrirArticle }: {
-  onglet: 'table' | 'pirate' | 'chat';
+export function RayonPerso({ onglet, seule, profil, articles, possedes, enCours, faire, acheter, offrirArticle }: {
+  onglet?: 'table' | 'pirate' | 'chat';
+  /** N'afficher qu'une seule catégorie. */
+  seule?: Categorie;
   profil: Profil;
   articles: Article[];
   possedes: string[];
@@ -22,7 +24,7 @@ export function RayonPerso({ onglet, profil, articles, possedes, enCours, faire,
 }) {
   const [pluie, setPluie] = useState<{ cle: number; emojis: string[] } | null>(null);
   const prix = new Map(articles.map((a) => [a.id, a]));
-  const cats = (Object.keys(CATEGORIES) as Categorie[]).filter((c) => CATEGORIES[c].onglet === onglet);
+  const cats = (Object.keys(CATEGORIES) as Categorie[]).filter((c) => (seule ? c === seule : CATEGORIES[c].onglet === onglet));
   return (
     <>
       {cats.map((c) => {

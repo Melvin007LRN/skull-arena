@@ -18,6 +18,7 @@ import { EcranAmis } from './ecrans/Amis.tsx';
 import { EcranBoutique } from './ecrans/Boutique.tsx';
 import { EcranBlackjack } from './jeu/Blackjack.tsx';
 import { Actualites } from './composants/Actualites.tsx';
+import { AvisRecherche } from './composants/AvisRecherche.tsx';
 import { demarrerPresence, useInvitations } from './lib/amis.ts';
 import { ContexteSocial, demarrerNonLus } from './lib/social.ts';
 import { rattacherAbonnement } from './lib/notifications.ts';
@@ -151,6 +152,7 @@ export function App() {
     <ContexteSocial.Provider value={social}>
       {contenu}
       {ecran.nom === 'accueil' && <Actualites />}
+      {ecran.nom === 'accueil' && <AvisRecherche moi={profil.id} defier={() => setEcran({ nom: 'lobby', mode: 'jouer' })} />}
       {ecran.nom !== 'salon' && <ToastInvitation moi={profil.id} entrer={(id) => setEcran({ nom: 'salon', id })} />}
       {fiche && <FicheJoueur joueur={fiche} moi={profil.id} fermer={() => setFiche(null)} salonInvitation={ecran.nom === 'salon' ? ecran.id : null} />}
       {discussion && <Conversation ami={discussion} moi={profil.id} fermer={() => setDiscussion(null)} />}

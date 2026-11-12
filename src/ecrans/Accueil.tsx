@@ -3,7 +3,7 @@
 // et une barre de navigation. Les compléments (défis, avis de recherche, alertes) s'ouvrent en fenêtre.
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
-import { chargerRecordVictoires, chargerDefisDuJour, DEFIS, grade, niveau, progressionNiveau } from '../lib/profil.ts';
+import { chargerDefisDuJour, DEFIS, grade, niveau, progressionNiveau } from '../lib/profil.ts';
 import { Avatar } from '../composants/Avatar.tsx';
 import { InstallerAppli } from '../composants/InstallerAppli.tsx';
 import { ActiverNotifications } from '../composants/ActiverNotifications.tsx';
@@ -13,6 +13,7 @@ import { Titre } from '../composants/Perso.tsx';
 import { useAmis, useEnLigne } from '../lib/amis.ts';
 import { totalNonLus, useNonLus } from '../lib/social.ts';
 import { actualitesVues, ouvrirActualites } from '../composants/Actualites.tsx';
+import { avisVuAujourdhui, ouvrirAvis } from '../composants/AvisRecherche.tsx';
 
 /** Icône de chaque défi du jour. */
 const ICONES_DEFIS: Record<string, string> = {
@@ -21,14 +22,13 @@ const ICONES_DEFIS: Record<string, string> = {
 };
 
 type Jeu = 'skull' | 'blackjack';
-type Fenetre = 'defis' | 'avis' | 'alertes' | null;
+type Fenetre = 'defis' | 'alertes' | null;
 
 export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirAmis, ouvrirBoutique, ouvrirBlackjack }: {
   profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
   ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirBoutique: () => void;
   ouvrirLegal?: (p: 'mentions' | 'confidentialite' | 'cgu') => void; ouvrirBlackjack: (mode: 'public' | 'solo' | 'amis') => void;
 }) {
-  const [numeroUn, setNumeroUn] = useState<{ id: string; pseudo: string; photo_url: string | null; cadre: string | null; victoires: number; parties_jouees: number } | null>(null);
   const [defis, setDefis] = useState<Array<{ id: string; reussi: boolean }>>([]);
   const [jeu, setJeu] = useState<Jeu>(() => { try { return localStorage.getItem('skull-jeu') === 'blackjack' ? 'blackjack' : 'skull'; } catch { return 'skull'; } });
   const [fenetre, setFenetre] = useState<Fenetre>(null);
@@ -38,7 +38,6 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
   const demandes = (amis ?? []).filter((a) => a.statut === 'attente' && a.recue).length + totalNonLus(nonLus);
   const amisEnLigne = (amis ?? []).filter((a) => a.statut === 'acceptee' && enLigne.has(a.id)).length;
   useEffect(() => {
-    chargerRecordVictoires().then(setNumeroUn).catch(() => {});
     chargerDefisDuJour().then(setDefis).catch(() => {});
   }, []);
   const choisir = (j: Jeu) => { setJeu(j); try { localStorage.setItem('skull-jeu', j); } catch { /* sans stockage */ } };
@@ -69,8 +68,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
 
       <section className="cr-scene">
         <div className="cr-rail gauche">
-          <BoutonRail icone="cible" nom="Défis" badge={defis.length ? `${defisFaits}/${defis.length}` : undefined} fait={defis.length > 0 && defisFaits === defis.length} onClick={() => setFenetre('defis')} />
-          <BoutonRail icone="tete" nom="Avis" onClick={() => setFenetre('avis')} />
+          <BoutonRail classe="r-defis" icone="cible" nom="Défis" badge={defis.length ? `${defisFaits}/${defis.length}` : undefined} fait={defis.length > 0 && defisFaits === defis.length} onClick={() => setFenetre('defis')} />
+          <BoutonRail classe="r-avis" icone="tete" nom="Avis" onClick={ouvrirAvis} />
         </div>
         <button type="button" className="cr-pirate" onClick={ouvrirProfil}>
           <span className="cr-socle" aria-hidden="true" />
@@ -80,15 +79,15 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           <span className="cr-grade">{grade(n)} · niveau {n}</span>
         </button>
         <div className="cr-rail droite">
-          <BoutonRail icone="grimoire" nom="Actus" onClick={ouvrirActualites} />
-          <BoutonRail icone="cloche" nom="Alertes" onClick={() => setFenetre('alertes')} />
+          <BoutonRail classe="r-actus" icone="grimoire" nom="Actus" onClick={ouvrirActualites} />
+          <BoutonRail classe="r-alertes" icone="cloche" nom="Alertes" onClick={() => setFenetre('alertes')} />
         </div>
       </section>
 
       <section className="cr-jeu">
         <div className="cr-modes" role="tablist">
           <button type="button" role="tab" aria-selected={jeu === 'skull'} className={jeu === 'skull' ? 'actif' : ''} onClick={() => choisir('skull')}>Skull King</button>
-          <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={jeu === 'blackjack' ? 'actif' : ''} onClick={() => choisir('blackjack')}>Blackjack</button>
+          <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={`m-blackjack ${jeu === 'blackjack' ? 'actif' : ''}`} onClick={() => choisir('blackjack')}>Blackjack</button>
         </div>
         <div className={`cr-affiche ${jeu}`}>
           <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : '/decor/art/jaune_14.webp'} alt="" />
@@ -99,33 +98,33 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
               : 'Table publique de 5 places · mise tes Louidors'}</small>
           </span>
         </div>
-        <button type="button" className="bouton-or cr-jouer" onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : ouvrirBlackjack('public'))}>
-          <Icone nom="epees" taille={24} /> {jeu === 'skull' ? 'Jouer' : 'S’asseoir'}
+        <button type="button" className={`bouton-or cr-jouer ${jeu === 'blackjack' ? 'bj' : ''}`} onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : ouvrirBlackjack('public'))}>
+          <Icone nom="epees" taille={28} /> {jeu === 'skull' ? 'Jouer' : 'S’asseoir'}
         </button>
         <div className="cr-secondaires">
           {jeu === 'skull' ? (
             <>
-              <button type="button" className="bouton-sombre" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={18} /> Rejoindre</button>
-              <button type="button" className="bouton-sombre" onClick={() => ouvrirLobby('entrainement')}><Icone nom="cible" taille={18} /> Entraînement</button>
+              <button type="button" className="bouton-sombre c-bleu" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={18} /> Rejoindre</button>
+              <button type="button" className="bouton-sombre c-vert" onClick={() => ouvrirLobby('entrainement')}><Icone nom="cible" taille={18} /> Entraînement</button>
             </>
           ) : (
             <>
-              <button type="button" className="bouton-sombre" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={18} /> En solo</button>
-              <button type="button" className="bouton-sombre" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={18} /> Avec compagnons</button>
+              <button type="button" className="bouton-sombre c-turquoise" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={18} /> En solo</button>
+              <button type="button" className="bouton-sombre c-violet" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={18} /> Avec compagnons</button>
             </>
           )}
         </div>
       </section>
 
       <nav className="cr-nav">
-        <BoutonNav icone="coffre" nom="Boutique" onClick={ouvrirBoutique} />
-        <BoutonNav icone="equipage" nom="Équipage" onClick={ouvrirAmis} badge={demandes || undefined} point={amisEnLigne > 0} />
-        <BoutonNav icone="epees" nom="Jouer" actif onClick={() => {}} />
-        <BoutonNav icone="trophee" nom="Classement" onClick={ouvrirClassement} />
-        <BoutonNav icone="grimoire" nom="Règles" onClick={ouvrirRegles} />
+        <BoutonNav classe="n-boutique" icone="coffre" nom="Boutique" onClick={ouvrirBoutique} />
+        <BoutonNav classe="n-equipage" icone="equipage" nom="Équipage" onClick={ouvrirAmis} badge={demandes || undefined} point={amisEnLigne > 0} />
+        <BoutonNav classe="n-jouer" icone="epees" nom="Jouer" actif onClick={() => {}} />
+        <BoutonNav classe="n-classement" icone="trophee" nom="Classement" onClick={ouvrirClassement} />
+        <BoutonNav classe="n-regles" icone="grimoire" nom="Règles" onClick={ouvrirRegles} />
       </nav>
 
-      {actualitesVues() && <FenetreNotifications />}
+      {actualitesVues() && avisVuAujourdhui() && <FenetreNotifications />}
 
       {fenetre === 'defis' && (
         <Fenetre titre="Défis du jour" fermer={() => setFenetre(null)}>
@@ -144,22 +143,6 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         </Fenetre>
       )}
 
-      {fenetre === 'avis' && (
-        <Fenetre titre="Avis de recherche" fermer={() => setFenetre(null)}>
-          <section className="avis-recherche">
-            <p className="avis-titre">AVIS DE RECHERCHE</p>
-            <p className="avis-sous-titre">Mort ou vif</p>
-            <div className="avis-portrait"><Avatar photo={numeroUn?.photo_url ?? null} taille={120} cadre={numeroUn?.cadre} /></div>
-            <p className="avis-nom">{numeroUn ? numeroUn.pseudo : 'Le pirate à abattre'}</p>
-            <p className="avis-detail">
-              {numeroUn
-                ? <>Recordman de victoires de tous les temps · <strong>{numeroUn.victoires} victoire{numeroUn.victoires > 1 ? 's' : ''}</strong> en {numeroUn.parties_jouees} partie{numeroUn.parties_jouees > 1 ? 's' : ''}.<br />{numeroUn.id === profil.id ? 'C’est toi ! Tout l’équipage veut ta tête.' : 'Détrône-le et prends sa place.'}</>
-                : 'Le pirate qui a le plus de victoires sera affiché ici.'}
-            </p>
-          </section>
-        </Fenetre>
-      )}
-
       {fenetre === 'alertes' && (
         <Fenetre titre="Alertes" fermer={() => setFenetre(null)}>
           <ActiverNotifications />
@@ -170,9 +153,9 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
   );
 }
 
-function BoutonRail({ icone, nom, badge, fait, onClick }: { icone: string; nom: string; badge?: string; fait?: boolean; onClick: () => void }) {
+function BoutonRail({ classe, icone, nom, badge, fait, onClick }: { classe: string; icone: string; nom: string; badge?: string; fait?: boolean; onClick: () => void }) {
   return (
-    <button type="button" className={`cr-bouton-rail ${fait ? 'fait' : ''}`} onClick={onClick}>
+    <button type="button" className={`cr-bouton-rail ${classe} ${fait ? 'fait' : ''}`} onClick={onClick}>
       <span className="cr-bouton-rail-icone"><Icone nom={icone} taille={22} /></span>
       <small>{nom}</small>
       {badge && <b>{badge}</b>}
@@ -180,9 +163,9 @@ function BoutonRail({ icone, nom, badge, fait, onClick }: { icone: string; nom: 
   );
 }
 
-function BoutonNav({ icone, nom, actif, badge, point, onClick }: { icone: string; nom: string; actif?: boolean; badge?: number; point?: boolean; onClick: () => void }) {
+function BoutonNav({ classe, icone, nom, actif, badge, point, onClick }: { classe: string; icone: string; nom: string; actif?: boolean; badge?: number; point?: boolean; onClick: () => void }) {
   return (
-    <button type="button" className={actif ? 'actif' : ''} onClick={onClick} aria-current={actif ? 'page' : undefined}>
+    <button type="button" className={`${classe} ${actif ? 'actif' : ''}`} onClick={onClick} aria-current={actif ? 'page' : undefined}>
       <span className="cr-nav-icone"><Icone nom={icone} taille={actif ? 26 : 22} />{badge ? <b className="pastille-nombre">{badge}</b> : point ? <i className="cr-point" /> : null}</span>
       <small>{nom}</small>
     </button>

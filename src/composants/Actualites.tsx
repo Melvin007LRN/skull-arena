@@ -32,7 +32,7 @@ export function Actualites() {
     return () => window.removeEventListener(EVENEMENT, ouvrir);
   }, []);
   if (!ouvert) return null;
-  const fermer = () => { try { localStorage.setItem('skull-actu-vue', VERSION); } catch { /* sans stockage */ } setOuvert(false); };
+  const fermer = () => { try { localStorage.setItem('skull-actu-vue', VERSION); } catch { /* sans stockage */ } setOuvert(false); window.dispatchEvent(new Event('skull-actu-fermee')); };
   const p = PAGES[page];
   const derniere = page === PAGES.length - 1;
   return (

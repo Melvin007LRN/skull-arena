@@ -81,7 +81,7 @@ export function EcranReglages({ profil, retour, ouvrirProfil, ouvrirAdmin, ouvri
           {message && <p className={`message ${message.ok ? 'info' : 'erreur'}`}>{message.texte}</p>}
           <button type="submit" className="bouton-or" disabled={enCours}>Changer le mot de passe</button>
         </form>
-        <button type="button" className="bouton-sombre" onClick={() => supabase.auth.signOut()}>Se déconnecter</button>
+        <button type="button" className="bouton-sombre c-rouge" onClick={() => supabase.auth.signOut()}>Se déconnecter</button>
       </section>
 
       {profil.est_admin && (
