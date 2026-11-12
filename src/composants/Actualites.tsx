@@ -1,7 +1,7 @@
 // Actualités : la fenêtre qui présente une grosse mise à jour, une seule fois par version (et rouvrable depuis l'accueil).
 import { useEffect, useState } from 'react';
 
-const VERSION = '2026-11-blackjack';
+const VERSION = '2026-11-blackjack-2';
 const EVENEMENT = 'skull-actualites';
 
 /** La présentation de cette version a-t-elle déjà été vue ? */
@@ -13,8 +13,8 @@ export function ouvrirActualites() { window.dispatchEvent(new Event(EVENEMENT));
 const PAGES: Array<{ icone: string; titre: string; texte: string; points: string[] }> = [
   { icone: '🏴‍☠️', titre: 'La grande mise à jour', texte: 'Le navire a été radoubé de la quille au grand mât. Voici ce qui change.',
     points: ['Nouvel accueil, tout sur un seul écran', 'Le Blackjack du Capitaine', 'Boutique et menus redessinés', 'Des parties plus vivantes'] },
-  { icone: '🃏', titre: 'Le Blackjack du Capitaine', texte: 'Un nouveau jeu : bats le croupier sans dépasser 21 et double tes Louidors.',
-    points: ['Une table publique de 5 places', 'En solo ou avec tes compagnons', 'Plus ton niveau est haut, plus tu peux miser', 'Blackjack payé 3 contre 2'] },
+  { icone: '🃏', titre: 'Le Blackjack du Capitaine', texte: 'Un nouveau jeu face au croupier pirate : bats-le sans dépasser 21.',
+    points: ['Une vraie table en paysage, 5 places', 'Séparer, doubler, assurance', 'Paris annexes : Paires parfaites et 21+3', 'Chat entre joueurs, plus ton niveau monte plus tu mises gros'] },
   { icone: '⚓', titre: 'Un accueil plus clair', texte: 'Ton pirate au centre, le gros bouton Jouer en bas, et tout le reste à un doigt.',
     points: ['Choisis ton jeu : Skull King ou Blackjack', 'Défis du jour et avis de recherche en un geste', 'Barre de navigation en bas'] },
   { icone: '🛍️', titre: 'Boutique et menus', texte: 'Un style plus sobre et plus élégant, sans néon dans les menus.',

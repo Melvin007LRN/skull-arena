@@ -3,7 +3,7 @@
 // le sabot et la carte cachée du croupier restent dans bj_secrets, que seul ce serveur lit.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
-  agir, asseoir, delaiEcoule, ErreurBJ, gains, lever, miser, nouvelEtat, nouveauSabot, type EtatBJ, type SecretBJ,
+  agir, asseoir, assurer, coutDuCoup, delaiEcoule, ErreurBJ, gains, lever, miser, nouvelEtat, nouveauSabot, type CoupBJ, type EtatBJ, type SecretBJ,
 } from './engine/blackjack.ts';
 
 const CORS = {
@@ -48,8 +48,9 @@ async function action(moi: string, c: Record<string, unknown>) {
   switch (c?.action) {
     case 'rejoindre': return rejoindre(moi, String(c.mode ?? 'public'), c.code ? String(c.code) : null);
     case 'quitter': return modifier(String(c.table_id), (e, s) => { lever(e, moi, s, Date.now()); });
-    case 'miser': return miserLouidors(moi, String(c.table_id), Number(c.mise));
-    case 'agir': return jouer(moi, String(c.table_id), String(c.coup) as 'tirer' | 'rester' | 'doubler');
+    case 'miser': return miserLouidors(moi, String(c.table_id), Number(c.mise), Number(c.paires ?? 0), Number(c.vingt_et_un ?? 0));
+    case 'agir': return jouer(moi, String(c.table_id), String(c.coup) as CoupBJ);
+    case 'assurer': return assurance(moi, String(c.table_id), !!c.prendre);
     case 'avancer': return modifier(String(c.table_id), (e, s) => { delaiEcoule(e, s, Date.now()); });
     default: throw new Refus('Action inconnue.');
   }
@@ -136,33 +137,46 @@ async function surveiller(id: string, echeance: number) {
   await modifier(id, (e, s) => { delaiEcoule(e, s, Date.now()); });
 }
 
-async function miserLouidors(moi: string, id: string, mise: number) {
-  if (!Number.isInteger(mise) || mise <= 0) throw new Refus('Mise invalide.');
-  const t = ok(await db.from('bj_tables').select('type').eq('id', id).maybeSingle()) as { type: string } | null;
-  if (!t) throw new Refus('Cette table n’existe plus.');
-  await db.rpc('louidors_ajuster', { p_joueur: moi, p_delta: -mise, p_table: id, p_raison: 'mise' }).then((r) => { if (r.error) throw r.error; });
-  try {
-    return await modifier(id, (e, s) => { miser(e, moi, mise, s, Date.now(), t.type === 'solo'); });
-  } catch (e) {
-    await db.rpc('louidors_ajuster', { p_joueur: moi, p_delta: mise, p_table: id, p_raison: 'remboursement' });
-    throw e;
-  }
+async function debiter(moi: string, id: string, montant: number, raison: string) {
+  const r = await db.rpc('louidors_ajuster', { p_joueur: moi, p_delta: -montant, p_table: id, p_raison: raison });
+  if (r.error) throw r.error;
+}
+async function rembourser(moi: string, id: string, montant: number) {
+  if (montant > 0) await db.rpc('louidors_ajuster', { p_joueur: moi, p_delta: montant, p_table: id, p_raison: 'remboursement' });
 }
 
-async function jouer(moi: string, id: string, coup: 'tirer' | 'rester' | 'doubler') {
-  if (!['tirer', 'rester', 'doubler'].includes(coup)) throw new Refus('Coup inconnu.');
-  let supplement = 0;
-  if (coup === 'doubler') {
-    const t = ok(await db.from('bj_tables').select('etat').eq('id', id).maybeSingle()) as { etat: EtatBJ } | null;
-    const s = t?.etat.tour !== null && t?.etat.tour !== undefined ? t.etat.sieges[t.etat.tour] : null;
-    if (!s || s.joueur !== moi || !s.main) throw new Refus('Ce n’est pas ton tour.');
-    supplement = s.main.mise;
-    await db.rpc('louidors_ajuster', { p_joueur: moi, p_delta: -supplement, p_table: id, p_raison: 'double' }).then((r) => { if (r.error) throw r.error; });
-  }
+async function miserLouidors(moi: string, id: string, mise: number, paires: number, vingtEtUn: number) {
+  if (![mise, paires, vingtEtUn].every((x) => Number.isInteger(x) && x >= 0) || mise <= 0) throw new Refus('Mise invalide.');
+  const t = ok(await db.from('bj_tables').select('type').eq('id', id).maybeSingle()) as { type: string } | null;
+  if (!t) throw new Refus('Cette table n’existe plus.');
+  const total = mise + paires + vingtEtUn;
+  await debiter(moi, id, total, 'mise');
+  try {
+    return await modifier(id, (e, s) => { miser(e, moi, mise, { paires, vingtEtUn }, s, Date.now(), t.type === 'solo'); });
+  } catch (e) { await rembourser(moi, id, total); throw e; }
+}
+
+async function lireEtat(id: string) {
+  const t = ok(await db.from('bj_tables').select('etat').eq('id', id).maybeSingle()) as { etat: EtatBJ } | null;
+  if (!t) throw new Refus('Cette table n’existe plus.');
+  return t.etat;
+}
+
+async function jouer(moi: string, id: string, coup: CoupBJ) {
+  if (!['tirer', 'rester', 'doubler', 'separer'].includes(coup)) throw new Refus('Coup inconnu.');
+  const cout = coutDuCoup(await lireEtat(id), moi, coup);
+  if (cout > 0) await debiter(moi, id, cout, coup);
   try {
     return await modifier(id, (e, s) => { agir(e, moi, coup, s, Date.now()); });
-  } catch (e) {
-    if (supplement) await db.rpc('louidors_ajuster', { p_joueur: moi, p_delta: supplement, p_table: id, p_raison: 'remboursement' });
-    throw e;
-  }
+  } catch (e) { await rembourser(moi, id, cout); throw e; }
+}
+
+async function assurance(moi: string, id: string, prendre: boolean) {
+  const etat = await lireEtat(id);
+  const siege = etat.sieges.find((x) => x?.joueur === moi);
+  const prix = prendre && siege ? Math.max(1, Math.floor(siege.mise / 2)) : 0;
+  if (prix > 0) await debiter(moi, id, prix, 'assurance');
+  try {
+    return await modifier(id, (e, s) => { assurer(e, moi, prendre, s, Date.now()); });
+  } catch (e) { await rembourser(moi, id, prix); throw e; }
 }

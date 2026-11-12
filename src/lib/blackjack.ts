@@ -18,6 +18,15 @@ export async function appelBJ<T = unknown>(action: string, params: Record<string
   return data as T;
 }
 
+/** Remet d'aplomb un état écrit par une ancienne version (sièges sans mains, sans paris annexes…). */
+function normaliser(e: EtatBJ): EtatBJ {
+  return {
+    ...e,
+    croupier: e.croupier ?? { cartes: [], cachee: false },
+    sieges: (e.sieges ?? []).map((s) => (s ? { ...s, mains: Array.isArray(s.mains) ? s.mains : [], annexes: s.annexes ?? { paires: 0, vingtEtUn: 0 }, assurance: s.assurance ?? null, active: s.active ?? 0, resultatsAnnexes: s.resultatsAnnexes ?? [] } : null)),
+  };
+}
+
 /** L'état public d'une table, mis à jour en direct. */
 export function useTableBJ(id: string | null): EtatBJ | null {
   const [etat, setEtat] = useState<EtatBJ | null>(null);
@@ -25,11 +34,11 @@ export function useTableBJ(id: string | null): EtatBJ | null {
     if (!id) return;
     let actif = true;
     const charger = () => supabase.from('bj_tables').select('etat').eq('id', id).maybeSingle()
-      .then(({ data }) => { if (actif && data) setEtat(data.etat as EtatBJ); });
+      .then(({ data }) => { if (actif && data) setEtat(normaliser(data.etat as EtatBJ)); });
     charger();
     const canal = supabase.channel(`bj-${id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bj_tables', filter: `id=eq.${id}` },
-        (msg) => setEtat((msg.new as { etat: EtatBJ }).etat))
+        (msg) => setEtat(normaliser((msg.new as { etat: EtatBJ }).etat)))
       .subscribe();
     const t = setInterval(charger, 10000); // filet de sécurité si une notification se perd
     return () => { actif = false; clearInterval(t); supabase.removeChannel(canal); };
