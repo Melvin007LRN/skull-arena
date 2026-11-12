@@ -514,3 +514,35 @@ html { min-height: var(--hauteur-ecran, 100%); }
 body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bottom: auto !important; }
 .ecran-accueil .cr-niveau { width: 74px !important; height: 77px !important; margin: -10px -6px -12px -8px; font-size: 24px !important; padding-top: 2px; }
 .ecran-accueil .cr-niveau.n3 { font-size: 18px !important; }
+
+/* =================== Personnalisations visibles en partie =================== */
+/* Tapis : l'image s'affiche telle quelle (plus de mélange qui la noircissait), juste un voile sur les bords */
+.jeu-table.tapis-fond { background-blend-mode: normal !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.jeu-table.tapis-fond .jeu-table-boussole { background: radial-gradient(ellipse at 50% 45%, transparent 0, transparent 45%, rgba(0,0,0,.5) 100%) !important; }
+/* Dos de cartes des adversaires : toujours visibles, même sur petit écran */
+@container jeu (max-height: 360px) { .adv-dos { display: block !important; transform: scale(.78); transform-origin: 0 100%; } }
+.jeu-arene.nombreux .adv-dos { display: block !important; transform: scale(.72); transform-origin: 0 100%; }
+.adv-dos img.dos-image, .adv-dos .dos-perso { width: 30px !important; aspect-ratio: 5 / 7; object-fit: cover; border: 1px solid rgba(255,215,120,.6); }
+.carte-volante { aspect-ratio: 5 / 7; object-fit: cover; }
+.adversaire .adv-dos { z-index: 3 !important; left: 74% !important; top: 30% !important; }
+.adv-dos img.dos-image { width: 32px !important; box-shadow: 0 3px 6px rgba(0,0,0,.7); }
+
+/* =================== Cadres peints autour de l'avatar =================== */
+.avatar.cadre-peint { overflow: visible !important; }
+.avatar.cadre-peint .avatar-cadre { position: absolute !important; left: 50% !important; top: 50% !important; width: 205% !important; height: 205% !important; max-width: none !important;
+  transform: translate(-50%, -50%) !important; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)) !important; animation: none !important; z-index: 2; pointer-events: none; object-fit: contain; }
+.avatar.cadre-peint .avatar-photo { inset: 4% !important; width: 92% !important; height: 92% !important; border-radius: 50%; }
+.avatar.cadre-peint::before, .avatar.cadre-peint::after { display: none !important; }
+.grille-cadres li .avatar.cadre-peint { margin: 22px auto; }
+
+/* =================== Profil : logos peints sur les stats =================== */
+.stat { position: relative; }
+.stat .stat-icone { display: block; margin: 0 auto 4px; width: 38px; height: 38px; }
+.hist-img { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.profil-onglets .icone-img { width: 30px; height: 30px; }
+.chiffre .chiffre-icone.icone-img { width: 34px; height: 34px; }
+.avatar.cadre-peint .avatar-cadre { width: 150% !important; height: 150% !important; }
+.avatar.cadre-peint .avatar-photo { inset: 15% !important; width: 70% !important; height: 70% !important; }
+.grille-cadres li .avatar.cadre-peint { margin: 12px auto; }
+.avatar.cadre-peint .avatar-photo { position: absolute !important; left: 15% !important; top: 15% !important; margin: 0 !important; transform: none !important; object-fit: cover; }
+.grille-cadres li .avatar.cadre-peint { margin: 22px auto 16px; }

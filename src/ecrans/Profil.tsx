@@ -105,7 +105,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
         <Chiffre icone="trophee" valeur={profil.victoires} libelle="Victoires" />
         <Chiffre icone="epees" valeur={profil.parties_jouees} libelle="Parties" />
         <Chiffre icone="cible" valeur={tauxVictoire === null ? '—' : `${tauxVictoire} %`} libelle="Taux de victoire" />
-        <Chiffre icone="feu" valeur={profil.meilleur_score ?? '—'} libelle="Record" />
+        <Chiffre icone="record" valeur={profil.meilleur_score ?? '—'} libelle="Record" />
       </div>
 
       {erreur && <p className="message erreur">{erreur}</p>}
@@ -201,7 +201,7 @@ function Historique({ lignes }: { lignes: LigneHistorique[] | null }) {
     <ul className="historique">
       {lignes.map((h) => (
         <li key={h.partie_id} className={h.victoire ? 'victoire' : h.abandon ? 'abandon' : ''}>
-          <span className="hist-rang">{h.victoire ? '👑' : h.abandon ? '🏳' : `${h.rang}e`}</span>
+          <span className="hist-rang">{h.victoire ? <img className="hist-img" src="/img/victoire_couronnes.webp" alt="Victoire" /> : h.abandon ? <img className="hist-img" src="/img/objet_drapeau_blanc.webp" alt="Abandon" /> : h.rang <= 3 ? <img className="hist-img" src={`/img/podium_${['or', 'argent', 'bronze'][h.rang - 1]}.webp`} alt={`${h.rang}e`} /> : `${h.rang}e`}</span>
           <span className="hist-texte">
             <strong>{h.victoire ? 'Victoire' : h.abandon ? 'Abandon' : `${h.rang}e sur ${h.nb_joueurs}`}</strong>
             <small>{new Date(h.joue_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} · {h.nb_joueurs} pirates · {h.mises_reussies}/10 mises</small>
@@ -239,19 +239,19 @@ function Statistiques({ profil, historique, precision }: { profil: Profil; histo
             <span className="ligne-zero" style={{ bottom: `${(100 * -min) / (max - min)}%` }} />
           </div>
         )}
-        <p className="petit-texte centre">Tes {recentes.length} dernières parties · 👑 en or = victoire</p>
+        <p className="petit-texte centre">Tes {recentes.length} dernières parties · en or = victoire</p>
       </section>
       <section className="parchemin neon profil-bloc">
         <h2 className="titre-pirate">En détail</h2>
         <div className="stats">
-          <Stat libelle="Points moyens (PM)" valeur={pm ?? '—'} />
-          <Stat libelle="Meilleur score" valeur={profil.meilleur_score ?? '—'} />
-          <Stat libelle="Mises réussies" valeur={precision === null ? '—' : `${precision} %`} />
-          <Stat libelle="Podiums récents" valeur={historique ? `${podiums}/${historique.length}` : '—'} />
-          <Stat libelle="Régicides" valeur={profil.regicides ?? 0} />
-          <Stat libelle="Mises de 0 en manche 10" valeur={profil.fantomes ?? 0} />
-          <Stat libelle="Points au total" valeur={profil.points_total ?? 0} />
-          <Stat libelle="XP au total" valeur={profil.xp} />
+          <Stat icone="stats" libelle="Points moyens (PM)" valeur={pm ?? '—'} />
+          <Stat icone="record" libelle="Meilleur score" valeur={profil.meilleur_score ?? '—'} />
+          <Stat icone="cible" libelle="Mises réussies" valeur={precision === null ? '—' : `${precision} %`} />
+          <Stat icone="podium" libelle="Podiums récents" valeur={historique ? `${podiums}/${historique.length}` : '—'} />
+          <Stat icone="regicide" libelle="Régicides" valeur={profil.regicides ?? 0} />
+          <Stat icone="fantome" libelle="Mises de 0 en manche 10" valeur={profil.fantomes ?? 0} />
+          <Stat icone="points" libelle="Points au total" valeur={profil.points_total ?? 0} />
+          <Stat icone="xp" libelle="XP au total" valeur={profil.xp} />
         </div>
         {precision !== null && (
           <div className="jauge">
@@ -268,9 +268,10 @@ function Statistiques({ profil, historique, precision }: { profil: Profil; histo
   );
 }
 
-function Stat({ libelle, valeur }: { libelle: string; valeur: number | string }) {
+function Stat({ icone, libelle, valeur }: { icone?: string; libelle: string; valeur: number | string }) {
   return (
     <div className="stat">
+      {icone && <Icone nom={icone} taille={30} className="stat-icone" />}
       <span className="stat-valeur">{valeur}</span>
       <span className="stat-libelle">{libelle}</span>
     </div>

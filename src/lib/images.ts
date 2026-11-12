@@ -33,7 +33,8 @@ export const IMAGE_ICONE: Record<string, string> = {
   tas: I('louidor_tas'),
   defi: I('defi_jour'),
   'son-on': I('jeu_son_on'), 'son-off': I('jeu_son_off'),
-  tete: I('nav_avis'), avis: I('nav_avis'),
+  avis: I('nav_avis'), tete: I('nav_profil'), cadre: I('cadre_gouvernail'), bouclier: I('rang_capitaine'), sablier: I('defi_jour'),
+  record: I('stat_record'), regicide: I('stat_regicide'), podium: I('podium_or'), fantome: I('badge_fantome'), points: I('louidor_tas'),
 };
 
 /** Objets lançables en partie. */
@@ -61,8 +62,8 @@ export const IMAGE_ARTICLE: Record<string, string> = {
   ...Object.fromEntries(['pieces', 'eclair', 'flammes', 'fumee', 'cranes', 'etoiles', 'kraken', 'couronne'].map((t) => [`pli_${t}`, I(`pli_${t}`)])),
   entree_canon: I('entree_canon'),
   // En attendant leurs propres images : on reprend les plus proches
-  entree_brouillard: I('fx_fumee'), entree_orage: I('pli_eclair'), entree_tresor: I('objet_pluie_tresor'), entree_kraken: I('pli_kraken'), entree_roi: I('pli_couronne'),
-  victoire_roses: I('objet_rose'), victoire_artifice: I('objet_feu_artifice'), victoire_couronnes: I('pli_couronne'), victoire_fantome: I('badge_fantome'), victoire_kraken: I('objet_kraken_poche'),
+  entree_brouillard: I('fx_fumee'), entree_orage: I('pli_eclair'), entree_tresor: I('objet_pluie_tresor'), entree_kraken: I('pli_kraken'), entree_roi: I('stat_regicide'),
+  victoire_roses: I('objet_rose'), victoire_artifice: I('victoire_artifice'), victoire_couronnes: I('victoire_couronnes'), victoire_fantome: I('badge_fantome'), victoire_kraken: I('objet_kraken_poche'),
 };
 
 /** Badges. */
@@ -95,3 +96,9 @@ export const BJ = {
   jeton: I('bj_jeton'), sabot: I('bj_sabot'), siegeVide: I('bj_siege_vide'), blackjack: I('bj_blackjack'), saute: I('bj_bust'), vip: I('bj_vip'),
   banniere: I('banniere_mode_bj'), roue: I('cadre_gouvernail'),
 };
+
+/** Cadres d'avatar peints (achetés ou gagnés). */
+export const CADRE_PEINT: Record<string, string> = Object.fromEntries(
+  ['c_chope', 'c_canard', 'c_dauphin', 'c_cocotier', 'c_pavillon', 'c_tonneau', 'c_goeland', 'c_singe', 'c_requin', 'c_tentacules', 'c_gouvernail', 'c_brasier',
+    'g_crane', 'g_canons', 'g_tresor', 'g_fantome', 'g_vaudou', 'g_tempete', 'g_kraken', 'g_vaisseau', 'g_lauriers', 'g_poseidon', 'g_ombres', 'g_ailes'].map((id) => [id, I(`cadre_${id}`)]),
+);

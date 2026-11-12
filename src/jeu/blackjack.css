@@ -207,3 +207,37 @@
 .bj2-banniere-bj { width: min(70vw, calc(120 * var(--gh)), 520px); height: auto; filter: drop-shadow(0 0 18px #ffcc33) drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
 .bj2-tampon-croupier.img { width: calc(40 * var(--gh)); max-width: 180px; height: auto; padding: 0; background: none; box-shadow: none; top: -60px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }
 .bj2-vip { width: 16px; height: 16px; object-fit: contain; margin: -3px 3px -3px -3px; vertical-align: middle; }
+
+/* ===== Mises façon Stake : on choisit un jeton, on touche son siège ===== */
+.bj2-jeton { --teinte: none !important; filter: drop-shadow(0 3px 2px rgba(0,0,0,.6)) !important; background: center / contain no-repeat !important; position: relative;
+  width: 40px !important; height: 40px !important; display: grid !important; place-items: center !important; padding: 0 !important; transition: transform .12s; }
+.bj2-jeton.j10 { background-image: url('/img/jeton_10.webp') !important; }
+.bj2-jeton.j50 { background-image: url('/img/jeton_50.webp') !important; }
+.bj2-jeton.j100 { background-image: url('/img/jeton_100.webp') !important; }
+.bj2-jeton.j500 { background-image: url('/img/jeton_500.webp') !important; }
+.bj2-jeton.j1000 { background-image: url('/img/jeton_1000.webp') !important; }
+.bj2-jeton.j5000 { background-image: url('/img/jeton_5000.webp') !important; }
+.bj2-jeton span { font-size: 10px; font-weight: 900; color: #fff; padding: 0 3px; border-radius: 6px; background: rgba(0,0,0,.65); line-height: 1.3; margin-top: 18px; }
+.bj2-jeton.choisi { transform: translateY(-5px) scale(1.12); filter: drop-shadow(0 0 6px #ffd979) drop-shadow(0 0 12px #ffb23a) !important; }
+.bj2-jeton.bloque { opacity: .45 !important; filter: grayscale(.8) !important; }
+.bj2-jeton:disabled { opacity: .45; }
+.bj2-cadenas { position: absolute; width: 18px; height: 18px; top: -4px; right: -4px; object-fit: contain; }
+.bj2-max { display: flex; flex-direction: column; align-items: center; line-height: 1.1; padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(255,201,77,.6); background: rgba(0,0,0,.45); box-shadow: 0 0 8px rgba(255,201,77,.35); }
+.bj2-max small { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: #ffffffa0; }
+.bj2-max b { font-size: 14px; color: #ffe39a; font-variant-numeric: tabular-nums; }
+.bj2-miser { white-space: nowrap; }
+/* Les cercles de mise devant chaque pirate */
+.bj2-cercles { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: calc(13.4 * var(--gh)); }
+.bj2-cercle { position: relative; display: grid; place-items: center; padding: 0; border-radius: 50%; cursor: pointer; color: #fff; background: rgba(0,0,0,.35);
+  border: 2px dashed rgba(255,215,120,.55); width: calc(9 * var(--gh)); height: calc(9 * var(--gh)); min-width: 30px; min-height: 30px; }
+.bj2-cercle.mise { width: calc(12.5 * var(--gh)); height: calc(12.5 * var(--gh)); min-width: 42px; min-height: 42px; border-style: solid; border-color: rgba(255,215,120,.75); }
+.bj2-cercle small { font-size: 9px; font-weight: 800; letter-spacing: .04em; color: #ffe39ab0; }
+.bj2-cercle.mise small { font-size: 11px; }
+.bj2-cercle img { position: absolute; inset: 6%; width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 3px 2px rgba(0,0,0,.6)); }
+.bj2-cercle b { position: relative; z-index: 1; font-size: 10px; font-weight: 900; padding: 0 4px; border-radius: 6px; background: rgba(0,0,0,.72); line-height: 1.35; font-variant-numeric: tabular-nums; }
+.bj2-cercle:disabled { cursor: default; opacity: 1; }
+.bj2-cercles.actifs .bj2-cercle { animation: bj2-cercle 1.4s ease-in-out infinite; }
+.bj2-cercles.actifs .bj2-cercle:active { transform: scale(.92); }
+@keyframes bj2-cercle { 50% { box-shadow: 0 0 10px #ffd979, inset 0 0 8px rgba(255,217,121,.4); } }
+.bj2-siege.moi .bj2-joueur[role="button"] { cursor: pointer; }
+@container jeu (max-width: 700px) { .bj2-jeton { width: 34px !important; height: 34px !important; } .bj2-jeton span { font-size: 9px; margin-top: 14px; } }

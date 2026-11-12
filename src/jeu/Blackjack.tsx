@@ -71,7 +71,7 @@ type Zone = 'mise' | 'paires' | 'vingtEtUn';
 export function TableBlackjack({ profil, table, quitter, recharger }: { profil: Profil; table: TableBJ; quitter: () => void; recharger: () => Promise<void> }) {
   const etat = useTableBJ(table.id);
   const [paris, setParis] = useState<Record<Zone, number>>({ mise: 0, paires: 0, vingtEtUn: 0 });
-  const [zone, setZone] = useState<Zone>('mise');
+  const [jeton, setJeton] = useState<number>(() => { try { return Number(localStorage.getItem('bj-jeton')) || 10; } catch { return 10; } });
   const [message, setMessage] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const [chatOuvert, setChatOuvert] = useState(false);
@@ -111,7 +111,7 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
         recharger();
       }, Math.max(0, (etat.revelationA ?? Date.now()) - Date.now()) + 200);
     }
-    if (p.phase === 'resultats' && etat.phase === 'mises') { setParis({ mise: 0, paires: 0, vingtEtUn: 0 }); setZone('mise'); recharger(); }
+    if (p.phase === 'resultats' && etat.phase === 'mises') { setParis({ mise: 0, paires: 0, vingtEtUn: 0 }); recharger(); }
   }, [etat, moiIndex, recharger]);
 
   // Filet de sécurité : si une minuterie a expiré sans que le serveur avance, on le relance.
@@ -147,15 +147,29 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
   const monTour = etat.phase === 'jeu' && etat.tour === moiIndex && !enDistribution;
   const maMain = moi?.mains[moi.active];
   const totalParis = paris.mise + paris.paires + paris.vingtEtUn;
-  const ajouter = (j: number) => {
-    son.piece();
+  const peutPoser = !!moi && etat.phase === 'mises' && moi.mise === 0 && !enCours;
+  /** Pose le jeton choisi sur une zone de mon siège (mise principale ou pari annexe). */
+  const poser = (z: Zone) => {
+    if (!peutPoser) return;
+    debloquerSon();
     setParis((p) => {
-      const n = { ...p, [zone]: p[zone] + j };
-      if (n.mise > max) n.mise = max;
-      if (zone !== 'mise' && n[zone] > Math.max(n.mise, 0)) n[zone] = n.mise;
+      const n = { ...p };
+      const reste = profil.louidors - (p.mise + p.paires + p.vingtEtUn);
+      let ajout = Math.min(jeton, reste);
+      if (z === 'mise') ajout = Math.min(ajout, max - p.mise);
+      else ajout = Math.min(ajout, Math.max(0, p.mise - p[z]));
+      if (ajout <= 0) { setMessage(z === 'mise' ? (p.mise >= max ? `Mise max à ton niveau : ${max.toLocaleString('fr-FR')}` : 'Pas assez de Louidors') : 'Pose d’abord ta mise : un pari annexe ne la dépasse pas'); return p; }
+      setMessage(null); son.piece();
+      n[z] = p[z] + ajout;
       return n;
     });
   };
+  const choisirJeton = (j: number) => { setJeton(j); try { localStorage.setItem('bj-jeton', String(j)); } catch { /* */ } };
+  const doublerParis = () => setParis((p) => {
+    const mise = Math.min(max, p.mise * 2);
+    const n = { mise, paires: Math.min(mise, p.paires * 2), vingtEtUn: Math.min(mise, p.vingtEtUn * 2) };
+    return n.mise + n.paires + n.vingtEtUn <= profil.louidors ? n : p;
+  });
   const restantMs = etat.echeance ? Math.max(0, etat.echeance - maintenant) : null;
   const totalMs = etat.phase === 'mises' ? 15000 : etat.phase === 'assurance' ? 10000 : 20000;
   const croupierTotal = valeurMain(etat.croupier.cartes).total;
@@ -202,7 +216,8 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
       {/* Sièges */}
       {etat.sieges.map((s, i) => (
         <Siege key={i} index={i} place={moiIndex >= 0 ? (i - moiIndex + 7) % 5 : i} siege={s} moi={i === moiIndex} actif={etat.phase === 'jeu' && etat.tour === i && !enDistribution}
-          resultat={etat.phase === 'resultats' && revele} etat={etat} maintenant={maintenant} L={L} H={H} />
+          resultat={etat.phase === 'resultats' && revele} etat={etat} maintenant={maintenant} L={L} H={H}
+          paris={i === moiIndex && moi && moi.mise === 0 ? paris : null} poser={i === moiIndex && peutPoser ? poser : undefined} />
       ))}
 
       {/* Grandes annonces */}
@@ -229,26 +244,28 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
             ? <p className="bj2-info">Mise posée : <strong>{moi.mise + moi.annexes.paires + moi.annexes.vingtEtUn}</strong> · on attend les autres pirates…</p>
             : (
               <div className="bj2-ligne">
-                <div className="bj2-zones" role="tablist" aria-label="Où poser les jetons">
-                  {([['mise', 'Mise'], ['paires', 'Paires'], ['vingtEtUn', '21+3']] as Array<[Zone, string]>).map(([z, nom]) => (
-                    <button key={z} type="button" role="tab" aria-selected={zone === z} className={zone === z ? 'actif' : ''} disabled={z !== 'mise' && paris.mise === 0} onClick={() => setZone(z)}
-                      title={z === 'mise' ? `Mise de ${MISE_MIN_BJ} à ${max} à ton niveau` : 'Pari annexe, jusqu’à ta mise'}>
-                      <small>{nom}</small><b>{paris[z]}</b>
-                    </button>
-                  ))}
+                <div className="bj2-max" title={`Niveau ${niveau}`}><small>Mise max</small><b>{max.toLocaleString('fr-FR')}</b></div>
+                <div className="bj2-jetons" role="radiogroup" aria-label="Jeton à poser">
+                  {JETONS.map((j) => {
+                    const bloque = j > max;
+                    return (
+                      <button key={j} type="button" role="radio" aria-checked={jeton === j} className={`bj2-jeton j${j} ${jeton === j ? 'choisi' : ''} ${bloque ? 'bloque' : ''}`}
+                        disabled={bloque} onClick={() => choisirJeton(j)} aria-label={`Jeton de ${j}${bloque ? ' (niveau insuffisant)' : ''}`}>
+                        <span>{j >= 1000 ? `${j / 1000}k` : j}</span>{bloque && <img className="bj2-cadenas" src="/img/etat_verrou.webp" alt="" />}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="bj2-jetons">
-                  {JETONS.filter((j) => j <= max).map((j) => (
-                    <button key={j} type="button" className={`bj2-jeton j${j}`} disabled={enCours || totalParis + j > profil.louidors || (zone === 'mise' && paris.mise >= max) || (zone !== 'mise' && paris[zone] >= paris.mise)}
-                      onClick={() => ajouter(j)} aria-label={`Jeton de ${j}`}>{j >= 1000 ? `${j / 1000}k` : j}</button>
-                  ))}
-                </div>
-                {totalParis === 0 && dernierPari && (
+                {totalParis === 0 && dernierPari ? (
                   <button type="button" className="bouton-sombre c-vert bj2-rejouer" disabled={enCours || dernierPari.mise > max || dernierPari.mise + dernierPari.paires + dernierPari.vingtEtUn > profil.louidors}
                     onClick={() => miser(dernierPari)} aria-label="Rejouer la même mise">↻ Rejouer<small>{dernierPari.mise + dernierPari.paires + dernierPari.vingtEtUn}</small></button>
+                ) : (
+                  <>
+                    <button type="button" className="bj2-effacer" disabled={totalParis === 0} onClick={doublerParis} aria-label="Doubler les jetons posés">×2</button>
+                    <button type="button" className="bj2-effacer" disabled={totalParis === 0} onClick={() => setParis({ mise: 0, paires: 0, vingtEtUn: 0 })} aria-label="Effacer les jetons">↺</button>
+                  </>
                 )}
-                <button type="button" className="bj2-effacer" disabled={totalParis === 0} onClick={() => { setParis({ mise: 0, paires: 0, vingtEtUn: 0 }); setZone('mise'); }} aria-label="Effacer les jetons">↺</button>
-                <button type="button" className="bouton-or bj2-miser" disabled={enCours || paris.mise < MISE_MIN_BJ} onClick={() => miser(paris)}>Miser{totalParis ? ` ${totalParis}` : ''}</button>
+                <button type="button" className="bouton-or bj2-miser" disabled={enCours || paris.mise < MISE_MIN_BJ} onClick={() => miser(paris)}>{totalParis ? `Miser ${totalParis.toLocaleString('fr-FR')}` : 'Touche ton siège'}</button>
               </div>
             ))
           : enDistribution ? <p className="bj2-info">Le croupier distribue…</p>
@@ -274,8 +291,9 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
   );
 }
 
-function Siege({ index, place, siege, moi, actif, resultat, etat, maintenant, L, H }: {
+function Siege({ index, place, siege, moi, actif, resultat, etat, maintenant, L, H, paris, poser }: {
   index: number; place: number; siege: SiegeBJ | null; moi: boolean; actif: boolean; resultat: boolean; etat: EtatBJ; maintenant: number; L: number; H: number;
+  paris?: Record<Zone, number> | null; poser?: (z: Zone) => void;
 }) {
   const p = SIEGES[place];
   if (!siege) return <div className="bj2-siege vide" style={{ left: `${p.x}%`, top: `${p.y}%` }}><span className="bj2-place">Libre</span></div>;
@@ -285,13 +303,27 @@ function Siege({ index, place, siege, moi, actif, resultat, etat, maintenant, L,
   const misesTotales = siege.mains.reduce((t, m) => t + m.mise, 0) || siege.mise;
   return (
     <div className={`bj2-siege ${moi ? 'moi' : ''} ${actif ? 'actif' : ''}`} style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+      {etat.phase === 'mises' ? (
+        <div className={`bj2-cercles ${poser ? 'actifs' : ''}`}>
+          {([['paires', 'P'], ['mise', 'Mise'], ['vingtEtUn', '21+3']] as Array<[Zone, string]>).map(([z, nom]) => {
+            const v = paris ? paris[z] : z === 'mise' ? siege.mise : siege.annexes[z];
+            return (
+              <button key={z} type="button" className={`bj2-cercle ${z}`} disabled={!poser} onClick={() => poser?.(z)}
+                aria-label={`${z === 'mise' ? 'Mise' : z === 'paires' ? 'Paires parfaites' : '21+3'} : ${v}`}>
+                {v > 0 ? <><img src={imageJeton(v)} alt="" /><b>{v >= 10000 ? `${Math.round(v / 1000)}k` : v.toLocaleString('fr-FR')}</b></> : <small>{nom}</small>}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
       <div className={`bj2-mains ${siege.mains.length > 1 ? 'deux' : ''}`}>
         {siege.mains.map((m, k) => (
           <Main key={k} main={m} active={actif && siege.active === k && siege.mains.length > 1} resultat={resultat}
             donne={!m.separee && etat.donneA && pos >= 0 ? { debut: etat.donneA, indices: [pos, n + 1 + pos] } : null} maintenant={maintenant} depart={depart} />
         ))}
       </div>
-      <div className="bj2-joueur">
+      )}
+      <div className="bj2-joueur" onClick={() => poser?.('mise')} role={poser ? 'button' : undefined}>
         <Avatar photo={siege.photo} taille={moi ? 38 : 32} cadre={siege.cadre} />
         <div className="bj2-infos">
           <span className="bj2-pseudo">{misesTotales >= 1000 && <img className="bj2-vip" src={BJ.vip} alt="VIP" />}{siege.pseudo}</span>
@@ -325,6 +357,12 @@ function Main({ main, active, resultat, donne, maintenant, depart }: {
       )}
     </div>
   );
+}
+
+/** Le plus gros jeton qui tient dans le montant (pour l'afficher sur la table). */
+function imageJeton(v: number) {
+  const j = [...JETONS].reverse().find((x) => x <= v) ?? 10;
+  return `/img/jeton_${j}.webp`;
 }
 
 /** Une carte : elle part du sabot et glisse jusqu'à sa place (ou se retourne pour la carte cachée). */

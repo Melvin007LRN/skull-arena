@@ -2,7 +2,7 @@
 // glisser vers l'arène, fenêtres parchemin, animations et phrases rapides.
 // Ce composant ne parle pas au serveur : il reçoit la partie et renvoie les intentions du joueur.
 import { Visuel } from '../composants/Visuel.tsx';
-import { FX, IMAGE_OBJET } from '../lib/images.ts';
+import { FX, IMAGE_ARTICLE, IMAGE_OBJET } from '../lib/images.ts';
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent as PE, type ReactNode, type RefObject } from 'react';
 import type { VueJeu, MembreSalon } from '../lib/jeu.ts';
 import type { VuePrivee } from '../engine/vues.ts';
@@ -176,7 +176,7 @@ export function TableJeu(p: PropsTable) {
   const nbDistribuees = vue.cartesParJoueur * vue.joueurs.length;
   const dureeDistribution = Math.min(6, 0.9 + vue.manche * 0.32 + vue.joueurs.length * 0.05); // en secondes
   const intervalleDistribution = Math.max(0.075, dureeDistribution / Math.max(nbDistribuees, 1));
-  const [volsDistribution, setVolsDistribution] = useState<Array<{ k: string; x0: number; y0: number; x1: number; y1: number; retard: number }>>([]);
+  const [volsDistribution, setVolsDistribution] = useState<Array<{ k: string; j?: string; x0: number; y0: number; x1: number; y1: number; retard: number }>>([]);
   const racine = useRef<HTMLDivElement>(null);
   const mancheVue = useRef(0);
   const pliVu = useRef(0);
@@ -392,7 +392,7 @@ export function TableJeu(p: PropsTable) {
         const el = centreDans(r, r.querySelector(`[data-joueur="${j}"]`));
         const x1 = j === moi ? base.width / 2 : el ? el.x : x0;
         const y1 = j === moi ? base.height - 40 : el ? el.y : y0;
-        for (let k = 0; k < nb; k++) vols.push({ k: `${distribution}-${j}-${k}`, x0, y0, x1, y1, retard: 50 + (k * vue.joueurs.length + i) * pas });
+        for (let k = 0; k < nb; k++) vols.push({ k: `${distribution}-${j}-${k}`, j, x0, y0, x1, y1, retard: 50 + (k * vue.joueurs.length + i) * pas });
       });
       setVolsDistribution(vols);
     });
@@ -1047,7 +1047,7 @@ export function TableJeu(p: PropsTable) {
       {volsDistribution.length > 0 && (
         <div className="vols" aria-hidden="true">
           {volsDistribution.map((v) => (
-            <img key={v.k} src="/decor/dos-carte.webp" alt="" className="carte-volante"
+            <img key={v.k} src={(v.j && IMAGE_ARTICLE[persoDe(v.j)?.dos ?? '']) || "/decor/dos-carte.webp"} alt="" className="carte-volante"
               style={{ left: v.x0, top: v.y0, animationDelay: `${v.retard}ms`, ['--dx' as string]: `${v.x1 - v.x0}px`, ['--dy' as string]: `${v.y1 - v.y0}px` }} />
           ))}
         </div>

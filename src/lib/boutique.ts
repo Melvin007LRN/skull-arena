@@ -40,6 +40,19 @@ export const CADRES_GAGNES: Array<{ id: string; nom: string; condition: string; 
   { id: 'regicide', nom: 'Cadre du Régicide', condition: 'Badge Régicide', obtenu: (p) => (p.regicides ?? 0) >= 25 },
   { id: 'fantome', nom: 'Cadre du Fantôme', condition: 'Badge Fantôme', obtenu: (p) => (p.fantomes ?? 0) >= 10 },
   { id: 'legende_mers', nom: 'Cadre Légende des mers', condition: 'Badge Légende des mers', obtenu: (p) => (p.badges ?? []).includes('legende') },
+  // Cadres peints
+  { id: 'g_crane', nom: 'Crâne au bandana', condition: 'Niveau 15', obtenu: (p) => niveau(p.xp) >= 15 },
+  { id: 'g_canons', nom: 'Canons du bord', condition: '50 parties jouées', obtenu: (p) => p.parties_jouees >= 50 },
+  { id: 'g_tresor', nom: 'Trésor englouti', condition: '50 victoires', obtenu: (p) => p.victoires >= 50 },
+  { id: 'g_fantome', nom: 'Spectre vert', condition: '5 fantômes réussis', obtenu: (p) => (p.fantomes ?? 0) >= 5 },
+  { id: 'g_vaudou', nom: 'Autel vaudou', condition: 'Niveau 40', obtenu: (p) => niveau(p.xp) >= 40 },
+  { id: 'g_tempete', nom: 'Tempête bleue', condition: '200 parties jouées', obtenu: (p) => p.parties_jouees >= 200 },
+  { id: 'g_kraken', nom: 'Roi Kraken', condition: '10 Skull Kings capturés', obtenu: (p) => (p.regicides ?? 0) >= 10 },
+  { id: 'g_vaisseau', nom: 'Vaisseau noir', condition: 'Niveau 75', obtenu: (p) => niveau(p.xp) >= 75 },
+  { id: 'g_lauriers', nom: 'Lauriers royaux', condition: '150 victoires', obtenu: (p) => p.victoires >= 150 },
+  { id: 'g_poseidon', nom: 'Poséidon', condition: 'Niveau 150', obtenu: (p) => niveau(p.xp) >= 150 },
+  { id: 'g_ombres', nom: 'Roi des ombres', condition: '300 victoires', obtenu: (p) => p.victoires >= 300 },
+  { id: 'g_ailes', nom: 'Ailes d’or', condition: 'Niveau 250', obtenu: (p) => niveau(p.xp) >= 250 },
 ];
 
 /** Gains de Louidors par place (la moitié de l'XP). */
