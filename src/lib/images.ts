@@ -54,6 +54,7 @@ export const FX = {
 /** Articles de personnalisation qui ont leur image (icône de boutique ou image pleine). */
 export const IMAGE_ARTICLE: Record<string, string> = {
   dos_parchemin: I('dos_parchemin'), dos_matelot: I('dos_matelot'), dos_kraken: I('dos_kraken'), dos_abysses: I('dos_abysses'),
+  dos_bois: I('dos_bois'), dos_rubis: I('dos_rubis'), dos_or: I('dos_or'), dos_spectral: I('dos_spectral'),
   ...Object.fromEntries(['velours', 'lagon', 'pont', 'carte', 'abysses', 'tresor', 'capitaine'].map((t) => [`tapis_${t}`, I(`tapis_${t}`)])),
   ...Object.fromEntries(['coucher', 'tempete', 'abysses', 'aurore', 'tresor', 'legende'].map((t) => [`banniere_${t}`, I(`banniere_${t}`)])),
   ...Object.fromEntries(['crabe', 'rat', 'perroquet', 'singe', 'chat', 'pieuvre', 'requin', 'dragon', 'corbeau'].map((t) => [`compagnon_${t}`, I(`compagnon_${t}`)])),

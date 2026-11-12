@@ -1,6 +1,7 @@
 /* Polices hébergées sur le site (préchargées dans index.html : pas de saut du texte au chargement) */
 @font-face { font-family: 'Cinzel Decorative'; src: url('/fonts/cinzel-decorative-700.woff') format('woff'); font-weight: 700 900; font-display: swap; }
 @font-face { font-family: 'Cinzel'; src: url('/fonts/cinzel.woff') format('woff'); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: 'Pirata One'; src: url('/fonts/pirata-one.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Inter'; src: url('/fonts/inter.woff') format('woff'); font-weight: 100 900; font-display: swap; }
 /* Skull Arena — or et noir pirate */
 :root {

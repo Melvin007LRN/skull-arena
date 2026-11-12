@@ -114,7 +114,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           ) : (
             <>
               <button type="button" className="plaque p-bleue" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={22} /> En solo</button>
-              <button type="button" className="plaque p-rouge" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={22} /> Avec compagnons</button>
+              <button type="button" className="plaque p-violet" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={22} /> Avec compagnons</button>
             </>
           )}
         </div>
