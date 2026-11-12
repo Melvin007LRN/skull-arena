@@ -1,6 +1,7 @@
 // Accueil façon jeu mobile : un seul écran, sans défilement.
 // En haut le joueur et sa bourse, au centre son pirate, en bas le choix du jeu et le gros bouton JOUER,
 // et une barre de navigation. Les compléments (défis, avis de recherche, alertes) s'ouvrent en fenêtre.
+import { BandeauNom } from '../composants/BandeauNom.tsx';
 import { BJ, IMAGE_GRADE } from '../lib/images.ts';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
@@ -10,7 +11,6 @@ import { InstallerAppli } from '../composants/InstallerAppli.tsx';
 import { ActiverNotifications } from '../composants/ActiverNotifications.tsx';
 import { FenetreNotifications } from '../composants/FenetreNotifications.tsx';
 import { Icone, Medaillon } from '../composants/Icone.tsx';
-import { Titre } from '../composants/Perso.tsx';
 import { useAmis, useEnLigne } from '../lib/amis.ts';
 import { totalNonLus, useNonLus } from '../lib/social.ts';
 import { actualitesVues, ouvrirActualites } from '../composants/Actualites.tsx';
@@ -78,8 +78,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
             <img className="cr-roue-img" src={BJ.roue} alt="" draggable={false} />
             <Avatar photo={profil.photo_url} taille={150} cadre={profil.cadre} compagnon={profil.perso?.compagnon ?? null} />
           </span>
-          <span className="cr-ruban"><span className="cr-nom">{profil.pseudo}</span></span>
-          <Titre perso={profil.perso} className="cr-titre" />
+          <BandeauNom pseudo={profil.pseudo} perso={profil.perso} repli={grade(n)} className="cr-bandeau" />
           <span className="cr-grade">{IMAGE_GRADE[grade(n)] && <img src={IMAGE_GRADE[grade(n)]} alt="" />}{grade(n)} · niveau {n}</span>
         </button>
         <div className="cr-rail droite">

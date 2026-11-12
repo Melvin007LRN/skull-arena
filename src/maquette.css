@@ -432,3 +432,42 @@ img.ico-texte { display: inline-block; width: 1.35em; height: 1.35em; object-fit
 .cr-modes button.actif.m-blackjack { background: linear-gradient(180deg, rgba(130,16,22,.92), rgba(56,6,10,.94)) !important; }
 .cr-affiche { height: 64px; }
 @media (max-height: 760px) { .ecran-accueil .bouton-or.cr-jouer { height: 60px; } .cr-secondaires .plaque, .cr-modes button { height: 42px; } }
+
+/* =================== Bandeau du nom façon logo =================== */
+.bn { position: relative; display: block; width: 100%; aspect-ratio: 1774 / 887; container-type: inline-size; pointer-events: none; }
+.bn > * { position: absolute; }
+.bn-ruban { top: 30.4%; height: 59.8%; width: auto; z-index: 1; filter: drop-shadow(0 .8cqw 1cqw rgba(0,0,0,.55)); }
+.bn-ruban.g { left: 0; }
+.bn-ruban.d { right: 0; }
+.bn-tissu { z-index: 2; left: 13%; right: 12.5%; top: 31.5%; height: 41%; border-radius: .6cqw;
+  background:
+    repeating-linear-gradient(100deg, rgba(0,0,0,.08) 0 .5cqw, transparent .5cqw 1.6cqw),
+    linear-gradient(180deg, #4a0707 0%, #a3161b 22%, #c21f24 45%, #8a1014 72%, #4a0606 100%);
+  border-top: .7cqw solid #e0a948; border-bottom: .7cqw solid #b07a26;
+  box-shadow: inset 0 1.2cqw 1.6cqw rgba(0,0,0,.45), inset 0 -1.2cqw 1.6cqw rgba(0,0,0,.45), 0 .8cqw 1.4cqw rgba(0,0,0,.5); }
+.bn-chapeau { z-index: 3; left: 18.6%; top: 0; width: 71.6%; height: auto; filter: drop-shadow(0 .8cqw 1cqw rgba(0,0,0,.6)); }
+.bn-nom { z-index: 4; left: 8%; right: 8%; top: 30%; height: 38%; display: flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1;
+  font-family: 'Cinzel Decorative', 'Cinzel', serif; font-weight: 900; letter-spacing: .02em;
+  background: linear-gradient(180deg, #fff7cf 0%, #ffd56a 28%, #e09a2a 52%, #a8601a 64%, #ffd77a 82%, #fff1b0 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: .35cqw #3a1702;
+  filter: drop-shadow(0 .5cqw 0 #2a0f02) drop-shadow(0 0 1.6cqw rgba(255,170,40,.65)); }
+.bn-plaque { z-index: 5; left: 21.5%; right: 20.5%; top: 63%; height: 19.5%; display: flex; align-items: center; justify-content: center; border-radius: 2cqw / 3cqw;
+  background: radial-gradient(ellipse at 50% 40%, #12305a 0%, #0a1a36 60%, #050d1e 100%);
+  border: .7cqw solid #d9a441; box-shadow: inset 0 0 2.4cqw rgba(60,190,255,.45), 0 .6cqw 1.2cqw rgba(0,0,0,.6), 0 0 2cqw rgba(60,190,255,.35); }
+.bn-plaque span { font-family: 'Great Vibes', cursive; line-height: 1; white-space: nowrap; color: #d8f7ff; padding-top: .4cqw;
+  text-shadow: 0 0 .6cqw #7fe3ff, 0 0 1.6cqw #27b4ff, 0 0 3cqw #1a8cff, 0 0 5cqw rgba(26,140,255,.7); }
+.bn-ancre { z-index: 6; left: 43.2%; top: 83%; width: 13.5%; height: auto; filter: drop-shadow(0 .6cqw .8cqw rgba(0,0,0,.6)); }
+/* Sur l'accueil : sous le gouvernail, à la place de l'ancienne planche */
+.cr-pirate .cr-bandeau { width: min(calc(100cqw - 8px), calc(var(--r) * 1.55), 340px); margin-top: calc(var(--r) * -.16); z-index: 5; }
+.cr-pirate .cr-ruban, .cr-pirate > .cr-titre { display: none !important; }
+.cr-pirate { --r: min(calc(100cqh - 150px), calc(100cqw - 150px), 250px) !important; }
+
+/* =================== Plein écran sur iPhone =================== */
+/* L'accueil remplit tout l'écran, quelle que soit la hauteur annoncée par iOS */
+.ecran-accueil.cr { position: fixed !important; inset: 0 !important; height: auto !important; }
+/* Si iOS laisse une bande sous la page, elle prend la couleur de la barre du bas */
+html:has(.ecran-accueil.cr), body:has(.ecran-accueil.cr) { background: #0e0904 !important; }
+.ecran-accueil.cr .cr-nav::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 120px; background: #0e0904; }
+.ecran-accueil.cr .cr-nav { background: linear-gradient(180deg, rgba(36,24,12,.98), #0e0904 70%) !important; }
+.cr-pirate .cr-bandeau { width: min(calc(100cqw - 136px), calc(var(--r) * 1.4), 320px) !important; margin-top: calc(var(--r) * -.12) !important; }
+.cr-pirate { --r: min(calc(100cqh - 140px), calc(100cqw - 150px), 250px) !important; }
