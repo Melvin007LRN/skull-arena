@@ -458,10 +458,11 @@ body:has(.ecran) { background: #07090d; }
 .ecran .bouton-or.cr-jouer { white-space: nowrap; font-size: clamp(20px, 6.6vw, 28px) !important; letter-spacing: .1em !important; flex-wrap: nowrap; }
 .boutique-nuit .rayon-perso > h2 { display: none; }
 
-/* Accueil : fond immobile, et le bas ne passe jamais sous la barre de navigation */
-.cr-halo, .cr-fond .braises { animation: none !important; }
-.cr-fond .braises { display: none; }
-.cr-pirate .avatar, .cr-pirate > :nth-child(2) { animation: none !important; }
+/* Accueil : la page est figée (aucun défilement ni rebond), les effets du fond restent ;
+   et le bas ne passe jamais sous la barre de navigation */
+html:has(.ecran-accueil.cr), body:has(.ecran-accueil.cr) { overflow: hidden; overscroll-behavior: none; height: 100%; }
+body:has(.ecran-accueil.cr) { position: fixed; inset: 0; width: 100%; }
+.ecran-accueil.cr { touch-action: manipulation; overscroll-behavior: none; }
 .ecran-accueil.cr { padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important; }
 .ecran-accueil.cr > .cr-scene { min-height: 0 !important; }
 .cr-pirate .avatar { width: clamp(84px, calc(100dvh - 560px), 210px) !important; height: clamp(84px, calc(100dvh - 560px), 210px) !important; }
