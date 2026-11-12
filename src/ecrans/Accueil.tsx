@@ -53,7 +53,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
 
       <header className="cr-haut">
         <button type="button" className="cr-joueur" onClick={ouvrirProfil}>
-          <span className="cr-niveau">{n}</span>
+          <span className={`cr-niveau ${n >= 100 ? 'n3' : ''}`}>{n}</span>
           <span className="cr-joueur-texte">
             <strong>{profil.pseudo}</strong>
             <span className="cr-xp"><i style={{ width: `${Math.round(prog * 100)}%` }} /></span>

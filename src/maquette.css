@@ -471,3 +471,46 @@ html:has(.ecran-accueil.cr), body:has(.ecran-accueil.cr) { background: #0e0904 !
 .ecran-accueil.cr .cr-nav { background: linear-gradient(180deg, rgba(36,24,12,.98), #0e0904 70%) !important; }
 .cr-pirate .cr-bandeau { width: min(calc(100cqw - 136px), calc(var(--r) * 1.4), 320px) !important; margin-top: calc(var(--r) * -.12) !important; }
 .cr-pirate { --r: min(calc(100cqh - 140px), calc(100cqw - 150px), 250px) !important; }
+
+/* =================== BORDS NÉON selon la couleur de chaque bouton (toute l'appli) =================== */
+.neon-bord, .ecran .bouton-sombre, .ecran .bouton-or, .ecran-accueil .bouton-or.cr-jouer, .cr-secondaires .plaque, .cr-modes button,
+.cr-affiche, .cr-bouton-rail-icone, .cr-or, .cr-rond, .b-rayons button, .b-puces button.actif {
+  border-style: solid !important; border-width: 1.5px !important; border-color: var(--n) !important;
+  box-shadow: 0 0 6px var(--n), 0 0 16px color-mix(in srgb, var(--n) 55%, transparent), inset 0 0 10px color-mix(in srgb, var(--n) 30%, transparent), 0 4px 10px rgba(0,0,0,.5) !important; }
+.ecran .bouton-sombre { --n: color-mix(in srgb, var(--bc, #3f7be0) 72%, #fff); }
+.ecran .bouton-or { --n: #ffc94d; }
+.ecran-accueil .bouton-or.cr-jouer { --n: #ffc44d; border-width: 2px !important; }
+.ecran-accueil .bouton-or.cr-jouer.cr-jouer-bj { --n: #ff4757; }
+.cr-secondaires .plaque.p-bleue { --n: #4fb6ff; }
+.cr-secondaires .plaque.p-rouge { --n: #ff4757; }
+.cr-secondaires .plaque.p-violet { --n: #b86bff; }
+.cr-modes button { --n: rgba(201,154,61,.55); box-shadow: 0 3px 8px rgba(0,0,0,.5) !important; }
+.cr-modes button.actif { --n: #ffc44d; box-shadow: 0 0 6px var(--n), 0 0 16px color-mix(in srgb, var(--n) 55%, transparent), inset 0 0 10px color-mix(in srgb, var(--n) 30%, transparent) !important; }
+.cr-modes button.actif.m-blackjack { --n: #ff4757; }
+.cr-affiche { --n: #ffc44d; } .cr-affiche.blackjack { --n: #ff4757; }
+.cr-bouton-rail-icone { --n: color-mix(in srgb, var(--rc, #c99a3d) 75%, #fff); }
+.cr-bouton-rail.r-defis { --rc: #ff9a2e; } .cr-bouton-rail.r-avis { --rc: #ff4757; } .cr-bouton-rail.r-actus { --rc: #4fb6ff; } .cr-bouton-rail.r-alertes { --rc: #b86bff; }
+.cr-or, .cr-rond { --n: #ffc44d; }
+.b-rayons button { --n: color-mix(in srgb, var(--rc, #c99a3d) 80%, #fff); }
+.b-puces button.actif { --n: #ffc44d; }
+.ecran .bouton-sombre:disabled, .ecran .bouton-or:disabled { box-shadow: none !important; border-color: rgba(255,255,255,.2) !important; }
+@media (prefers-reduced-motion: no-preference) {
+  .ecran-accueil .bouton-or.cr-jouer { animation: neon-pulse 2.4s ease-in-out infinite !important; }
+}
+@keyframes neon-pulse { 50% { box-shadow: 0 0 10px var(--n), 0 0 26px color-mix(in srgb, var(--n) 70%, transparent), inset 0 0 14px color-mix(in srgb, var(--n) 40%, transparent), 0 4px 10px rgba(0,0,0,.5); } }
+
+/* =================== Badge de niveau peint =================== */
+.ecran-accueil .cr-niveau { width: 62px !important; height: 64px !important; margin: -6px -4px -8px -6px; clip-path: none !important; border: 0 !important; border-radius: 0 !important;
+  background: url('/img/niveau_badge.webp') center / contain no-repeat !important; box-shadow: none !important; filter: drop-shadow(0 3px 5px rgba(0,0,0,.6)) !important;
+  padding: 3px 0 0 0; font-family: 'Cinzel Decorative', var(--gravure) !important; font-weight: 900 !important; font-size: 20px !important; line-height: 1;
+  color: #2a1203 !important; -webkit-text-stroke: .6px #ffd979; text-shadow: 0 1px 0 rgba(255,235,160,.7), 0 0 4px rgba(255,200,80,.6) !important; }
+.ecran-accueil .cr-niveau.n3 { font-size: 15px !important; }
+.ecran-accueil .cr-niveau::before, .ecran-accueil .cr-niveau::after { display: none !important; }
+
+/* =================== Hauteur réelle de l'écran (iPhone, appli sur l'écran d'accueil) =================== */
+html { min-height: var(--hauteur-ecran, 100%); }
+.ecran-accueil.cr { top: 0 !important; bottom: auto !important; height: var(--hauteur-ecran, 100dvh) !important; }
+.ecran-accueil.cr .cr-nav { bottom: auto !important; top: var(--hauteur-ecran, 100dvh) !important; transform: translate(-50%, -100%) !important; }
+body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bottom: auto !important; }
+.ecran-accueil .cr-niveau { width: 74px !important; height: 77px !important; margin: -10px -6px -12px -8px; font-size: 24px !important; padding-top: 2px; }
+.ecran-accueil .cr-niveau.n3 { font-size: 18px !important; }
