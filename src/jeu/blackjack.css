@@ -13,32 +13,35 @@
 .bj2-attente { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: #ffd979; font-family: var(--gravure); }
 
 /* Le croupier, mis en avant derrière la table */
-.bj2-croupier { position: absolute; left: 36%; top: calc(1 * var(--gh)); height: calc(50 * var(--gh)); max-width: 46%; object-fit: contain; transform: translateX(-50%);
+.bj2-croupier { position: absolute; left: 50%; top: max(0px, var(--sa-h, 0px)); height: calc(37 * var(--gh)); max-width: 40%; object-fit: contain; object-position: center bottom; transform: translateX(-50%);
   filter: drop-shadow(0 10px 24px rgba(0,0,0,.7)) drop-shadow(0 0 30px rgba(255,40,60,.25)); pointer-events: none; z-index: 1; }
 
 /* La table : même verre fumé et même néon rouge que les parties classiques, en demi-ovale */
-.bj2-tapis { position: absolute; left: -6%; right: 22%; top: 46%; bottom: -46%; z-index: 2; border-radius: 50%;
+.bj2-tapis { position: absolute; left: -3%; right: -3%; top: 29%; bottom: -62%; z-index: 2; border-radius: 50%;
   background: radial-gradient(ellipse at 50% 30%, rgba(0,0,0,.22) 0%, rgba(0,0,0,.42) 55%, rgba(0,0,0,.7) 100%);
   -webkit-backdrop-filter: grayscale(1) brightness(.62) contrast(1.15); backdrop-filter: grayscale(1) brightness(.62) contrast(1.15);
   border: 2px solid #ff2a4a; box-shadow: 0 0 6px #ff2a4a, 0 0 22px #ff2a4a88, inset 0 0 26px #ff2a4a44, 0 -10px 30px #000a; }
-.bj2-tapis::after { content: ''; position: absolute; inset: 7%; border-radius: 50%; border: 1px solid #ff2a4a44; }
-.bj2-inscription { position: absolute; left: 36%; top: 54%; transform: translateX(-50%); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; white-space: nowrap; }
-.bj2-inscription span { font-family: var(--gravure); font-weight: 700; font-size: clamp(9px, calc(3 * var(--gh)), 14px); letter-spacing: .22em; text-transform: uppercase; color: #ffd97966; }
+.bj2-tapis::after { content: ''; position: absolute; inset: 4% 6%; border-radius: 50%; border: 1px solid #ff2a4a44; }
+.bj2-inscription { position: absolute; left: 50%; top: 48.5%; transform: translateX(-50%); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; white-space: nowrap; }
+.bj2-inscription span { font-family: var(--gravure); font-weight: 700; font-size: clamp(8px, calc(2.4 * var(--gh)), 12px); letter-spacing: .22em; text-transform: uppercase; color: #ffd97955; }
 .bj2-inscription small { font-size: clamp(7px, calc(2.2 * var(--gh)), 10px); letter-spacing: .18em; text-transform: uppercase; color: #ffffff40; }
 .bj2-sabot { position: absolute; z-index: 3; width: calc(9 * var(--gh)); height: calc(12 * var(--gh)); transform: translate(-50%, -50%) rotate(-8deg); border-radius: 6px;
   background: linear-gradient(160deg, #6b4220, #2a160a); border: 2px solid #c99a3d; box-shadow: 0 4px 10px #000c, inset 0 0 0 3px #1a0e06; }
 .bj2-sabot::after { content: ''; position: absolute; inset: 18% 14% 28%; border-radius: 3px; background: #1a1008 url('/decor/dos-carte.webp') center / cover; box-shadow: 2px 2px 0 #000a; }
 
-/* Barre du haut */
-.bj2-rond { position: absolute; z-index: 20; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.25); background: rgba(0,0,0,.6); color: #fff; font-size: 22px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
-.bj2-quitter { left: calc(10px + var(--sa-g, 0px)); top: calc(10px + var(--sa-h, 0px)); }
-.bj2-titre { position: absolute; z-index: 20; left: calc(58px + var(--sa-g, 0px)); top: calc(20px + var(--sa-h, 0px)); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #ffffffb0; text-shadow: 0 1px 3px #000; }
-.bj2-solde { position: absolute; z-index: 20; right: calc(10px + var(--sa-d, 0px)); top: calc(10px + var(--sa-h, 0px)); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px; border-radius: 99px;
+/* Barre du haut : retour + nom de la table à gauche, chat + solde à droite */
+.bj2-haut { position: absolute; z-index: 20; top: max(8px, calc(4px + var(--sa-h, 0px))); display: flex; align-items: center; gap: 8px; }
+.bj2-haut.gauche { left: max(8px, calc(4px + var(--sa-g, 0px))); }
+.bj2-haut.droite { right: max(8px, calc(4px + var(--sa-d, 0px))); }
+.bj2-rond { width: 38px; height: 38px; flex: none; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.25); background: rgba(0,0,0,.6); color: #fff; font-size: 20px; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.bj2-titre { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #ffffffa0; text-shadow: 0 1px 3px #000; white-space: nowrap; }
+.bj2-solde { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px 0 9px; border-radius: 99px;
   background: rgba(0,0,0,.65); border: 1px solid rgba(255,204,51,.45); color: #ffe39a; font-weight: 800; font-variant-numeric: tabular-nums; }
 .bj2 .piece-or { width: 16px; height: 16px; flex: none; }
+@container jeu (max-width: 720px) { .bj2-titre { display: none; } }
 
 /* Cartes */
-.bj2-carte { position: relative; display: inline-block; flex: none; width: calc(11 * var(--gh)); height: calc(15.5 * var(--gh)); min-width: 30px; min-height: 42px; max-width: 58px; max-height: 82px;
+.bj2-carte { position: relative; display: inline-block; flex: none; width: calc(9.6 * var(--gh)); height: calc(13.4 * var(--gh)); min-width: 30px; min-height: 42px; max-width: 54px; max-height: 76px;
   border-radius: 6px; background: linear-gradient(160deg, #151a29, #05070c); border: 1.5px solid var(--c); box-shadow: 0 0 6px var(--c), 0 4px 8px #000c;
   color: #fff; font-size: clamp(11px, calc(4.2 * var(--gh)), 19px); }
 .bj2-carte.rouge { --c: #ff2a4a; }
@@ -54,35 +57,36 @@
 
 /* Main du croupier */
 .bj2-main-croupier { position: absolute; z-index: 5; transform: translate(-50%, -50%); display: flex; align-items: center; }
-.bj2-main-croupier .bj2-carte { margin-left: calc(-4 * var(--gh)); }
+.bj2-main-croupier .bj2-carte { margin-left: calc(-3 * var(--gh)); }
 .bj2-main-croupier .bj2-carte:first-child { margin-left: 0; }
-.bj2-main-croupier > .bj2-total { margin-left: 8px; }
+.bj2-main-croupier > .bj2-total { position: absolute; left: calc(100% + 6px); top: 50%; transform: translateY(-50%); }
 .bj2-total { min-width: 26px; padding: 2px 7px; border-radius: 99px; background: rgba(0,0,0,.8); border: 1px solid rgba(255,255,255,.3); font-weight: 900; font-size: 12px; text-align: center; color: #fff; font-variant-numeric: tabular-nums; }
 .bj2-total.saute { background: #7a0d14; border-color: #ff2a4a; }
 .bj2-tampon-croupier { position: absolute; left: 50%; top: -34px; transform: translateX(-50%); white-space: nowrap; z-index: 6; padding: 4px 12px; border-radius: 8px;
   font-weight: 900; font-size: 15px; letter-spacing: .06em; color: #fff; background: #b3121f; box-shadow: 0 0 18px #ff2a4a; animation: bj2-tampon .5s cubic-bezier(.2,1.6,.4,1) both, bj2-secoue .5s linear .45s; }
 
-/* Sièges */
-.bj2-siege { position: absolute; z-index: 6; transform: translate(-50%, -62%); display: flex; flex-direction: column; align-items: center; gap: 3px; width: calc(15 * var(--gw)); max-width: 150px; }
-.bj2-siege.vide .bj2-place { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: #ffffff60; border: 1.5px dashed #ffffff40; background: rgba(0,0,0,.25); }
-.bj2-mains { display: flex; gap: 10px; align-items: flex-end; min-height: calc(15.5 * var(--gh)); }
+/* Sièges : les cartes posées sur la table, le pirate juste en dessous */
+.bj2-siege { position: absolute; z-index: 6; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; width: calc(17 * var(--gw)); max-width: 150px; }
+.bj2-siege.vide { gap: 0; }
+.bj2-siege.vide .bj2-place { margin-top: calc(4 * var(--gh)); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; color: #ffffff55; border: 1.5px dashed #ffffff35; background: rgba(0,0,0,.25); }
+.bj2-mains { display: flex; gap: 8px; align-items: flex-end; justify-content: center; min-height: calc(13.4 * var(--gh)); }
 .bj2-main { position: relative; display: flex; flex-direction: column; align-items: center; }
 .bj2-main.active { filter: drop-shadow(0 0 8px #ffd979); }
-.bj2-main.active::after { content: '▲'; position: absolute; bottom: -12px; font-size: 9px; color: #ffd979; }
 .bj2-cartes { display: flex; }
 .bj2-cartes .bj2-carte { margin-left: calc(-6 * var(--gh)); }
 .bj2-cartes .bj2-carte:first-child { margin-left: 0; }
-.bj2-mains.deux .bj2-carte { width: calc(8.5 * var(--gh)); height: calc(12 * var(--gh)); }
-.bj2-main > .bj2-total { position: absolute; right: -14px; top: -8px; font-size: 11px; padding: 1px 6px; }
-.bj2-joueur { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.bj2-pseudo { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 99px; background: rgba(0,0,0,.75); color: #fff; }
+.bj2-mains.deux .bj2-carte { width: calc(7.5 * var(--gh)); height: calc(10.5 * var(--gh)); min-width: 26px; min-height: 36px; }
+.bj2-main > .bj2-total { position: absolute; right: -12px; top: -8px; font-size: 11px; padding: 1px 6px; }
+.bj2-joueur { display: flex; align-items: center; gap: 5px; max-width: 100%; }
+.bj2-infos { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
+.bj2-pseudo { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.75); color: #fff; }
 .bj2-siege.moi .bj2-pseudo { background: linear-gradient(180deg, #ffe48a, #e3b04b); color: #1a1006; }
 .bj2-siege.actif .bj2-joueur .avatar { box-shadow: 0 0 0 3px #ffd979, 0 0 18px #ffd979; border-radius: 50%; animation: bj2-pulse 1s ease-in-out infinite alternate; }
 @keyframes bj2-pulse { to { box-shadow: 0 0 0 3px #ffd979, 0 0 32px #ffd979; } }
-.bj2-mise { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 900; color: #ffe39a; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.75); border: 1px solid #e3b04b88; font-variant-numeric: tabular-nums; }
-.bj2-mise .piece-or { width: 12px !important; height: 12px !important; }
-.bj2-annexes { display: flex; gap: 3px; }
-.bj2-annexes i { font-style: normal; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; background: rgba(111,59,214,.75); color: #fff; }
+.bj2-sous { display: flex; align-items: center; gap: 3px; }
+.bj2-sous i { font-style: normal; font-size: 9px; font-weight: 800; padding: 1px 4px; border-radius: 4px; background: rgba(111,59,214,.8); color: #fff; }
+.bj2-mise { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 900; color: #ffe39a; padding: 0 6px; border-radius: 99px; background: rgba(0,0,0,.75); border: 1px solid #e3b04b88; font-variant-numeric: tabular-nums; }
+.bj2-mise .piece-or { width: 11px !important; height: 11px !important; }
 .bj2-etiquette, .bj2-resultat { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 3; font-weight: 900; font-size: 10px; letter-spacing: .06em; padding: 2px 7px; border-radius: 5px;
   animation: bj2-tampon .45s cubic-bezier(.2,1.6,.4,1) both; }
 .bj2-etiquette.saute { background: #b3121f; box-shadow: 0 0 12px #ff2a4a; color: #fff; }
@@ -96,7 +100,7 @@
 @keyframes bj2-secoue { 0%, 100% { margin-left: 0; } 20%, 60% { margin-left: -6px; } 40%, 80% { margin-left: 6px; } }
 
 /* Grandes annonces de victoire */
-.bj2-annonce { position: absolute; z-index: 30; left: 36%; top: 58%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; animation: bj2-annonce 3.2s ease both; }
+.bj2-annonce { position: absolute; z-index: 30; left: 50%; top: 48%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; animation: bj2-annonce 3.2s ease both; }
 .bj2-annonce strong { font-family: 'Cinzel Decorative', var(--gravure); font-weight: 900; font-size: clamp(30px, calc(13 * var(--gh)), 64px); line-height: 1; letter-spacing: .04em; }
 .bj2-annonce em { font-style: normal; font-weight: 900; font-size: clamp(18px, calc(7 * var(--gh)), 32px); font-variant-numeric: tabular-nums; }
 .bj2-annonce.gagne strong, .bj2-annonce.gagne em { color: #9dffbf; text-shadow: 0 0 10px #2dff7a, 0 0 26px #2dff7a, 0 3px 0 #000; }
@@ -115,60 +119,64 @@
   background: radial-gradient(circle at 35% 30%, #fff6c4, #f3c443 40%, #a8730f 100%); box-shadow: inset 0 0 0 2px #7a5208; opacity: 0;
   animation-name: bj2-piece; animation-timing-function: cubic-bezier(.4,0,.8,.6); animation-fill-mode: both; }
 @keyframes bj2-piece { 0% { opacity: 0; transform: translateY(-20px) rotateY(0); } 10% { opacity: 1; } 100% { opacity: 0; transform: translateY(calc(70 * var(--gh))) rotateY(720deg); } }
-.bj2-annexe-gagnee { position: absolute; z-index: 25; left: calc(58px + var(--sa-g, 0px)); top: calc(46px + var(--sa-h, 0px)); white-space: nowrap; padding: 5px 14px; border-radius: 99px; font-size: 13px; font-weight: 800; color: #fff;
+.bj2-annexe-gagnee { position: absolute; z-index: 25; left: max(8px, calc(4px + var(--sa-g, 0px))); top: calc(54px + var(--sa-h, 0px)); white-space: nowrap; padding: 5px 14px; border-radius: 99px; font-size: 13px; font-weight: 800; color: #fff;
   background: linear-gradient(180deg, #8a4fd6, #5d2ea0); box-shadow: 0 0 18px #b866ff; animation: bj2-toast 4s ease both; pointer-events: none; }
 .bj2-annexe-gagnee b { color: #ffe58a; }
 
-/* Commandes en bas */
-.bj2-commandes { position: absolute; z-index: 15; right: calc(8px + var(--sa-d, 0px)); bottom: calc(8px + var(--sa-b, 0px)); width: min(28%, 240px); max-height: calc(100% - 66px); overflow: auto; display: flex; flex-direction: column; gap: 6px;
-  padding: 8px 10px; border-radius: 16px; background: rgba(8,10,14,.82); border: 1px solid rgba(255,255,255,.12); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.bj2-minuterie { height: 3px; border-radius: 2px; background: rgba(255,255,255,.12); overflow: hidden; }
+/* Commandes : une seule barre, centrée en bas, comme sous la main dans les parties classiques */
+.bj2-barre { position: absolute; z-index: 15; left: 50%; transform: translateX(-50%); bottom: max(6px, calc(2px + var(--sa-b, 0px)));
+  max-width: calc(100% - 2 * max(12px, var(--sa-g, 0px), var(--sa-d, 0px)) - 8px); display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 8px; border-radius: 18px; background: rgba(8,10,14,.8); border: 1px solid rgba(255,255,255,.12); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 6px 20px #000a; }
+.bj2-minuterie { align-self: stretch; height: 3px; border-radius: 2px; background: rgba(255,255,255,.12); overflow: hidden; }
 .bj2-minuterie i { display: block; height: 100%; background: linear-gradient(90deg, #ff2a4a, #ffd979); transition: width .2s linear; }
-.bj2-info { margin: 0; text-align: center; font-size: 12px; color: #ffffffd0; }
-.bj2-info.petit { font-size: 10px; color: #ffffff80; }
+.bj2-ligne { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: nowrap; }
+.bj2-info { margin: 0; padding: 4px 8px; text-align: center; font-size: 12px; color: #ffffffd0; white-space: nowrap; }
+.bj2-info small { color: #ffffff80; }
 .bj2-info strong { color: #ffe39a; }
-.bj2-erreur { margin: 0; text-align: center; font-size: 12px; color: #ffb4ad; }
-.bj2-mises { display: flex; flex-direction: column; gap: 6px; }
-.bj2-zones { display: grid; grid-template-columns: 1fr; gap: 4px; }
-.bj2-zones button { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 10px; border-radius: 10px; cursor: pointer; color: #fff;
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15); font-variant-numeric: tabular-nums; }
-.bj2-zones button small { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: #ffffffb0; white-space: nowrap; }
-.bj2-zones button b { font-size: 14px; color: #ffe39a; }
+.bj2-erreur { position: absolute; z-index: 16; left: 50%; transform: translateX(-50%); bottom: calc(66px + var(--sa-b, 0px)); margin: 0; padding: 4px 12px; border-radius: 99px; background: rgba(90,12,18,.9); font-size: 12px; color: #ffd6da; white-space: nowrap; }
+.bj2-zones { display: flex; gap: 2px; padding: 2px; border-radius: 12px; background: rgba(255,255,255,.06); }
+.bj2-zones button { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 50px; height: 38px; padding: 0 6px; border-radius: 10px; cursor: pointer; color: #fff;
+  background: transparent; border: 1px solid transparent; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.bj2-zones button small { font-size: 9px; font-weight: 700; letter-spacing: .04em; color: #ffffffa0; white-space: nowrap; }
+.bj2-zones button b { font-size: 13px; color: #ffe39a; }
 .bj2-zones button.actif { border-color: #ffd979; background: rgba(255,217,121,.14); box-shadow: 0 0 10px #ffd97955; }
-.bj2-zones button:disabled { opacity: .4; }
-.bj2-jetons { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
-.bj2-jeton { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 0; cursor: pointer; font-weight: 900; font-size: 11px; color: #fff; text-shadow: 0 1px 2px #000;
+.bj2-zones button:disabled { opacity: .35; }
+.bj2-jetons { display: flex; align-items: center; gap: 5px; }
+.bj2-jeton { width: 38px; height: 38px; flex: none; border-radius: 50%; border: 0; cursor: pointer; font-weight: 900; font-size: 11px; color: #fff; text-shadow: 0 1px 2px #000; padding: 0;
   background: radial-gradient(circle, var(--j) 50%, #fff 51% 59%, var(--j) 60%); box-shadow: inset 0 0 0 3px #0005, 0 3px 0 #0009; transition: transform .1s; }
 .bj2-jeton:active { transform: translateY(2px) scale(.95); }
 .bj2-jeton:disabled { opacity: .3; }
 .bj2-jeton.j10 { --j: #8a8f99; } .bj2-jeton.j50 { --j: #c8202e; } .bj2-jeton.j100 { --j: #1f8a3a; }
 .bj2-jeton.j500 { --j: #1d1d24; } .bj2-jeton.j1000 { --j: #7330d6; } .bj2-jeton.j5000 { --j: #c99a2e; }
-.bj2 .bouton-or, .bj2 .bouton-sombre { width: auto; min-height: 40px; padding: 6px 14px; font-size: 13px; border-radius: 12px; }
+.bj2-effacer { width: 38px; height: 38px; flex: none; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #fff; font-size: 18px; cursor: pointer; padding: 0; }
+.bj2-effacer:disabled { opacity: .3; }
+.bj2 .bouton-or, .bj2 .bouton-sombre { width: auto; min-height: 40px; padding: 4px 16px; font-size: 14px; border-radius: 12px; white-space: nowrap; }
 .bj2 .bouton-sombre { color: #fff !important; font-family: var(--corps) !important; font-weight: 800; letter-spacing: .04em;
   background: linear-gradient(180deg, color-mix(in srgb, var(--bc, #3f7be0) 88%, #fff), var(--bc, #3f7be0) 45%, var(--bc2, #24519f)) !important; border: 1px solid color-mix(in srgb, var(--bc2, #24519f) 70%, #000) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 3px 0 color-mix(in srgb, var(--bc2, #24519f) 70%, #000) !important; text-shadow: 0 1px 2px rgba(0,0,0,.4) !important; }
 .bj2 .bouton-sombre.c-bleu { --bc: #3f7be0; --bc2: #24519f; }
 .bj2 .bouton-sombre.c-vert { --bc: #2f9e55; --bc2: #1d6b38; }
 .bj2 .bouton-sombre.c-violet { --bc: #8a4fd6; --bc2: #5d2ea0; }
-.bj2 .bouton-sombre.bj2-petit { --bc: #6b7280; --bc2: #3f4450; }
-.bj2-miser { min-width: 96px; }
-.bj2-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.bj2-actions .bouton-or, .bj2-actions .bouton-sombre { min-height: 46px; }
-.bj2-actions .bouton-or:first-of-type { grid-column: 1 / -1; min-height: 52px; font-size: 16px; }
-.bj2-actions .bj2-info, .bj2-actions .bj2-quelle-main { grid-column: 1 / -1; text-align: center; }
-.bj2-actions .bj2-info { flex-basis: 100%; }
-.bj2-quelle-main { font-size: 11px; font-weight: 800; color: #ffd979; }
+.bj2 .bouton-sombre.c-gris { --bc: #6b7280; --bc2: #3f4450; }
+.bj2-miser { min-width: 92px; }
+.bj2-tirer { min-width: 110px; min-height: 46px !important; font-size: 17px !important; }
+.bj2-quelle-main { font-size: 11px; font-weight: 800; color: #ffd979; white-space: nowrap; }
+@container jeu (max-width: 700px) {
+  .bj2-zones button { min-width: 44px; padding: 0 4px; }
+  .bj2-jeton, .bj2-effacer { width: 34px; height: 34px; font-size: 10px; }
+  .bj2 .bouton-or, .bj2 .bouton-sombre { padding: 4px 12px; font-size: 13px; }
+  .bj2-tirer { min-width: 92px; }
+}
 
 /* Chat transparent sur le côté gauche */
-.bj2-chat { position: absolute; z-index: 18; left: calc(10px + var(--sa-g, 0px)); top: 15%; width: min(26%, 240px); display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+.bj2-chat { position: absolute; z-index: 18; left: max(8px, calc(4px + var(--sa-g, 0px))); top: calc(54px + var(--sa-h, 0px)); width: min(24%, 220px); display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
 .bj2-chat p { margin: 0; padding: 4px 9px; border-radius: 10px; font-size: 12px; line-height: 1.3; color: #fff; background: rgba(0,0,0,.42); text-shadow: 0 1px 2px #000;
   animation: bj2-message 4s linear both; word-break: break-word; }
 .bj2-chat p b { color: #ffd979; margin-right: 3px; }
 .bj2-chat p.moi b { color: #9dffbf; }
 .bj2-chat p.erreur { color: #ffb4ad; }
 @keyframes bj2-message { 0% { opacity: 0; transform: translateX(-12px); } 6% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; } }
-.bj2-bouton-chat { left: calc(10px + var(--sa-g, 0px)); bottom: calc(10px + var(--sa-b, 0px)); font-size: 18px; }
-.bj2-chat-saisie { position: absolute; z-index: 22; left: calc(10px + var(--sa-g, 0px)); bottom: calc(10px + var(--sa-b, 0px)); width: min(42%, 340px); display: flex; gap: 4px;
+.bj2-chat-saisie { position: absolute; z-index: 22; left: 50%; transform: translateX(-50%); top: calc(52px + var(--sa-h, 0px)); width: min(60%, 380px); display: flex; gap: 4px;
   padding: 4px; border-radius: 99px; background: rgba(0,0,0,.75); border: 1px solid rgba(255,255,255,.2); }
 .bj2-chat-saisie input { flex: 1; min-width: 0; padding: 7px 10px; border: 0; border-radius: 99px; background: rgba(255,255,255,.08); color: #fff; font-size: 14px; outline: none; }
 .bj2-chat-saisie button { width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; background: #e3b04b; color: #1a1006; font-weight: 900; cursor: pointer; }

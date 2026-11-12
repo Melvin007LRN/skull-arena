@@ -17,10 +17,10 @@ import './jeu.css';
 import './blackjack.css';
 
 const SYMBOLES: Record<string, string> = { pique: '♠', coeur: '♥', carreau: '♦', trefle: '♣' };
-/** Position des sièges et du sabot sur la table (en % de l'écran paysage). */
-const SIEGES = [{ x: 8, y: 60 }, { x: 21, y: 74 }, { x: 36, y: 80 }, { x: 51, y: 74 }, { x: 64, y: 60 }];
-const SABOT = { x: 54, y: 40 };
-const CROUPIER = { x: 36, y: 43 };
+/** Places autour de la table (en % de l'écran paysage), en arc symétrique : on se voit toujours au milieu, face au croupier. */
+const SIEGES = [{ x: 13, y: 48 }, { x: 31, y: 52 }, { x: 50, y: 54 }, { x: 69, y: 52 }, { x: 87, y: 48 }];
+const SABOT = { x: 66, y: 38 };
+const CROUPIER = { x: 50, y: 40 };
 
 export function EcranBlackjack({ profil, mode, retour, recharger }: {
   profil: Profil; mode: 'public' | 'solo' | 'amis'; retour: () => void; recharger: () => Promise<void>;
@@ -70,6 +70,7 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
   const [zone, setZone] = useState<Zone>('mise');
   const [message, setMessage] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [chatOuvert, setChatOuvert] = useState(false);
   const maintenant = useHorloge();
   const taille = useTailleEcran();
   const precedent = useRef<EtatBJ | null>(null);
@@ -152,13 +153,18 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
       <div className="bj2-decor" />
       <img className="bj2-croupier" src="/decor/bj-croupier.webp" alt="Le croupier" draggable={false} />
       <div className="bj2-tapis" aria-hidden="true" />
-      <div className="bj2-inscription" aria-hidden="true"><span>Blackjack paie 3 pour 2</span><small>Le croupier reste sur 17 · Assurance paie 2 pour 1</small></div>
+      <div className="bj2-inscription" aria-hidden="true"><span>Blackjack paie 3 pour 2</span></div>
       <div className="bj2-sabot" style={{ left: `${SABOT.x}%`, top: `${SABOT.y}%` }} aria-hidden="true" />
 
       {/* Barre du haut */}
-      <button type="button" className="bj2-rond bj2-quitter" onClick={quitter} aria-label="Quitter la table">‹</button>
-      <span className="bj2-titre">{table.type === 'public' ? 'Table publique' : table.type === 'solo' ? 'Table solo' : `Table privée · ${table.code}`}</span>
-      <span className="bj2-solde"><span className="piece-or" aria-hidden="true" />{profil.louidors.toLocaleString('fr-FR')}</span>
+      <div className="bj2-haut gauche">
+        <button type="button" className="bj2-rond" onClick={quitter} aria-label="Quitter la table">‹</button>
+        <span className="bj2-titre">{table.type === 'public' ? 'Table publique' : table.type === 'solo' ? 'Table solo' : `Table privée · ${table.code}`}</span>
+      </div>
+      <div className="bj2-haut droite">
+        {moi && <button type="button" className="bj2-rond" onClick={() => setChatOuvert(true)} aria-label="Écrire à la table">💬</button>}
+        <span className="bj2-solde"><span className="piece-or" aria-hidden="true" />{profil.louidors.toLocaleString('fr-FR')}</span>
+      </div>
 
       {/* Croupier */}
       <div className="bj2-main-croupier" style={{ left: `${CROUPIER.x}%`, top: `${CROUPIER.y}%` }}>
@@ -179,7 +185,7 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
 
       {/* Sièges */}
       {etat.sieges.map((s, i) => (
-        <Siege key={i} index={i} siege={s} moi={i === moiIndex} actif={etat.phase === 'jeu' && etat.tour === i && !enDistribution}
+        <Siege key={i} index={i} place={moiIndex >= 0 ? (i - moiIndex + 7) % 5 : i} siege={s} moi={i === moiIndex} actif={etat.phase === 'jeu' && etat.tour === i && !enDistribution}
           resultat={etat.phase === 'resultats' && revele} etat={etat} maintenant={maintenant} L={L} H={H} />
       ))}
 
@@ -194,64 +200,64 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
         <div key={`${etat.manche}-${r.pari}`} className="bj2-annexe-gagnee">{r.pari === 'paires' ? 'Paires' : '21+3'} · {r.nom} · <b>+{(r.gain - r.mise).toLocaleString('fr-FR')}</b></div>
       ))}
 
-      <ChatBJ tableId={table.id} moi={profil.id} assis={!!moi} />
+      <ChatBJ tableId={table.id} moi={profil.id} ouvert={!!moi && chatOuvert} fermer={() => setChatOuvert(false)} />
 
-      {/* Commandes */}
-      <div className="bj2-commandes">
+      {/* Commandes : une seule barre centrée en bas */}
+      {message && <p className="bj2-erreur">{message}</p>}
+      <div className="bj2-barre">
         {restantMs !== null && etat.phase !== 'resultats' && !enDistribution && (
           <div className="bj2-minuterie"><i style={{ width: `${Math.min(100, (restantMs / totalMs) * 100)}%` }} /></div>
         )}
-        {etat.phase === 'mises' && moi && (moi.mise > 0
-          ? <p className="bj2-info">Mise posée : <strong>{moi.mise}</strong>{moi.annexes.paires + moi.annexes.vingtEtUn > 0 ? ` + ${moi.annexes.paires + moi.annexes.vingtEtUn} en paris annexes` : ''} · on attend les autres pirates…</p>
-          : (
-            <div className="bj2-mises">
-              <div className="bj2-zones">
-                {([['mise', 'Mise'], ['paires', 'Paires parfaites'], ['vingtEtUn', '21+3']] as Array<[Zone, string]>).map(([z, nom]) => (
-                  <button key={z} type="button" className={zone === z ? 'actif' : ''} disabled={z !== 'mise' && paris.mise === 0} onClick={() => setZone(z)}>
-                    <small>{nom}</small><b>{paris[z]}</b>
-                  </button>
-                ))}
+        {!moi ? <p className="bj2-info">Tu regardes la table · une place se libère ? Reviens t’asseoir.</p>
+          : etat.phase === 'mises' ? (moi.mise > 0
+            ? <p className="bj2-info">Mise posée : <strong>{moi.mise + moi.annexes.paires + moi.annexes.vingtEtUn}</strong> · on attend les autres pirates…</p>
+            : (
+              <div className="bj2-ligne">
+                <div className="bj2-zones" role="tablist" aria-label="Où poser les jetons">
+                  {([['mise', 'Mise'], ['paires', 'Paires'], ['vingtEtUn', '21+3']] as Array<[Zone, string]>).map(([z, nom]) => (
+                    <button key={z} type="button" role="tab" aria-selected={zone === z} className={zone === z ? 'actif' : ''} disabled={z !== 'mise' && paris.mise === 0} onClick={() => setZone(z)}
+                      title={z === 'mise' ? `Mise de ${MISE_MIN_BJ} à ${max} à ton niveau` : 'Pari annexe, jusqu’à ta mise'}>
+                      <small>{nom}</small><b>{paris[z]}</b>
+                    </button>
+                  ))}
+                </div>
+                <div className="bj2-jetons">
+                  {JETONS.filter((j) => j <= max).map((j) => (
+                    <button key={j} type="button" className={`bj2-jeton j${j}`} disabled={enCours || totalParis + j > profil.louidors || (zone === 'mise' && paris.mise >= max) || (zone !== 'mise' && paris[zone] >= paris.mise)}
+                      onClick={() => ajouter(j)} aria-label={`Jeton de ${j}`}>{j >= 1000 ? `${j / 1000}k` : j}</button>
+                  ))}
+                </div>
+                <button type="button" className="bj2-effacer" disabled={totalParis === 0} onClick={() => { setParis({ mise: 0, paires: 0, vingtEtUn: 0 }); setZone('mise'); }} aria-label="Effacer les jetons">↺</button>
+                <button type="button" className="bouton-or bj2-miser" disabled={enCours || paris.mise < MISE_MIN_BJ} onClick={() => envoyer('miser', { mise: paris.mise, paires: paris.paires, vingt_et_un: paris.vingtEtUn })}>Miser{totalParis ? ` ${totalParis}` : ''}</button>
               </div>
-              <div className="bj2-jetons">
-                {JETONS.filter((j) => j <= max).map((j) => (
-                  <button key={j} type="button" className={`bj2-jeton j${j}`} disabled={enCours || totalParis + j > profil.louidors || (zone === 'mise' && paris.mise >= max) || (zone !== 'mise' && paris[zone] >= paris.mise)}
-                    onClick={() => ajouter(j)}>{j >= 1000 ? `${j / 1000}k` : j}</button>
-                ))}
-                <button type="button" className="bouton-sombre bj2-petit" disabled={totalParis === 0} onClick={() => { setParis({ mise: 0, paires: 0, vingtEtUn: 0 }); setZone('mise'); }}>Effacer</button>
-                <button type="button" className="bouton-or bj2-miser" disabled={enCours || paris.mise < MISE_MIN_BJ} onClick={() => envoyer('miser', { mise: paris.mise, paires: paris.paires, vingt_et_un: paris.vingtEtUn })}>Miser {totalParis || ''}</button>
-              </div>
-              <p className="bj2-info petit">Mise de {MISE_MIN_BJ} à {max.toLocaleString('fr-FR')} à ton niveau · paris annexes jusqu’à ta mise</p>
+            ))
+          : enDistribution ? <p className="bj2-info">Le croupier distribue…</p>
+          : etat.phase === 'assurance' ? (moi.mains.length && moi.assurance === null ? (
+            <div className="bj2-ligne">
+              <p className="bj2-info">Assurance pour <strong>{Math.max(1, Math.floor(moi.mise / 2))}</strong> ? <small>(paie 2 pour 1)</small></p>
+              <button type="button" className="bouton-sombre c-gris" disabled={enCours} onClick={() => envoyer('assurer', { prendre: false })}>Non</button>
+              <button type="button" className="bouton-or" disabled={enCours || profil.louidors < Math.floor(moi.mise / 2)} onClick={() => envoyer('assurer', { prendre: true })}>Oui</button>
             </div>
-          ))}
-        {etat.phase === 'assurance' && !enDistribution && (moi?.mains.length && moi.assurance === null ? (
-          <div className="bj2-actions">
-            <p className="bj2-info">Le croupier montre un As. Assurance pour <strong>{Math.max(1, Math.floor(moi.mise / 2))}</strong> ? (paie 2 pour 1)</p>
-            <button type="button" className="bouton-sombre bj2-petit" disabled={enCours} onClick={() => envoyer('assurer', { prendre: false })}>Non</button>
-            <button type="button" className="bouton-or bj2-petit" disabled={enCours || profil.louidors < Math.floor(moi.mise / 2)} onClick={() => envoyer('assurer', { prendre: true })}>Oui</button>
-          </div>
-        ) : <p className="bj2-info">Assurance : on attend la décision des pirates…</p>)}
-        {etat.phase === 'jeu' && !enDistribution && (monTour && moi && maMain ? (
-          <div className="bj2-actions">
-            {moi.mains.length > 1 && <span className="bj2-quelle-main">Main {moi.active + 1}/2</span>}
-            <button type="button" className="bouton-or" disabled={enCours} onClick={() => envoyer('agir', { coup: 'tirer' })}>Tirer</button>
-            <button type="button" className="bouton-sombre c-bleu" disabled={enCours} onClick={() => envoyer('agir', { coup: 'rester' })}>Rester</button>
-            <button type="button" className="bouton-sombre c-vert" disabled={enCours || !peutDoubler(moi) || profil.louidors < maMain.mise} onClick={() => envoyer('agir', { coup: 'doubler' })}>Doubler</button>
-            {peutSeparer(moi) && <button type="button" className="bouton-sombre c-violet" disabled={enCours || profil.louidors < maMain.mise} onClick={() => envoyer('agir', { coup: 'separer' })}>Séparer</button>}
-          </div>
-        ) : <p className="bj2-info">{etat.tour !== null && etat.sieges[etat.tour] ? `${etat.sieges[etat.tour]!.pseudo} réfléchit…` : '…'}</p>)}
-        {enDistribution && etat.phase !== 'mises' && <p className="bj2-info">Le croupier distribue…</p>}
-        {etat.phase === 'resultats' && <p className="bj2-info">{revele ? 'Nouvelle donne dans un instant…' : 'Le croupier retourne ses cartes…'}</p>}
-        {!moi && <p className="bj2-info">Tu regardes la table. Une place se libère ? Reviens pour t’asseoir.</p>}
-        {message && <p className="bj2-erreur">{message}</p>}
+          ) : <p className="bj2-info">Assurance : on attend les pirates…</p>)
+          : etat.phase === 'jeu' ? (monTour && maMain ? (
+            <div className="bj2-ligne">
+              {moi.mains.length > 1 && <span className="bj2-quelle-main">Main {moi.active + 1}/2</span>}
+              <button type="button" className="bouton-sombre c-vert" disabled={enCours || !peutDoubler(moi) || profil.louidors < maMain.mise} onClick={() => envoyer('agir', { coup: 'doubler' })}>Doubler</button>
+              <button type="button" className="bouton-or bj2-tirer" disabled={enCours} onClick={() => envoyer('agir', { coup: 'tirer' })}>Tirer</button>
+              <button type="button" className="bouton-sombre c-bleu" disabled={enCours} onClick={() => envoyer('agir', { coup: 'rester' })}>Rester</button>
+              {peutSeparer(moi) && <button type="button" className="bouton-sombre c-violet" disabled={enCours || profil.louidors < maMain.mise} onClick={() => envoyer('agir', { coup: 'separer' })}>Séparer</button>}
+            </div>
+          ) : <p className="bj2-info">{etat.tour !== null && etat.sieges[etat.tour] ? `${etat.sieges[etat.tour]!.pseudo} réfléchit…` : '…'}</p>)
+          : <p className="bj2-info">{revele ? 'Nouvelle donne dans un instant…' : 'Le croupier retourne ses cartes…'}</p>}
       </div>
     </div>
   );
 }
 
-function Siege({ index, siege, moi, actif, resultat, etat, maintenant, L, H }: {
-  index: number; siege: SiegeBJ | null; moi: boolean; actif: boolean; resultat: boolean; etat: EtatBJ; maintenant: number; L: number; H: number;
+function Siege({ index, place, siege, moi, actif, resultat, etat, maintenant, L, H }: {
+  index: number; place: number; siege: SiegeBJ | null; moi: boolean; actif: boolean; resultat: boolean; etat: EtatBJ; maintenant: number; L: number; H: number;
 }) {
-  const p = SIEGES[index];
+  const p = SIEGES[place];
   if (!siege) return <div className="bj2-siege vide" style={{ left: `${p.x}%`, top: `${p.y}%` }}><span className="bj2-place">Libre</span></div>;
   const pos = etat.ordre?.indexOf(index) ?? -1;
   const n = etat.ordre?.length ?? 1;
@@ -266,11 +272,16 @@ function Siege({ index, siege, moi, actif, resultat, etat, maintenant, L, H }: {
         ))}
       </div>
       <div className="bj2-joueur">
-        <Avatar photo={siege.photo} taille={moi ? 44 : 38} cadre={siege.cadre} />
-        <span className="bj2-pseudo">{siege.pseudo}</span>
-        {misesTotales > 0 && <span className="bj2-mise"><span className="piece-or" aria-hidden="true" />{misesTotales}</span>}
-        {(siege.annexes.paires > 0 || siege.annexes.vingtEtUn > 0) && <span className="bj2-annexes">{siege.annexes.paires > 0 && <i title="Paires parfaites">P {siege.annexes.paires}</i>}{siege.annexes.vingtEtUn > 0 && <i title="21+3">21+3 {siege.annexes.vingtEtUn}</i>}</span>}
-        {(siege.assurance ?? 0) > 0 && <span className="bj2-annexes"><i>Assuré {siege.assurance}</i></span>}
+        <Avatar photo={siege.photo} taille={moi ? 38 : 32} cadre={siege.cadre} />
+        <div className="bj2-infos">
+          <span className="bj2-pseudo">{siege.pseudo}</span>
+          <span className="bj2-sous">
+            {misesTotales > 0 && <span className="bj2-mise"><span className="piece-or" aria-hidden="true" />{misesTotales}</span>}
+            {siege.annexes.paires > 0 && <i title="Paires parfaites">P{siege.annexes.paires}</i>}
+            {siege.annexes.vingtEtUn > 0 && <i title="21+3">21+3</i>}
+            {(siege.assurance ?? 0) > 0 && <i title="Assurance">A</i>}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -316,9 +327,8 @@ function Pieces() {
 }
 
 /** Chat de la table : transparent, sur le côté ; chaque message reste 4 secondes puis s'efface. */
-function ChatBJ({ tableId, moi, assis }: { tableId: string; moi: string; assis: boolean }) {
+function ChatBJ({ tableId, moi, ouvert, fermer }: { tableId: string; moi: string; ouvert: boolean; fermer: () => void }) {
   const [messages, setMessages] = useState<Array<{ id: number; de: string; pseudo: string; texte: string }>>([]);
-  const [ouvert, setOuvert] = useState(false);
   const [texte, setTexte] = useState('');
   const [erreur, setErreur] = useState<string | null>(null);
   const bloques = useBloques();
@@ -347,13 +357,13 @@ function ChatBJ({ tableId, moi, assis }: { tableId: string; moi: string; assis: 
         ))}
         {erreur && <p className="erreur">{erreur}</p>}
       </div>
-      {assis && (ouvert ? (
+      {ouvert && (
         <form className="bj2-chat-saisie" onSubmit={(e) => { e.preventDefault(); envoyer(); }}>
           <input autoFocus value={texte} onChange={(e) => setTexte(e.target.value)} maxLength={120} placeholder="Écris à la table…" enterKeyHint="send" autoComplete="off" />
           <button type="submit" disabled={!texte.trim()} aria-label="Envoyer">➤</button>
-          <button type="button" onClick={() => setOuvert(false)} aria-label="Fermer le chat">×</button>
+          <button type="button" onClick={fermer} aria-label="Fermer le chat">×</button>
         </form>
-      ) : <button type="button" className="bj2-rond bj2-bouton-chat" onClick={() => setOuvert(true)} aria-label="Écrire à la table">💬</button>)}
+      )}
     </>
   );
 }
