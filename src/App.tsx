@@ -18,6 +18,7 @@ import { EcranLegal, type PageLegale } from './ecrans/Legal.tsx';
 import { EcranAmis } from './ecrans/Amis.tsx';
 import { EcranBoutique } from './ecrans/Boutique.tsx';
 import { EcranBlackjack } from './jeu/Blackjack.tsx';
+import { EcranRoue } from './jeu/Roue.tsx';
 import { Actualites } from './composants/Actualites.tsx';
 import { AvisRecherche } from './composants/AvisRecherche.tsx';
 import { demarrerPresence, useInvitations } from './lib/amis.ts';
@@ -38,7 +39,8 @@ type Ecran =
   | { nom: 'legal'; page: PageLegale; retour: Ecran }
   | { nom: 'lobby'; mode: 'jouer' | 'code' | 'entrainement' }
   | { nom: 'salon'; id: string }
-  | { nom: 'blackjack'; mode: 'public' | 'solo' | 'amis' };
+  | { nom: 'blackjack'; mode: 'public' | 'solo' | 'amis' }
+  | { nom: 'roue' };
 
 const ACCUEIL: Ecran = { nom: 'accueil' };
 
@@ -170,6 +172,7 @@ export function App() {
   if (ecran.nom === 'classement') return <EcranClassement profil={profil} retour={versAccueil} />;
   if (ecran.nom === 'regles') return <EcranRegles retour={versAccueil} />;
   if (ecran.nom === 'boutique') return <EcranBoutique profil={profil} retour={versAccueil} recharger={recharger} />;
+  if (ecran.nom === 'roue') return <EcranRoue profil={profil} retour={versAccueil} recharger={recharger} />;
   if (ecran.nom === 'blackjack') return <EcranBlackjack key={ecran.mode} profil={profil} mode={ecran.mode} retour={versAccueil} recharger={recharger} />;
   if (ecran.nom === 'amis') return <EcranAmis moi={profil.id} retour={versAccueil} />;
   if (ecran.nom === 'admin') return <EcranAdmin profil={profil} retour={() => setEcran({ nom: 'reglages' })} />;
@@ -188,7 +191,7 @@ export function App() {
       ouvrirLobby={(mode) => setEcran({ nom: 'lobby', mode })} ouvrirClassement={() => setEcran({ nom: 'classement' })}
       ouvrirRegles={() => setEcran({ nom: 'regles' })} ouvrirReglages={() => setEcran({ nom: 'reglages' })}
       ouvrirLegal={(page) => setEcran({ nom: 'legal', page, retour: ACCUEIL })} ouvrirAmis={() => setEcran({ nom: 'amis' })}
-      ouvrirBoutique={() => setEcran({ nom: 'boutique' })} ouvrirBlackjack={(mode) => setEcran({ nom: 'blackjack', mode })} />
+      ouvrirBoutique={() => setEcran({ nom: 'boutique' })} ouvrirBlackjack={(mode) => setEcran({ nom: 'blackjack', mode })} ouvrirRoue={() => setEcran({ nom: 'roue' })} />
   );
   }
 }

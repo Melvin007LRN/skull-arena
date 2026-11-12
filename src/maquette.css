@@ -553,3 +553,16 @@ body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bot
 .ecran-accueil.cr { padding-bottom: calc(90px + max(0px, calc(env(safe-area-inset-bottom) - 26px))) !important; }
 /* La main reste entre l'avatar (à gauche) et les boutons cadeau / chat (à droite) */
 .main-eventail { left: 100px !important; right: 166px !important; width: auto !important; }
+
+/* Roue du Kraken sur l'accueil : 3e jeu, couleur turquoise des abysses */
+.cr-modes button { font-size: clamp(15px, 4.4vw, 19px); gap: 5px; }
+.cr-modes button.actif.m-roue { --n: #3fd6e8; background: linear-gradient(180deg, rgba(14,92,110,.92), rgba(4,36,46,.94)) !important; border-color: #3fd6e8 !important;
+  text-shadow: 0 1px 0 #02262e, 0 0 6px #7ff0ff, 0 0 14px #17c0d8, 0 0 22px rgba(23,192,216,.7) !important; }
+.ecran-accueil .bouton-or.cr-jouer.cr-jouer-roue { --n: #3fd6e8; background: linear-gradient(180deg, rgba(14,92,110,.92), rgba(4,36,46,.94)) !important;
+  color: #ecfdff !important; text-shadow: 0 2px 0 #02262e, 0 0 6px #7ff0ff, 0 0 14px #17c0d8, 0 0 26px rgba(23,192,216,.8) !important; }
+.cr-affiche.roue { --n: #3fd6e8; }
+.cr-affiche.roue img { filter: brightness(.9) saturate(1.2) hue-rotate(-10deg); object-position: 50% 40%; }
+.cr-secondaires > .plaque:only-child { grid-column: 1 / -1; }
+.cr-modes { grid-template-columns: repeat(3, 1fr) !important; }
+.cr-modes button { padding: 0 4px !important; white-space: nowrap; }
+.cr-modes .icone-img { width: 20px; height: 20px; }

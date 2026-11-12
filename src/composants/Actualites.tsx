@@ -1,7 +1,7 @@
 // Actualités : la fenêtre qui présente une grosse mise à jour, une seule fois par version (et rouvrable depuis l'accueil).
 import { useEffect, useState } from 'react';
 
-const VERSION = '2026-11-images';
+const VERSION = '2026-11-roue';
 const EVENEMENT = 'skull-actualites';
 
 /** La présentation de cette version a-t-elle déjà été vue ? */
@@ -11,6 +11,8 @@ export function actualitesVues(): boolean { try { return localStorage.getItem('s
 export function ouvrirActualites() { window.dispatchEvent(new Event(EVENEMENT)); }
 
 const PAGES: Array<{ icone: string; titre: string; texte: string; points: string[] }> = [
+  { icone: '/img/objet_kraken_poche.webp', titre: 'La Roue du Kraken', texte: 'Un nouveau jeu sur l’accueil : une grande roue partagée par tous les pirates. Pose tes Louidors et regarde-la tourner.',
+    points: ['Mise sur 1, 2, 5 ou 10, ou sur un mini-jeu', 'La Boussole multiplie une case avant chaque tour', '4 mini-jeux : Pièce maudite, Abysses, Chasse au trésor, Tempête du Kraken', 'Jusqu’à ×2500 ta mise'] },
   { icone: '/decor/logo.webp', titre: 'Le navire fait peau neuve', texte: 'Fini les emojis : toute l’appli est maintenant peinte à la main, dans le style des cartes.',
     points: ['Un nouvel accueil, décor du port au coucher du soleil', 'Des icônes peintes partout', 'Un décor différent pour chaque écran', 'Des écrans d’attente soignés'] },
   { icone: '/img/objet_bordee.webp', titre: 'Cadeaux et personnalisations', texte: 'Tous les cadeaux de la boutique ont leur vraie illustration, en vitrine comme en plein vol.',

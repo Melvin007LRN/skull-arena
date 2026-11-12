@@ -15,6 +15,7 @@ import { useAmis, useEnLigne } from '../lib/amis.ts';
 import { totalNonLus, useNonLus } from '../lib/social.ts';
 import { actualitesVues, ouvrirActualites } from '../composants/Actualites.tsx';
 import { avisVuAujourdhui, ouvrirAvis } from '../composants/AvisRecherche.tsx';
+import { ReglesRoue } from '../jeu/Roue.tsx';
 
 /** Icône de chaque défi du jour. */
 const ICONES_DEFIS: Record<string, string> = {
@@ -22,16 +23,17 @@ const ICONES_DEFIS: Record<string, string> = {
   quatorze_noir: 'pavillon', regicide: 'couronne', chasseur: 'tete', bonus_50: 'coffre', deux_cents: 'feu',
 };
 
-type Jeu = 'skull' | 'blackjack';
+type Jeu = 'skull' | 'blackjack' | 'roue';
 type Fenetre = 'defis' | 'alertes' | null;
 
-export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirAmis, ouvrirBoutique, ouvrirBlackjack }: {
+export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, ouvrirRegles, ouvrirReglages, ouvrirAmis, ouvrirBoutique, ouvrirBlackjack, ouvrirRoue }: {
   profil: Profil; ouvrirProfil: () => void; ouvrirLobby: (mode: 'jouer' | 'code' | 'entrainement') => void; ouvrirClassement: () => void;
   ouvrirRegles: () => void; ouvrirReglages: () => void; ouvrirAmis: () => void; ouvrirBoutique: () => void;
-  ouvrirLegal?: (p: 'mentions' | 'confidentialite' | 'cgu') => void; ouvrirBlackjack: (mode: 'public' | 'solo' | 'amis') => void;
+  ouvrirLegal?: (p: 'mentions' | 'confidentialite' | 'cgu') => void; ouvrirBlackjack: (mode: 'public' | 'solo' | 'amis') => void; ouvrirRoue: () => void;
 }) {
   const [defis, setDefis] = useState<Array<{ id: string; reussi: boolean }>>([]);
-  const [jeu, setJeu] = useState<Jeu>(() => { try { return localStorage.getItem('skull-jeu') === 'blackjack' ? 'blackjack' : 'skull'; } catch { return 'skull'; } });
+  const [jeu, setJeu] = useState<Jeu>(() => { try { const j = localStorage.getItem('skull-jeu'); return j === 'blackjack' || j === 'roue' ? j : 'skull'; } catch { return 'skull'; } });
+  const [reglesRoue, setReglesRoue] = useState(false);
   const [fenetre, setFenetre] = useState<Fenetre>(null);
   const { amis } = useAmis(profil.id);
   const enLigne = useEnLigne();
@@ -91,18 +93,19 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         <div className="cr-modes" role="tablist">
           <button type="button" role="tab" aria-selected={jeu === 'skull'} className={jeu === 'skull' ? 'actif' : ''} onClick={() => choisir('skull')}><Icone nom="epees" taille={20} /> Skull King</button>
           <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={`m-blackjack ${jeu === 'blackjack' ? 'actif' : ''}`} onClick={() => choisir('blackjack')}><Icone nom="cartes" taille={20} /> Blackjack</button>
+          <button type="button" role="tab" aria-selected={jeu === 'roue'} className={`m-roue ${jeu === 'roue' ? 'actif' : ''}`} onClick={() => choisir('roue')}><Icone nom="gouvernail" taille={20} /> Roue</button>
         </div>
         <div className={`cr-affiche ${jeu}`}>
-          <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : BJ.banniere} alt="" />
+          <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : jeu === 'blackjack' ? BJ.banniere : '/img/decor_pont.webp'} alt="" />
           <span className="cr-affiche-texte">
-            <strong>{jeu === 'skull' ? 'Skull King' : 'Blackjack du Capitaine'}</strong>
+            <strong>{jeu === 'skull' ? 'Skull King' : jeu === 'blackjack' ? 'Blackjack du Capitaine' : 'Roue du Kraken'}</strong>
             <small>{jeu === 'skull'
               ? (enLigne.size > 0 ? `${enLigne.size} pirate${enLigne.size > 1 ? 's' : ''} en ligne · 2 à 8 joueurs` : '2 à 8 joueurs · mise juste, pille tout')
-              : 'Table publique de 5 places · mise tes Louidors'}</small>
+              : jeu === 'blackjack' ? 'Table publique de 5 places · mise tes Louidors' : 'Une roue pour tous · 4 mini-jeux · jusqu’à ×2500'}</small>
           </span>
         </div>
-        <button type="button" className={`bouton-or cr-jouer ${jeu === 'blackjack' ? 'cr-jouer-bj' : ''}`} onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : ouvrirBlackjack('public'))}>
-          <Icone nom={jeu === 'skull' ? 'epees' : 'cartes'} taille={40} /> <span>{jeu === 'skull' ? 'Jouer' : 'S’asseoir'}</span>
+        <button type="button" className={`bouton-or cr-jouer ${jeu === 'blackjack' ? 'cr-jouer-bj' : jeu === 'roue' ? 'cr-jouer-roue' : ''}`} onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : jeu === 'blackjack' ? ouvrirBlackjack('public') : ouvrirRoue())}>
+          <Icone nom={jeu === 'skull' ? 'epees' : jeu === 'blackjack' ? 'cartes' : 'gouvernail'} taille={40} /> <span>{jeu === 'skull' ? 'Jouer' : jeu === 'blackjack' ? 'S’asseoir' : 'Tourner'}</span>
         </button>
         <div className="cr-secondaires">
           {jeu === 'skull' ? (
@@ -110,6 +113,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
               <button type="button" className="plaque p-bleue" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={22} /> Rejoindre</button>
               <button type="button" className="plaque p-rouge" onClick={() => ouvrirLobby('entrainement')}><Icone nom="mannequin" taille={22} /> Entraînement</button>
             </>
+          ) : jeu === 'roue' ? (
+            <button type="button" className="plaque p-violet" onClick={() => setReglesRoue(true)}><Icone nom="grimoire" taille={22} /> Comment jouer</button>
           ) : (
             <>
               <button type="button" className="plaque p-bleue" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={22} /> En solo</button>
@@ -128,6 +133,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
       </nav>
 
       {actualitesVues() && avisVuAujourdhui() && <FenetreNotifications />}
+
+      {reglesRoue && <Fenetre titre="Roue du Kraken" fermer={() => setReglesRoue(false)}><ReglesRoue /></Fenetre>}
 
       {fenetre === 'defis' && (
         <Fenetre titre="Défis du jour" fermer={() => setFenetre(null)}>
