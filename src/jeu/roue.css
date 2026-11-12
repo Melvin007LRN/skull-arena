@@ -309,3 +309,8 @@
 @supports (height: 1cqh) { .rk-roue { width: min(74vw, 76cqh, 360px); } }
 .rk-scene { padding-top: 6%; }
 .rk-roue-cadre, .rk-pointeur, .rk-moyeu { max-width: none !important; }
+.rk-drapeau img, .rk-tempete-moyeu, .rk-aiguille, .rk-intro-img { max-width: none !important; }
+/* Roue géante un peu plus petite pour que les 3 drapeaux tiennent dans l'écran */
+.rk-tempete-roue { --r: min(34vw, 22vh, 165px); width: calc(var(--r) * 2); margin: 56px 0 8px; }
+.rk-drapeau img { left: -17px; top: calc(-1 * var(--r) - 30px); width: 34px; }
+.rk-drapeau b { top: calc(-1 * var(--r) - 56px); }
