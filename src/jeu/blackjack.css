@@ -187,3 +187,23 @@
 
 .bj2-rejouer { min-width: 0; }
 .bj2-rejouer small { opacity: .8; font-weight: 700; margin-left: 4px; }
+
+/* ===== Images peintes du Blackjack ===== */
+.bj2-jeton { background: url('/img/bj_jeton.webp') center / contain no-repeat !important; box-shadow: none !important; position: relative; color: #fff; font-size: 10px; display: grid; place-items: end center; padding: 0 0 1px !important;
+  filter: var(--teinte, none) drop-shadow(0 3px 2px rgba(0,0,0,.6)); }
+.bj2-jeton.j10 { --teinte: grayscale(1) brightness(1.35); }
+.bj2-jeton.j50 { --teinte: hue-rotate(-42deg) saturate(2.2) brightness(.9); }
+.bj2-jeton.j100 { --teinte: hue-rotate(78deg) saturate(1.6) brightness(.85); }
+.bj2-jeton.j500 { --teinte: grayscale(1) brightness(.5) contrast(1.3); }
+.bj2-jeton.j1000 { --teinte: hue-rotate(228deg) saturate(1.7) brightness(.9); }
+.bj2-jeton.j5000 { --teinte: saturate(1.2); }
+.bj2-jeton { text-shadow: 0 0 3px #000, 0 1px 2px #000; font-weight: 900; }
+.bj2-jeton::after { content: ''; }
+.bj2-sabot { background: url('/img/bj_sabot.webp') center / contain no-repeat !important; border: 0 !important; box-shadow: none !important; width: calc(17 * var(--gh)) !important; height: calc(17 * var(--gh)) !important;
+  transform: translate(-50%, -50%) rotate(0) !important; filter: drop-shadow(0 6px 8px rgba(0,0,0,.7)); }
+.bj2-sabot::after { display: none; }
+.bj2-siege.vide .bj2-place { width: 50px; height: 50px; border: 0; border-radius: 0; background: url('/img/bj_siege_vide.webp') center / contain no-repeat; display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 0; color: #ffffffb0; font-size: 8px; text-shadow: 0 1px 2px #000; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)) brightness(.85); }
+.bj2-banniere-bj { width: min(70vw, calc(120 * var(--gh)), 520px); height: auto; filter: drop-shadow(0 0 18px #ffcc33) drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+.bj2-tampon-croupier.img { width: calc(40 * var(--gh)); max-width: 180px; height: auto; padding: 0; background: none; box-shadow: none; top: -60px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }
+.bj2-vip { width: 16px; height: 16px; object-fit: contain; margin: -3px 3px -3px -3px; vertical-align: middle; }

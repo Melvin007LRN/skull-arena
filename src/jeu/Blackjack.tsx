@@ -1,6 +1,7 @@
 // Le Blackjack du Capitaine : une table ovale en paysage, comme les parties classiques, face au croupier.
 // 5 sièges, distribution carte par carte, paris annexes (Paires parfaites, 21+3, Assurance),
 // séparation et double, animations de victoire et chat transparent sur le côté.
+import { BJ } from '../lib/images.ts';
 import { EcranAttente } from '../composants/Attente.tsx';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Profil } from '../lib/profil.ts';
@@ -195,7 +196,7 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
         {etat.croupier.cartes.length > 0 && !enDistribution && (
           <span className={`bj2-total ${croupierSaute ? 'saute' : ''}`}>{etat.croupier.cachee ? valeurMain(etat.croupier.cartes).total : revele ? croupierTotal : '…'}</span>
         )}
-        {croupierSaute && <span className="bj2-tampon-croupier">Le croupier saute !</span>}
+        {croupierSaute && <img className="bj2-tampon-croupier img" src={BJ.saute} alt="Le croupier saute !" />}
       </div>
 
       {/* Sièges */}
@@ -206,7 +207,7 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
 
       {/* Grandes annonces */}
       {etat.phase === 'resultats' && revele && moi?.mains.length ? (
-        monBJ ? <div className="bj2-annonce blackjack" key={`a${etat.manche}`}><span className="bj2-rayons" /><strong>BLACKJACK !</strong><em>+{monGain.toLocaleString('fr-FR')}</em><Pieces /></div>
+        monBJ ? <div className="bj2-annonce blackjack" key={`a${etat.manche}`}><span className="bj2-rayons" /><img className="bj2-banniere-bj" src={BJ.blackjack} alt="BLACKJACK !" /><em>+{monGain.toLocaleString('fr-FR')}</em><Pieces /></div>
           : monGain > 0 ? <div className="bj2-annonce gagne" key={`a${etat.manche}`}><strong>GAGNÉ</strong><em>+{monGain.toLocaleString('fr-FR')}</em><Pieces /></div>
             : monGain < 0 ? <div className="bj2-annonce perdu" key={`a${etat.manche}`}><strong>PERDU</strong><em>{monGain.toLocaleString('fr-FR')}</em></div>
               : <div className="bj2-annonce egalite" key={`a${etat.manche}`}><strong>ÉGALITÉ</strong><em>mise rendue</em></div>
@@ -293,7 +294,7 @@ function Siege({ index, place, siege, moi, actif, resultat, etat, maintenant, L,
       <div className="bj2-joueur">
         <Avatar photo={siege.photo} taille={moi ? 38 : 32} cadre={siege.cadre} />
         <div className="bj2-infos">
-          <span className="bj2-pseudo">{siege.pseudo}</span>
+          <span className="bj2-pseudo">{misesTotales >= 1000 && <img className="bj2-vip" src={BJ.vip} alt="VIP" />}{siege.pseudo}</span>
           <span className="bj2-sous">
             {misesTotales > 0 && <span className="bj2-mise"><span className="piece-or" aria-hidden="true" />{misesTotales}</span>}
             {siege.annexes.paires > 0 && <i title="Paires parfaites">P{siege.annexes.paires}</i>}

@@ -237,3 +237,76 @@ img.ico-texte { display: inline-block; width: 1.35em; height: 1.35em; object-fit
 .b-rayons .b-rayon-icone { left: auto !important; right: 6px; top: 6px !important; }
 .b-rayons .b-rayon-icone img.visuel { width: 44px; height: 44px; }
 .avatar-compagnon-img { filter: drop-shadow(0 0 2px rgba(255,225,160,.75)) drop-shadow(0 3px 4px rgba(0,0,0,.8)) !important; }
+
+/* =================== ACCUEIL v2 : au plus près de la photo de référence =================== */
+/* Barre du haut : le logo trône au centre, joueur à gauche, bourse et réglages à droite */
+.ecran-accueil.cr .cr-haut { position: relative; align-items: flex-start; height: calc(clamp(78px, 13.5dvh, 132px) - 14px); flex: none; }
+.cr-haut > :not(.cr-logo) { position: relative; z-index: 2; }
+.cr-joueur { flex: 0 1 auto; max-width: 36%; gap: 6px; }
+.cr-joueur-texte strong { font-size: 15px; }
+.cr-xp { width: 86px; }
+.cr-or { margin-left: auto; }
+.cr-or strong { font-size: 14px; }
+.cr-or .piece-or { width: 22px; height: 22px; }
+.cr-plus { width: 22px; height: 22px; font-size: 16px; }
+.cr-rond { width: 40px; height: 40px; }
+.ecran-accueil.cr .cr-logo { position: absolute; z-index: 1; left: 50%; top: -6px; transform: translateX(-50%); height: clamp(78px, 13.5dvh, 132px); width: auto; max-width: 52%; margin: 0; }
+
+/* Scène : le gouvernail doré autour de la photo, taillé selon la place disponible */
+.ecran-accueil.cr > .cr-scene { container-type: size; grid-template-columns: 72px minmax(0, 1fr) 72px; min-height: 0 !important; }
+.cr-pirate { --r: min(calc(100cqh - 104px), calc(100cqw - 150px), 270px); gap: 2px; animation: none; }
+.cr-roue { position: relative; width: var(--r); height: var(--r); display: grid; place-items: center; flex: none; animation: cr-respire 4s ease-in-out infinite; }
+.cr-roue-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; pointer-events: none; filter: drop-shadow(0 10px 16px rgba(0,0,0,.7)) drop-shadow(0 0 20px rgba(255,190,80,.25)); }
+.cr-roue .avatar { width: calc(var(--r) * .54) !important; height: calc(var(--r) * .54) !important; animation: none !important; filter: none !important; z-index: 1; }
+.cr-roue .avatar::before, .cr-roue .avatar::after { display: none !important; }
+.cr-roue .avatar-cadre { display: none; }
+.cr-roue .avatar-photo { border-radius: 50%; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cr-roue .avatar-compagnon { z-index: 3; left: -38%; bottom: -30%; }
+.cr-socle { display: none; }
+
+/* Le nom sur une planche, le titre sur un ruban rouge, le grade dessous */
+.cr-ruban { margin-top: -10px; z-index: 3; padding: 2px 26px 4px; min-width: 0; max-width: 100%; border-radius: 6px;
+  background: linear-gradient(180deg, #6b3a18 0%, #4a2410 45%, #2e1406 100%); border: 2px solid #d9a94a;
+  box-shadow: 0 6px 14px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,220,140,.35), inset 0 -2px 0 rgba(0,0,0,.35); }
+.cr-ruban::before, .cr-ruban::after { top: 6px; bottom: -7px; width: 20px; background: linear-gradient(180deg, #4a2410, #2a1206); border-color: #d9a94a; }
+.cr-ruban .cr-nom { font-family: 'Cinzel Decorative', var(--gravure); font-weight: 900; font-size: clamp(20px, 6.4vw, 30px); letter-spacing: .03em; line-height: 1.15; }
+.cr-pirate > .cr-titre { position: relative; z-index: 2; margin-top: -2px; padding: 2px 16px; white-space: nowrap; font-family: var(--gravure); font-style: normal; font-weight: 700; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: #ffe08a; background: linear-gradient(180deg, #a3241a, #6b0f0a); border: 1.5px solid #d9a94a; border-top: 0; border-radius: 0 0 6px 6px; box-shadow: 0 4px 8px rgba(0,0,0,.55);
+  clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%); }
+.cr-grade { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 11px; letter-spacing: .12em; }
+.cr-grade img { width: 20px; height: 20px; object-fit: contain; filter: drop-shadow(0 1px 2px #000); }
+
+/* Tuiles latérales calées sur la hauteur du gouvernail */
+.cr-rail { gap: clamp(10px, 4cqh, 26px); }
+.cr-bouton-rail-icone { width: 60px; height: 60px; }
+.cr-bouton-rail .icone-img { width: 50px; height: 50px; }
+
+/* Choix du jeu, affiche et boutons : comme sur la photo */
+.cr-modes button { min-height: 46px; font-size: 17px; }
+.cr-affiche-texte strong { font-size: 24px; }
+.cr-affiche.blackjack img { object-position: 50% 40%; }
+@media (max-height: 760px) {
+  .ecran-accueil.cr .cr-haut { height: calc(clamp(64px, 11dvh, 100px) - 10px); }
+  .ecran-accueil.cr .cr-logo { height: clamp(64px, 11dvh, 100px); }
+  .cr-bouton-rail-icone { width: 50px; height: 50px; }
+  .cr-bouton-rail .icone-img { width: 42px; height: 42px; }
+  .cr-modes button { min-height: 40px; font-size: 15px; }
+}
+@media (max-height: 640px) {
+  .ecran-accueil.cr .cr-logo { display: block; height: 56px; }
+  .ecran-accueil.cr .cr-haut { height: 46px; }
+  .cr-pirate > .cr-titre, .cr-grade { display: none; }
+}
+
+/* Bouts en pointe, comme sur la photo de référence */
+.ecran .bouton-or.cr-jouer { border-radius: 10px; clip-path: polygon(3.5% 0, 96.5% 0, 100% 50%, 96.5% 100%, 3.5% 100%, 0 50%); box-shadow: none !important; outline-offset: -8px; }
+.cr-jeu { filter: drop-shadow(0 6px 10px rgba(0,0,0,.55)); }
+.cr-secondaires .bouton-sombre { clip-path: polygon(5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%, 0 50%); border-radius: 8px; }
+.cr-modes { clip-path: polygon(2.5% 0, 97.5% 0, 100% 50%, 97.5% 100%, 2.5% 100%, 0 50%); border-radius: 8px; }
+/* Le Jouer du milieu : un écusson sombre cerclé d'or qui dépasse de la barre */
+.cr-nav button.actif .cr-nav-icone { background: none !important; border: 0 !important; clip-path: none !important; box-shadow: none !important; width: 70px; height: 76px; transform: translateY(-24px); }
+.cr-nav button.actif .cr-nav-icone::before, .cr-nav button.actif .cr-nav-icone::after { content: ''; position: absolute; clip-path: polygon(50% 0, 100% 20%, 100% 72%, 50% 100%, 0 72%, 0 20%); }
+.cr-nav button.actif .cr-nav-icone::before { inset: 0; background: linear-gradient(180deg, #fff0b0, #e0a83a 45%, #8a5a14); filter: drop-shadow(0 0 10px rgba(255,190,80,.55)); }
+.cr-nav button.actif .cr-nav-icone::after { inset: 3px; background: radial-gradient(circle at 50% 35%, #4a3418, #120b05 80%); }
+.cr-nav button.actif .cr-nav-icone .icone-img { position: relative; z-index: 1; width: 54px; height: 54px; }
+.cr-nav button.actif small { margin-top: -22px; }

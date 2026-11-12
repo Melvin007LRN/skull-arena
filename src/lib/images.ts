@@ -33,6 +33,7 @@ export const IMAGE_ICONE: Record<string, string> = {
   tas: I('louidor_tas'),
   defi: I('defi_jour'),
   'son-on': I('jeu_son_on'), 'son-off': I('jeu_son_off'),
+  tete: I('nav_avis'), avis: I('nav_avis'),
 };
 
 /** Objets lançables en partie. */
@@ -52,7 +53,7 @@ export const FX = {
 
 /** Articles de personnalisation qui ont leur image (icône de boutique ou image pleine). */
 export const IMAGE_ARTICLE: Record<string, string> = {
-  dos_parchemin: I('dos_parchemin'),
+  dos_parchemin: I('dos_parchemin'), dos_matelot: I('dos_matelot'), dos_kraken: I('dos_kraken'), dos_abysses: I('dos_abysses'),
   ...Object.fromEntries(['velours', 'lagon', 'pont', 'carte', 'abysses', 'tresor', 'capitaine'].map((t) => [`tapis_${t}`, I(`tapis_${t}`)])),
   ...Object.fromEntries(['coucher', 'tempete', 'abysses', 'aurore', 'tresor', 'legende'].map((t) => [`banniere_${t}`, I(`banniere_${t}`)])),
   ...Object.fromEntries(['crabe', 'rat', 'perroquet', 'singe', 'chat', 'pieuvre', 'requin', 'dragon', 'corbeau'].map((t) => [`compagnon_${t}`, I(`compagnon_${t}`)])),
@@ -81,3 +82,15 @@ export const IMG = {
 
 /** Une valeur « visuelle » est soit un emoji, soit le chemin d'une image. */
 export const estImage = (v: string | undefined | null): v is string => !!v && v.startsWith('/');
+
+/** Écusson de chaque grade. */
+export const IMAGE_GRADE: Record<string, string> = {
+  Mousse: I('rang_mousse'), Matelot: I('rang_matelot'), 'Quartier-maître': I('rang_quartier_maitre'), Second: I('rang_second'),
+  Capitaine: I('rang_capitaine'), Amiral: I('rang_amiral'), Légende: I('rang_legende'),
+};
+
+/** Blackjack. */
+export const BJ = {
+  jeton: I('bj_jeton'), sabot: I('bj_sabot'), siegeVide: I('bj_siege_vide'), blackjack: I('bj_blackjack'), saute: I('bj_bust'), vip: I('bj_vip'),
+  banniere: I('banniere_mode_bj'), roue: I('cadre_gouvernail'),
+};

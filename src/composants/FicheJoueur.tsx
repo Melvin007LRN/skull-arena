@@ -1,4 +1,5 @@
 // Fiche d'un joueur (visible par tous) : stats, badges, dernières parties, et actions (ami, message, inviter, signaler, bloquer).
+import { IMAGE_GRADE } from '../lib/images.ts';
 import { Visuel } from './Visuel.tsx';
 import { Patience } from './Attente.tsx';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -65,7 +66,7 @@ export function FicheJoueur({ joueur, moi, fermer, salonInvitation }: { joueur: 
                 <div>
                   <h2 className="titre-pirate">{p.pseudo}</h2>
                   <Titre perso={p.perso} />
-                  <p className="grade">Niveau {n} · {grade(n)}</p>
+                  <p className="grade">{IMAGE_GRADE[grade(n)] && <img className="ico-texte" src={IMAGE_GRADE[grade(n)]} alt="" />}Niveau {n} · {grade(n)}</p>
                   <small>{enLigne.has(joueur) ? '🟢 En ligne' : 'Hors ligne'}{p.est_admin ? ' · ⚓ Capitaine du navire' : ''}</small>
                 </div>
               </div>

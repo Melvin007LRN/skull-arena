@@ -1,5 +1,6 @@
 // Mon pirate : portrait encadré, grade et niveau, chiffres clés, puis onglets
 // Profil · Cadres · Badges · Stats · Historique. La gestion du compte est en bas de l'onglet Profil.
+import { IMAGE_GRADE } from '../lib/images.ts';
 import { Visuel } from '../composants/Visuel.tsx';
 import { Patience } from '../composants/Attente.tsx';
 import { styleNeon } from '../lib/neons.ts';
@@ -83,7 +84,7 @@ export function EcranProfil({ profil, retour, recharger, ouvrirBoutique }: {
         {(() => { const n = styleNeon(profil.couleur_nom); return <h1 className={`heros-pseudo ${profil.couleur_nom ? n.className : ''}`} style={n.style}>{profil.pseudo}</h1>; })()}
         <Titre perso={profil.perso} className="heros-titre" />
         <div className="heros-grade">
-          <span className="heros-embleme">{EMBLEMES[g]}</span>
+          <span className="heros-embleme">{IMAGE_GRADE[g] ? <img className="embleme-img" src={IMAGE_GRADE[g]} alt="" /> : EMBLEMES[g]}</span>
           <span>{g}</span>
           {profil.est_admin && <em>⚓ Capitaine du navire</em>}
         </div>

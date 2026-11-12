@@ -1,4 +1,5 @@
 // Mes compagnons : ajouter un pirate par son pseudo, répondre aux demandes, voir qui est en ligne.
+import { IMAGE_GRADE } from '../lib/images.ts';
 import { Patience } from '../composants/Attente.tsx';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { messageErreur } from '../lib/supabase.ts';
@@ -117,7 +118,7 @@ function LigneAmi({ ami, enLigne, children }: { ami: Ami; enLigne: boolean; chil
       </span>
       <span className="cl-nom">
         <strong>{ami.pseudo}</strong>
-        <small>{enLigne ? 'En ligne' : 'Hors ligne'} · Niv. {n} · {grade(n)}</small>
+        <small>{enLigne ? 'En ligne' : 'Hors ligne'} · {IMAGE_GRADE[grade(n)] && <img className="ico-texte" src={IMAGE_GRADE[grade(n)]} alt="" />}Niv. {n} · {grade(n)}</small>
       </span>
       <span className="ami-actions">
         {ami.statut === 'acceptee' && (

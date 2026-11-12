@@ -1,4 +1,5 @@
 // Classements : la saison (mois en cours, remise à zéro chaque mois) et le classement permanent.
+import { IMAGE_GRADE } from '../lib/images.ts';
 import { Patience } from '../composants/Attente.tsx';
 import { useEffect, useState } from 'react';
 import {
@@ -63,7 +64,7 @@ export function EcranClassement({ profil, retour }: { profil: Profil; retour: ()
                   <Avatar photo={l.photo_url} taille={i === 0 ? 56 : 44} cadre={l.cadre} />
                   <span className="cl-nom">
                     <strong>{l.pseudo}</strong>
-                    <small>Niv. {n} · {grade(n)} · {l.pm} PM · {l.parties} partie{l.parties > 1 ? 's' : ''}</small>
+                    <small>{IMAGE_GRADE[grade(n)] && <img className="ico-texte" src={IMAGE_GRADE[grade(n)]} alt="" />}Niv. {n} · {grade(n)} · {l.pm} PM · {l.parties} partie{l.parties > 1 ? 's' : ''}</small>
                   </span>
                   <span className="cl-pm">{l.victoires}<small>VICT.</small></span>
                 </li>

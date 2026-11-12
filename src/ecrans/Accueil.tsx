@@ -1,6 +1,7 @@
 // Accueil façon jeu mobile : un seul écran, sans défilement.
 // En haut le joueur et sa bourse, au centre son pirate, en bas le choix du jeu et le gros bouton JOUER,
 // et une barre de navigation. Les compléments (défis, avis de recherche, alertes) s'ouvrent en fenêtre.
+import { BJ, IMAGE_GRADE } from '../lib/images.ts';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Profil } from '../lib/profil.ts';
 import { chargerDefisDuJour, DEFIS, grade, niveau, progressionNiveau } from '../lib/profil.ts';
@@ -64,9 +65,8 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           <span className="cr-plus">+</span>
         </button>
         <button type="button" className="cr-rond" onClick={ouvrirReglages} aria-label="Réglages"><Icone nom="gouvernail" taille={24} /></button>
+        <img className="cr-logo" src="/decor/logo.webp" alt="Skull Arena" />
       </header>
-
-      <img className="cr-logo" src="/decor/logo.webp" alt="Skull Arena" />
 
       <section className="cr-scene">
         <div className="cr-rail gauche">
@@ -74,13 +74,13 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           <BoutonRail classe="r-avis" icone="tete" nom="Avis" onClick={ouvrirAvis} />
         </div>
         <button type="button" className="cr-pirate" onClick={ouvrirProfil}>
-          <span className="cr-socle" aria-hidden="true" />
-          <Avatar photo={profil.photo_url} taille={150} cadre={profil.cadre} compagnon={profil.perso?.compagnon ?? null} />
-          <span className="cr-ruban">
-            <span className="cr-nom">{profil.pseudo}</span>
-            <Titre perso={profil.perso} className="cr-titre" />
+          <span className="cr-roue">
+            <img className="cr-roue-img" src={BJ.roue} alt="" draggable={false} />
+            <Avatar photo={profil.photo_url} taille={150} cadre={profil.cadre} compagnon={profil.perso?.compagnon ?? null} />
           </span>
-          <span className="cr-grade">{grade(n)} · niveau {n}</span>
+          <span className="cr-ruban"><span className="cr-nom">{profil.pseudo}</span></span>
+          <Titre perso={profil.perso} className="cr-titre" />
+          <span className="cr-grade">{IMAGE_GRADE[grade(n)] && <img src={IMAGE_GRADE[grade(n)]} alt="" />}{grade(n)} · niveau {n}</span>
         </button>
         <div className="cr-rail droite">
           <BoutonRail classe="r-actus" icone="parchemin" nom="Actus" nouveau={!actualitesVues()} onClick={ouvrirActualites} />
@@ -94,7 +94,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={`m-blackjack ${jeu === 'blackjack' ? 'actif' : ''}`} onClick={() => choisir('blackjack')}><Icone nom="cartes" taille={20} /> Blackjack</button>
         </div>
         <div className={`cr-affiche ${jeu}`}>
-          <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : '/decor/art/jaune_14.webp'} alt="" />
+          <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : BJ.banniere} alt="" />
           <span className="cr-affiche-texte">
             <strong>{jeu === 'skull' ? 'Skull King' : 'Blackjack du Capitaine'}</strong>
             <small>{jeu === 'skull'
