@@ -310,3 +310,56 @@ img.ico-texte { display: inline-block; width: 1.35em; height: 1.35em; object-fit
 .cr-nav button.actif .cr-nav-icone::after { inset: 3px; background: radial-gradient(circle at 50% 35%, #4a3418, #120b05 80%); }
 .cr-nav button.actif .cr-nav-icone .icone-img { position: relative; z-index: 1; width: 54px; height: 54px; }
 .cr-nav button.actif small { margin-top: -22px; }
+
+/* =================== ACCUEIL v3 : les plaques peintes du capitaine =================== */
+/* Bloc du bas resserré et centré, comme sur la photo (marges de chaque côté) */
+.ecran-accueil.cr > .cr-jeu { width: min(100%, 360px); align-self: center; gap: 8px; filter: none; }
+/* Gros JOUER : la plaque dorée, plus étroite que la barre des modes */
+.ecran .bouton-or.cr-jouer { position: relative; isolation: isolate; align-self: center; width: 88%; min-height: 0 !important; height: auto; aspect-ratio: 720 / 193;
+  padding: 0 8% 2px !important; border: 0 !important; outline: 0 !important; border-radius: 0 !important; clip-path: none !important;
+  background: url('/img/plaque_or.webp') center / 100% 100% no-repeat !important; box-shadow: none !important;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,.6)) drop-shadow(0 0 16px rgba(255,190,70,.35));
+  color: #3a1f04 !important; font-size: clamp(26px, 8.4vw, 38px) !important; text-shadow: 0 1px 0 rgba(255,245,200,.85), 0 -1px 0 rgba(120,70,0,.35) !important; }
+.ecran .bouton-or.cr-jouer.cr-jouer-bj { aspect-ratio: 720 / 219; background-image: url('/img/plaque_rouge.webp') !important; color: #fff3d0 !important;
+  text-shadow: 0 2px 2px rgba(0,0,0,.6), 0 0 10px rgba(0,0,0,.35) !important; filter: drop-shadow(0 8px 12px rgba(0,0,0,.6)) drop-shadow(0 0 16px rgba(255,60,60,.3)); }
+.ecran .bouton-or.cr-jouer:active { transform: translateY(3px) scale(.98); box-shadow: none !important; }
+.cr-jouer .icone-img { width: 44px; height: 44px; }
+/* Boutons secondaires : plaques bleue et rouge, plus petites */
+.cr-secondaires { gap: 8px; }
+.cr-secondaires .plaque { display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px; padding: 0 12% 2px; border: 0; cursor: pointer;
+  background: center / 100% 100% no-repeat; font-family: var(--gravure); font-weight: 700; font-size: 14px; letter-spacing: .02em; color: #fff;
+  text-shadow: 0 2px 2px rgba(0,0,0,.65); filter: drop-shadow(0 5px 7px rgba(0,0,0,.55)); transition: transform .1s; white-space: nowrap; }
+.cr-secondaires .plaque.p-bleue { background-image: url('/img/plaque_bleue.webp'); }
+.cr-secondaires .plaque.p-rouge { background-image: url('/img/plaque_rouge_simple.webp'); }
+.cr-secondaires .plaque:active { transform: translateY(2px) scale(.97); }
+.cr-secondaires .plaque .icone-img { width: 26px; height: 26px; margin: -4px 0; }
+/* Choix du jeu : la plaque or pour le jeu choisi, une plaque sombre pour l'autre */
+.cr-modes { clip-path: none !important; border: 0 !important; background: none !important; box-shadow: none !important; overflow: visible; gap: 4px; padding: 0; }
+.cr-modes button { position: relative; isolation: isolate; height: 44px; min-height: 0 !important; padding: 0 10% 2px; background: none !important; box-shadow: none !important; color: #e8dcc0 !important; font-size: 15px; text-shadow: 0 2px 2px rgba(0,0,0,.6) !important; }
+.cr-modes button::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('/img/plaque_bleue.webp') center / 100% 100% no-repeat; filter: grayscale(.85) brightness(.42) sepia(.35); transition: filter .2s; }
+.cr-modes button.actif { color: #3a1f04 !important; text-shadow: 0 1px 0 rgba(255,245,200,.8) !important; }
+.cr-modes button.actif::before { background-image: url('/img/plaque_or.webp'); filter: drop-shadow(0 0 8px rgba(255,190,70,.4)); }
+.cr-modes button.actif.m-blackjack { color: #fff3d0 !important; text-shadow: 0 2px 2px rgba(0,0,0,.6) !important; }
+.cr-modes button.actif.m-blackjack::before { background-image: url('/img/plaque_rouge.webp'); }
+.cr-modes .icone-img { width: 22px; height: 22px; }
+/* Affiche un peu plus basse */
+.cr-affiche { height: 68px; }
+/* Barre du bas : plus basse et plus fine, collée au bas de l'écran */
+.ecran-accueil.cr .cr-nav { padding: 4px 4px max(2px, calc(env(safe-area-inset-bottom) - 16px)) !important; }
+.ecran-accueil.cr .cr-nav button { padding: 4px 2px 2px; }
+.ecran-accueil.cr .cr-nav-icone { width: 34px; height: 34px; }
+.ecran-accueil.cr .cr-nav button.actif .cr-nav-icone { width: 62px; height: 68px; transform: translateY(-22px); }
+.ecran-accueil.cr .cr-nav button.actif .cr-nav-icone .icone-img { width: 46px; height: 46px; }
+.ecran-accueil.cr .cr-nav button.actif small { margin-top: -22px; }
+.ecran-accueil.cr { padding-bottom: calc(66px + max(2px, calc(env(safe-area-inset-bottom) - 16px))) !important; gap: 8px !important; }
+@media (max-height: 760px) {
+  .ecran .bouton-or.cr-jouer { width: 80%; font-size: clamp(24px, 7.4vw, 32px) !important; }
+  .cr-modes button, .cr-secondaires .plaque { height: 40px; font-size: 13px; }
+}
+.cr-modes button.actif, .cr-modes button.actif.m-blackjack { background: none !important; box-shadow: none !important; }
+.cr-secondaires .plaque { height: 50px; font-size: 15px; }
+/* Espace réparti : le pirate au centre de la place libre, rien ne touche la barre */
+.ecran-accueil.cr > .cr-scene { align-items: center; }
+.cr-pirate { align-self: center; justify-content: center; }
+.ecran-accueil.cr { padding-bottom: calc(86px + max(2px, calc(env(safe-area-inset-bottom) - 16px))) !important; }
+@media (max-height: 760px) { .cr-secondaires .plaque { height: 44px; font-size: 13px; } }

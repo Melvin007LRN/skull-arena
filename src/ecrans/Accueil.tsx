@@ -108,13 +108,13 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         <div className="cr-secondaires">
           {jeu === 'skull' ? (
             <>
-              <button type="button" className="bouton-sombre c-bleu" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={22} /> Rejoindre</button>
-              <button type="button" className="bouton-sombre c-vert" onClick={() => ouvrirLobby('entrainement')}><Icone nom="mannequin" taille={22} /> Entraînement</button>
+              <button type="button" className="plaque p-bleue" onClick={() => ouvrirLobby('code')}><Icone nom="longue-vue" taille={22} /> Rejoindre</button>
+              <button type="button" className="plaque p-rouge" onClick={() => ouvrirLobby('entrainement')}><Icone nom="mannequin" taille={22} /> Entraînement</button>
             </>
           ) : (
             <>
-              <button type="button" className="bouton-sombre c-turquoise" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={22} /> En solo</button>
-              <button type="button" className="bouton-sombre c-violet" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={22} /> Avec compagnons</button>
+              <button type="button" className="plaque p-bleue" onClick={() => ouvrirBlackjack('solo')}><Icone nom="piece" taille={22} /> En solo</button>
+              <button type="button" className="plaque p-rouge" onClick={() => ouvrirBlackjack('amis')}><Icone nom="equipage" taille={22} /> Avec compagnons</button>
             </>
           )}
         </div>
