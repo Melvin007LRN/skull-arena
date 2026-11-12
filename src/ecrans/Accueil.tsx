@@ -93,10 +93,10 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
         <div className="cr-modes" role="tablist">
           <button type="button" role="tab" aria-selected={jeu === 'skull'} className={jeu === 'skull' ? 'actif' : ''} onClick={() => choisir('skull')}><Icone nom="epees" taille={20} /> Skull King</button>
           <button type="button" role="tab" aria-selected={jeu === 'blackjack'} className={`m-blackjack ${jeu === 'blackjack' ? 'actif' : ''}`} onClick={() => choisir('blackjack')}><Icone nom="cartes" taille={20} /> Blackjack</button>
-          <button type="button" role="tab" aria-selected={jeu === 'roue'} className={`m-roue ${jeu === 'roue' ? 'actif' : ''}`} onClick={() => choisir('roue')}><Icone nom="gouvernail" taille={20} /> Roue</button>
+          <button type="button" role="tab" aria-selected={jeu === 'roue'} className={`m-roue ${jeu === 'roue' ? 'actif' : ''}`} onClick={() => choisir('roue')}><img className="icone-img" src="/img/nav_roue.webp" alt="" /> Roue</button>
         </div>
         <div className={`cr-affiche ${jeu}`}>
-          <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : jeu === 'blackjack' ? BJ.banniere : '/img/decor_pont.webp'} alt="" />
+          <img src={jeu === 'skull' ? '/decor/art/skull_king.webp' : jeu === 'blackjack' ? BJ.banniere : '/img/banniere_mode_roue.webp'} alt="" />
           <span className="cr-affiche-texte">
             <strong>{jeu === 'skull' ? 'Skull King' : jeu === 'blackjack' ? 'Blackjack du Capitaine' : 'Roue du Kraken'}</strong>
             <small>{jeu === 'skull'
@@ -105,7 +105,7 @@ export function Accueil({ profil, ouvrirProfil, ouvrirLobby, ouvrirClassement, o
           </span>
         </div>
         <button type="button" className={`bouton-or cr-jouer ${jeu === 'blackjack' ? 'cr-jouer-bj' : jeu === 'roue' ? 'cr-jouer-roue' : ''}`} onClick={() => (jeu === 'skull' ? ouvrirLobby('jouer') : jeu === 'blackjack' ? ouvrirBlackjack('public') : ouvrirRoue())}>
-          <Icone nom={jeu === 'skull' ? 'epees' : jeu === 'blackjack' ? 'cartes' : 'gouvernail'} taille={40} /> <span>{jeu === 'skull' ? 'Jouer' : jeu === 'blackjack' ? 'S’asseoir' : 'Tourner'}</span>
+          {jeu === 'roue' ? <img className="icone-img" src="/img/nav_roue.webp" alt="" style={{ width: 52, height: 52 }} /> : <Icone nom={jeu === 'skull' ? 'epees' : 'cartes'} taille={40} />} <span>{jeu === 'skull' ? 'Jouer' : jeu === 'blackjack' ? 'S’asseoir' : 'Tourner'}</span>
         </button>
         <div className="cr-secondaires">
           {jeu === 'skull' ? (

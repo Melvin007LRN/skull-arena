@@ -561,7 +561,7 @@ body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bot
 .ecran-accueil .bouton-or.cr-jouer.cr-jouer-roue { --n: #3fd6e8; background: linear-gradient(180deg, rgba(14,92,110,.92), rgba(4,36,46,.94)) !important;
   color: #ecfdff !important; text-shadow: 0 2px 0 #02262e, 0 0 6px #7ff0ff, 0 0 14px #17c0d8, 0 0 26px rgba(23,192,216,.8) !important; }
 .cr-affiche.roue { --n: #3fd6e8; }
-.cr-affiche.roue img { filter: brightness(.9) saturate(1.2) hue-rotate(-10deg); object-position: 50% 40%; }
+.cr-affiche.roue img { filter: none; object-position: 50% 50%; }
 .cr-secondaires > .plaque:only-child { grid-column: 1 / -1; }
 .cr-modes { grid-template-columns: repeat(3, 1fr) !important; }
 .cr-modes button { padding: 0 4px !important; white-space: nowrap; }

@@ -221,3 +221,91 @@
 .rk-statut p { min-height: 24px; white-space: nowrap; }
 .rk-solde strong, .rk-solde { font-variant-numeric: tabular-nums; }
 .rk-jeton-pose b { font-variant-numeric: tabular-nums; }
+
+/* ---- Images peintes du pack « Roue du Kraken » et couleurs sombres ---- */
+.rk-fond { background: radial-gradient(ellipse at 50% 32%, rgba(30, 50, 80, .35), transparent 60%), linear-gradient(rgba(4, 6, 12, .45), rgba(4, 6, 12, .88)), url('/img/roue_decor.webp') center / cover; }
+.rk-titre { align-items: flex-start; }
+.rk-logo { height: 38px; width: auto; max-width: 100%; object-fit: contain; object-position: left; filter: drop-shadow(0 2px 4px #000); margin: -4px 0 -2px; }
+.rk-titre small { padding-left: 4px; }
+
+.rk-h { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 85%, #fff 8%), var(--c)); border: 1px solid var(--n); color: var(--n); box-shadow: 0 0 5px color-mix(in srgb, var(--n) 50%, transparent); }
+.rk-h img { width: 22px; height: 22px; object-fit: contain; }
+.rk-h:has(img) { padding: 0 3px; }
+.rk-h:first-child { box-shadow: 0 0 10px var(--n); }
+
+/* Roue : cadre à ampoules autour, crochet en pointeur, moyeu peint */
+.rk-roue { width: min(70vw, 100%, 340px); }
+@supports (height: 1cqh) { .rk-roue { width: min(70vw, 74cqh, 340px); } }
+.rk-roue-cadre { inset: -13%; width: 126%; height: 126%; opacity: 1; z-index: 2; filter: drop-shadow(0 8px 16px #000); }
+.rk-roue-svg { box-shadow: 0 0 22px rgba(0, 0, 0, .8); }
+.rk-txt { fill: #f2c14e; font-size: 10px; stroke: rgba(0, 0, 0, .85); stroke-width: 1.6px; }
+.rk-txt.bonus { font-size: 6px; fill: #f3dfa8; }
+.rk-moyeu { position: absolute; left: 50%; top: 50%; width: 36%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 3; border: 0; background: none; box-shadow: none; border-radius: 0;
+  filter: drop-shadow(0 4px 8px #000); }
+.rk-roue.tourne .rk-moyeu { animation: rk-respire-moyeu 1s ease-in-out infinite alternate; }
+@keyframes rk-respire-moyeu { to { transform: translate(-50%, -50%) scale(1.06); } }
+.rk-pointeur { position: absolute; left: 50%; top: -19%; width: 17%; height: auto; transform: translateX(-50%); border: 0; z-index: 4; filter: drop-shadow(0 3px 4px #000) drop-shadow(0 0 6px rgba(255, 200, 90, .5)); }
+
+/* Plateau : médaillons peints sur fond sombre, néon de la couleur de la case */
+.rk-zone { height: 74px; padding: 2px 2px 4px; justify-content: flex-end; gap: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 92%, #fff 6%) 0%, color-mix(in srgb, var(--c) 70%, #000) 100%);
+  border: 1.5px solid var(--n); box-shadow: 0 0 7px color-mix(in srgb, var(--n) 60%, transparent), inset 0 0 12px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .12); }
+.rk-zone-img { position: absolute; left: 50%; top: 3px; width: 40px; height: 40px; transform: translateX(-50%); object-fit: contain; filter: drop-shadow(0 2px 3px #000); pointer-events: none; }
+.rk-zone strong { position: relative; font-size: 20px; color: var(--n); text-shadow: 0 0 6px var(--n), 0 2px 2px #000; }
+.rk-zone.bonus strong { font-size: 12px; color: #f3dfa8; text-shadow: 0 0 5px var(--n), 0 1px 2px #000; }
+.rk-zone small { position: relative; font-size: 9px; color: #e8dcc0; }
+.rk-zone.z-tempete { border-color: #c9952e; }
+.rk-zone.gagne { animation: rk-gagne2 .6s ease-in-out infinite alternate; }
+@keyframes rk-gagne2 { to { box-shadow: 0 0 0 3px #fff3c8, 0 0 28px var(--n); } }
+.rk-resultat-case { border-color: var(--n); box-shadow: 0 0 26px var(--n), 0 6px 16px #000; color: var(--n); }
+
+/* Boussole peinte */
+.rk-boussole-cadran { width: 150px; height: 150px; background: url('/img/roue_boussole_cadran.webp') center / contain no-repeat; border: 0; box-shadow: none; border-radius: 50%; filter: drop-shadow(0 0 20px rgba(255, 200, 90, .6)) drop-shadow(0 6px 12px #000); }
+.rk-aiguille { position: absolute; left: 50%; top: 50%; height: 78%; width: auto; transform-origin: 50% 50%; filter: drop-shadow(0 2px 3px #000); }
+.rk-boussole p { border-color: var(--c, #c9952e); }
+
+/* Pièce maudite : vraies faces */
+.rk-piece { width: 130px; height: 130px; }
+.rk-piece .cote { border: 0; background: none; box-shadow: none; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 10px #000); }
+
+/* Abysses : fond sous-marin, boulet peint */
+.rk-abysses svg { background: linear-gradient(rgba(2, 18, 30, .35), rgba(2, 8, 18, .75)), url('/img/roue_abysses_fond.webp') center / cover; }
+.rk-rocher { fill: #cfeef5; }
+
+/* Chasse : vraie carte, croix peintes */
+.rk-carte { background: linear-gradient(rgba(60, 40, 10, .08), rgba(30, 18, 4, .25)), url('/img/roue_chasse_carte.webp') center / 100% 100%; border-color: #6b4614; padding: 18px 22px; }
+.rk-croix { background: rgba(250, 236, 200, .12); border: 1px dashed rgba(90, 50, 10, .55); }
+.rk-croix img { width: 74%; height: 74%; object-fit: contain; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
+.rk-croix.mienne { background: rgba(255, 211, 107, .55); }
+
+/* Tempête : moyeu du Kraken, drapeaux peints */
+.rk-tempete-moyeu { width: 40%; }
+.rk-drapeau i { display: none; }
+.rk-drapeau img { position: absolute; left: -20px; top: calc(-1 * min(41vw, 26vh, 190px) - 40px); width: 40px; height: auto; filter: drop-shadow(0 0 6px var(--c)) drop-shadow(0 2px 2px #000); }
+.rk-drapeau.mien img { transform: scale(1.3); }
+.rk-drapeau b { top: calc(-1 * min(41vw, 26vh, 190px) - 64px); }
+.rk-drapeaux button i { display: none; }
+.rk-drapeaux button img { width: 30px; height: auto; margin: -6px 0; }
+
+/* Règles : l'animateur */
+.rk-animateur { display: block; width: 120px; margin: -6px auto 4px; filter: drop-shadow(0 4px 8px #000); }
+
+/* Grande annonce du mini-jeu */
+.rk-intro { gap: 12px; overflow: hidden; }
+.rk-intro-rayons { position: absolute; left: 50%; top: 42%; width: 160vmax; height: 160vmax; transform: translate(-50%, -50%); z-index: -1; opacity: .35;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 200, 90, .5) 0 6deg, transparent 6deg 18deg); animation: rk-rayons 12s linear infinite;
+  -webkit-mask: radial-gradient(circle, #000 0, transparent 45%); mask: radial-gradient(circle, #000 0, transparent 45%); }
+@keyframes rk-rayons { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.rk-intro-img { width: min(56vw, 230px); height: auto; filter: drop-shadow(0 0 30px rgba(255, 200, 90, .6)) drop-shadow(0 8px 14px #000); animation: rk-intro-img 1s cubic-bezier(.2, 1.5, .4, 1) both, rk-flotte 2.4s 1s ease-in-out infinite alternate; }
+@keyframes rk-intro-img { from { transform: scale(.2) rotate(-25deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes rk-flotte { to { transform: translateY(-8px) scale(1.03); } }
+.rk-intro h2 { font-size: 42px; animation: rk-pop .6s .3s both cubic-bezier(.2, 1.6, .4, 1); }
+.rk-intro-decompte { margin: 0; font-family: 'Pirata One', var(--gravure); font-size: 46px; color: #fff3c8; text-shadow: 0 0 18px #ffb400; }
+.rk-boussole p img { width: 30px; height: 30px; object-fit: contain; }
+.rk-boussole p span { font-size: 17px; }
+.rk-txt.booste { font-size: 9px; }
+.rk-piece.vole { animation-duration: 4s; }
+.rk-roue { width: min(74vw, 100%, 360px); }
+@supports (height: 1cqh) { .rk-roue { width: min(74vw, 76cqh, 360px); } }
+.rk-scene { padding-top: 6%; }
+.rk-roue-cadre, .rk-pointeur, .rk-moyeu { max-width: none !important; }

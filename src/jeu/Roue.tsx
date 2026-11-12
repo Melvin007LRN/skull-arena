@@ -19,15 +19,28 @@ import { useBloques } from '../lib/social.ts';
 import './roue.css';
 
 /** Couleur de chaque case (roue et plateau). */
+/** Couleurs sombres, façon bois et velours de navire. */
 export const COULEURS: Record<Zone, string> = {
-  '1': '#2f6fd6', '2': '#e3a92b', '5': '#d0344f', '10': '#8a46d6',
-  piece: '#d9772b', abysses: '#17a3b8', chasse: '#9b6a35', tempete: '#14182e',
+  '1': '#1a2c4e', '2': '#5a4114', '5': '#5a121e', '10': '#34184f',
+  piece: '#5e2e0e', abysses: '#0b3a44', chasse: '#3f2a14', tempete: '#0a0c16',
+};
+/** Couleur vive de chaque case, pour les néons et les reflets. */
+export const NEONS: Record<Zone, string> = {
+  '1': '#4f8dff', '2': '#e8b54a', '5': '#ff4a5e', '10': '#b06bff',
+  piece: '#ff9a3d', abysses: '#2fd3e8', chasse: '#d9a45a', tempete: '#c9952e',
+};
+/** Image peinte de chaque case : un doublon pour les nombres, un médaillon pour les mini-jeux. */
+export const IMG_ZONE: Record<Zone, string> = {
+  '1': '/img/roue_doublon_bronze.webp', '2': '/img/roue_doublon_argent.webp', '5': '/img/roue_doublon_or.webp', '10': '/img/roue_doublon_rubis.webp',
+  piece: '/img/roue_case_piece.webp', abysses: '/img/roue_case_abysses.webp', chasse: '/img/roue_case_chasse.webp', tempete: '/img/roue_case_tempete.webp',
 };
 const COURTS: Record<Zone, string> = { '1': '1', '2': '2', '5': '5', '10': '10', piece: 'PIÈCE', abysses: 'ABYSSES', chasse: 'TRÉSOR', tempete: 'KRAKEN' };
 const PAIE: Record<Zone, string> = { '1': 'paie 1:1', '2': 'paie 2:1', '5': 'paie 5:1', '10': 'paie 10:1', piece: '×2 à ×100', abysses: '×15 à ×200', chasse: '×5 à ×75', tempete: '×10 à ×200' };
 const COULEUR_DRAPEAU: Record<Drapeau, string> = { rouge: '#e0343f', bleu: '#2f7be8', or: '#f2c14e' };
 const NOM_DRAPEAU: Record<Drapeau, string> = { rouge: 'Rouge', bleu: 'Bleu', or: 'Or' };
 const ANGLE = 360 / CASES.length;
+/** Ce que la Boussole donne sur une case : pour un nombre, son gain multiplié (5 ×5 = ×25) ; pour un mini-jeu, le bonus. */
+const multBoussole = (z: Zone, m: number) => (estBonus(z) ? m : Number(z) * m);
 const fmt = (n: number) => n.toLocaleString('fr-FR');
 const somme = (z: Partial<Record<Zone, number>> | undefined) => Object.values(z ?? {}).reduce((s, v) => s + (v ?? 0), 0);
 
@@ -168,7 +181,7 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
       <div className="rk-fond" aria-hidden="true" />
       <header className="rk-haut">
         <button type="button" className="rk-rond" onClick={quitter} aria-label="Quitter la roue">‹</button>
-        <div className="rk-titre"><strong>Roue du Kraken</strong><small>{presents} pirate{presents > 1 ? 's' : ''} à bord</small></div>
+        <div className="rk-titre"><img className="rk-logo" src="/img/roue_logo.webp" alt="Roue du Kraken" /><small>{presents} pirate{presents > 1 ? 's' : ''} à bord</small></div>
         <button type="button" className="rk-rond" onClick={() => setRegles(true)} aria-label="Règles">?</button>
         <button type="button" className="rk-rond" onClick={() => setChat(true)} aria-label="Écrire aux pirates"><img src="/img/jeu_chat.webp" alt="" /></button>
         <span className="rk-solde"><span className="piece-or" aria-hidden="true" />{fmt(profil.louidors)}</span>
@@ -176,8 +189,8 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
 
       <div className="rk-historique" aria-label="Derniers tirages">
         {etat.historique.length === 0 ? <small>Les derniers tirages s’afficheront ici</small> : etat.historique.map((h, i) => (
-          <span key={i} className={`rk-h z-${h.zone}`} style={{ ['--c' as string]: COULEURS[h.zone] } as CSSProperties}>
-            {estBonus(h.zone) ? COURTS[h.zone][0] : h.zone}{h.mult && (estBonus(h.zone) || h.mult !== Number(h.zone)) ? <b>×{h.mult}</b> : null}
+          <span key={i} className={`rk-h z-${h.zone}`} style={{ ['--c' as string]: COULEURS[h.zone], ['--n' as string]: NEONS[h.zone] } as CSSProperties}>
+            {estBonus(h.zone) ? <img src={IMG_ZONE[h.zone]} alt={NOMS_ZONES[h.zone]} /> : h.zone}{h.mult && (estBonus(h.zone) || h.mult !== Number(h.zone)) ? <b>×{h.mult}</b> : null}
           </span>
         ))}
       </div>
@@ -209,10 +222,11 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
           const gagne = etat.phase === 'resultats' && arretZone === z;
           return (
             <button key={z} type="button" className={`rk-zone z-${z} ${estBonus(z) ? 'bonus' : ''} ${gagne ? 'gagne' : ''} ${v ? 'mise' : ''}`}
-              style={{ ['--c' as string]: COULEURS[z] } as CSSProperties} onClick={() => poser(z)} aria-label={`Miser sur ${NOMS_ZONES[z]}`}>
+              style={{ ['--c' as string]: COULEURS[z], ['--n' as string]: NEONS[z] } as CSSProperties} onClick={() => poser(z)} aria-label={`Miser sur ${NOMS_ZONES[z]}`}>
+              <img className="rk-zone-img" src={IMG_ZONE[z]} alt="" draggable={false} />
               <strong>{estBonus(z) ? COURTS[z] : z}</strong>
-              <small>{PAIE[z]}</small>
-              {boussole?.zone === z && <em className="rk-boost">×{boussole.mult}</em>}
+              <small>{boussole?.zone === z && !estBonus(z) ? `paie ${multBoussole(z, boussole.mult)}:1` : PAIE[z]}</small>
+              {boussole?.zone === z && <em className="rk-boost">×{multBoussole(z, boussole.mult)}</em>}
               {nb > 0 && <span className="rk-nb">{nb}</span>}
               {v > 0 && <span className="rk-jeton-pose" style={{ backgroundImage: `url(${imageJeton(v)})` }}><b>{v >= 1000 ? `${Math.round(v / 100) / 10}k` : v}</b></span>}
             </button>
@@ -275,6 +289,7 @@ function imageJeton(v: number) {
 export function ReglesRoue() {
   return (
     <div className="rk-regles-texte">
+      <img className="rk-animateur" src="/img/roue_animateur.webp" alt="" />
       <h2>La Roue du Kraken</h2>
       <p>Pose tes jetons sur une ou plusieurs cases pendant 15 secondes. Si la roue s’arrête sur ta case, tu gagnes ta mise multipliée, plus ta mise.</p>
       <ul>
@@ -320,27 +335,36 @@ function Roue({ etat, boussole }: { etat: EtatRoue; boussole: { zone: Zone | nul
   const fini = etat.phase === 'bonus' || etat.phase === 'resultats';
   return (
     <div className={`rk-roue ${etat.phase === 'tour' ? 'tourne' : ''}`}>
-      <img className="rk-roue-cadre" src="/img/cadre_gouvernail.webp" alt="" draggable={false} />
+      <img className="rk-roue-cadre" src="/img/roue_cadre.webp" alt="" draggable={false} />
       <svg viewBox="-100 -100 200 200" className="rk-roue-svg" style={{ transform: `rotate(${rot.deg}deg)`, transition: rot.ms ? `transform ${rot.ms}ms cubic-bezier(0.12, 0.6, 0.12, 1)` : 'none' }}>
-        <circle r="99" fill="#2a1a0c" />
+        <defs>
+          <radialGradient id="rk-ombre" r="0.5">
+            <stop offset="0.3" stopColor="#000" stopOpacity="0.55" />
+            <stop offset="0.55" stopColor="#000" stopOpacity="0" />
+            <stop offset="0.86" stopColor="#fff" stopOpacity="0.07" />
+            <stop offset="1" stopColor="#000" stopOpacity="0.5" />
+          </radialGradient>
+        </defs>
+        <circle r="99" fill="#1a1007" />
         {CASES.map((z, i) => {
           const surbrillance = boussole?.zone === z;
           const gagnant = fini && etat.arret === i;
           return (
             <g key={i}>
-              <path d={cheminSegment(i, CASES.length, 30, 95)} fill={COULEURS[z]} stroke={gagnant ? '#fff6c8' : surbrillance ? '#ffe27a' : 'rgba(0,0,0,0.45)'} strokeWidth={gagnant || surbrillance ? 1.4 : 0.5} />
+              <path d={cheminSegment(i, CASES.length, 30, 95)} fill={COULEURS[z]} stroke={gagnant ? '#fff6c8' : surbrillance ? '#ffe27a' : '#8a6420'} strokeWidth={gagnant || surbrillance ? 1.4 : 0.45} />
               {estBonus(z)
-                ? <text transform={`rotate(${i * ANGLE}) translate(0 -63) rotate(-90)`} className="rk-txt bonus" textAnchor="middle" dominantBaseline="central">{COURTS[z]}</text>
-                : <text transform={`rotate(${i * ANGLE}) translate(0 -84)`} className="rk-txt" textAnchor="middle" dominantBaseline="central">{z}</text>}
+                ? <image href={IMG_ZONE[z]} width="11" height="11" x="-5.5" y="-5.5" transform={`rotate(${i * ANGLE}) translate(0 -84)`} />
+                : <text transform={`rotate(${i * ANGLE}) translate(0 -84)`} className={`rk-txt ${surbrillance ? 'booste' : ''}`} textAnchor="middle" dominantBaseline="central" style={{ fill: surbrillance ? '#fff3c8' : NEONS[z] }}>{surbrillance ? multBoussole(z, boussole!.mult) : z}</text>}
+              {estBonus(z) && <text transform={`rotate(${i * ANGLE}) translate(0 -58) rotate(-90)`} className="rk-txt bonus" textAnchor="middle" dominantBaseline="central">{COURTS[z]}</text>}
             </g>
           );
         })}
         {CASES.map((_, i) => { const t = ((i + 0.5) * ANGLE * Math.PI) / 180; return <circle key={`c${i}`} cx={96.5 * Math.sin(t)} cy={-96.5 * Math.cos(t)} r="1.3" fill="#f6d27a" />; })}
-        <circle r="96" fill="none" stroke="#c9952e" strokeWidth="1.2" />
+        <circle r="96" fill="url(#rk-ombre)" stroke="#c9952e" strokeWidth="1.2" />
         <circle r="30" fill="#140c05" stroke="#c9952e" strokeWidth="1.6" />
       </svg>
-      <div className="rk-moyeu"><img src="/img/objet_kraken_poche.webp" alt="" /></div>
-      <div className="rk-pointeur" aria-hidden="true" />
+      <img className="rk-moyeu" src="/img/roue_moyeu.webp" alt="" draggable={false} />
+      <img className="rk-pointeur" src="/img/roue_pointeur.webp" alt="" draggable={false} />
     </div>
   );
 }
@@ -351,9 +375,9 @@ function Boussole({ zone, mult, debut, maintenant }: { zone: Zone | null; mult: 
   const revele = t > DELAI_BOUSSOLE * 0.55;
   return (
     <div className={`rk-boussole ${revele ? 'revele' : ''}`}>
-      <div className="rk-boussole-cadran"><i style={{ transform: `rotate(${revele ? 0 : t * 0.9}deg)` }} /></div>
+      <div className="rk-boussole-cadran"><img className="rk-aiguille" src="/img/roue_boussole_aiguille.webp" alt="" style={{ transform: `translate(-50%, -50%) rotate(${revele ? 0 : t * 0.9}deg)` }} /></div>
       {revele && (zone
-        ? <p style={{ ['--c' as string]: COULEURS[zone] } as CSSProperties}><span>{NOMS_ZONES[zone]}</span><b>×{mult}</b></p>
+        ? <p style={{ ['--c' as string]: NEONS[zone] } as CSSProperties}><img src={IMG_ZONE[zone]} alt="" /><span>{estBonus(zone) ? `${NOMS_ZONES[zone]} ×${mult}` : `Le ${zone} passe à`}</span><b>×{multBoussole(zone, mult)}</b></p>
         : <p className="vide"><span>La Boussole ne trouve rien</span></p>)}
     </div>
   );
@@ -364,7 +388,7 @@ function Resultat({ etat, moi, zone, totalMoi }: { etat: EtatRoue; moi: string; 
   const h = etat.historique[0];
   return (
     <div className="rk-resultat" key={etat.manche}>
-      <p className="rk-resultat-case" style={{ ['--c' as string]: COULEURS[zone] } as CSSProperties}>
+      <p className="rk-resultat-case" style={{ ['--c' as string]: COULEURS[zone], ['--n' as string]: NEONS[zone] } as CSSProperties}>
         {estBonus(zone) ? NOMS_ZONES[zone] : zone}{h?.mult && (estBonus(zone) || h.mult !== Number(zone)) ? <b> ×{h.mult}</b> : null}
       </p>
       {gain > 0 ? <p className="rk-gain"><strong>GAGNÉ</strong><em>+{fmt(gain)}</em><Pieces /></p>
@@ -386,6 +410,18 @@ function SceneBonus({ etat, bonus, moi, maintenant, boussole, choisir }: {
   const boost = boussole && boussole.zone === bonus.type ? boussole.mult : 1;
   const t = maintenant - etat.debut;
   let contenu: ReactNode;
+  if (t < 0) {
+    return (
+      <div className={`rk-bonus rk-intro b-${bonus.type}`}>
+        <span className="rk-intro-rayons" aria-hidden="true" />
+        <img className="rk-intro-img" src={IMG_ZONE[bonus.type]} alt="" />
+        <h2>{NOMS_ZONES[bonus.type]}</h2>
+        {boost > 1 && <p className="rk-bonus-boost">Boussole ×{boost}</p>}
+        <p className="rk-bonus-info">{participe ? 'Tu as misé dessus : prépare-toi !' : 'Tu n’as pas misé dessus : tu regardes.'}</p>
+        <p className="rk-intro-decompte">{Math.ceil(-t / 1000)}</p>
+      </div>
+    );
+  }
   if (bonus.type === 'piece') contenu = <ScenePiece b={bonus} t={t} />;
   else if (bonus.type === 'abysses') contenu = <SceneAbysses b={bonus} t={t} />;
   else if (bonus.type === 'chasse') contenu = <SceneChasse b={bonus} moi={moi} participe={participe} choisir={choisir} t={t} />;
@@ -401,12 +437,12 @@ function SceneBonus({ etat, bonus, moi, maintenant, boussole, choisir }: {
 }
 
 function ScenePiece({ b, t }: { b: Extract<EtatBonus, { type: 'piece' }>; t: number }) {
-  const lancee = t > 600, tombee = t > 3600;
+  const lancee = t > 800, tombee = t > 4800;
   return (
     <div className="rk-piece-scene">
       <div className={`rk-face f-crane ${tombee && b.resultat === 'crane' ? 'gagne' : ''} ${tombee && b.resultat !== 'crane' ? 'perd' : ''}`}><span>Crâne</span><b>×{b.faces.crane}</b></div>
       <div className={`rk-piece ${lancee && !tombee ? 'vole' : ''} ${tombee ? `tombe-${b.resultat}` : ''}`}>
-        <span className="cote c-crane">☠</span><span className="cote c-couronne">♛</span>
+        <img className="cote c-crane" src="/img/roue_piece_crane.webp" alt="Crâne" /><img className="cote c-couronne" src="/img/roue_piece_couronne.webp" alt="Couronne" />
       </div>
       <div className={`rk-face f-couronne ${tombee && b.resultat === 'couronne' ? 'gagne' : ''} ${tombee && b.resultat !== 'couronne' ? 'perd' : ''}`}><span>Couronne</span><b>×{b.faces.couronne}</b></div>
       {tombee && <p className="rk-bonus-mult">×{b.faces[b.resultat]}</p>}
@@ -416,7 +452,7 @@ function ScenePiece({ b, t }: { b: Extract<EtatBonus, { type: 'piece' }>; t: num
 
 /** Abysses : un boulet descend 15 rangées de rochers ; position calculée à partir du chemin tiré par le serveur. */
 function SceneAbysses({ b, t }: { b: Extract<EtatBonus, { type: 'abysses' }>; t: number }) {
-  const RANGS = 15, DX = 6, DY = 5.4, DESCENTE = 2400;
+  const RANGS = 15, DX = 6, DY = 5.4, DESCENTE = 3300;
   const k = Math.min(b.chutes.length - 1, Math.max(0, Math.floor(t / DELAI_ABYSSES_CHUTE)));
   const tc = t - k * DELAI_ABYSSES_CHUTE;
   const chute = b.chutes[k];
@@ -448,7 +484,7 @@ function SceneAbysses({ b, t }: { b: Extract<EtatBonus, { type: 'abysses' }>; t:
             </g>
           );
         })}
-        <circle cx={bx} cy={by - 2.2} r="1.9" className="rk-boulet" />
+        <image href="/img/roue_boulet.webp" x={bx - 2.4} y={by - 4.6} width="4.8" height="4.8" />
       </svg>
       {doublesVus > 0 && !fini && <p className="rk-bonus-info">Tout est doublé ×{2 ** doublesVus} ! Le boulet retombe…</p>}
       {fini && <p className="rk-bonus-mult">×{b.mult}</p>}
@@ -469,7 +505,7 @@ function SceneChasse({ b, moi, participe, choisir, t }: {
         {Array.from({ length: 24 }, (_, i) => (
           <button key={i} type="button" disabled={!participe || !!revele} onClick={() => choisir(i)}
             className={`rk-croix ${mien === i ? 'mienne' : ''} ${revele ? 'revele' : ''}`} style={{ animationDelay: revele ? `${(i % 6) * 60 + Math.floor(i / 6) * 40}ms` : undefined }}>
-            {revele ? <b>×{b.grille![i]}</b> : <span>✕</span>}
+            {revele ? <b>×{b.grille![i]}</b> : <img src="/img/roue_chasse_croix.webp" alt="Croix" />}
             {!revele && nbChoix(i) > 0 && <small>{nbChoix(i)}</small>}
           </button>
         ))}
@@ -493,19 +529,19 @@ function SceneTempete({ b, moi, participe, choisir, debut, echeance }: {
         <svg viewBox="-100 -100 200 200" style={{ transform: `rotate(${rot.deg}deg)`, transition: rot.ms ? `transform ${rot.ms}ms cubic-bezier(0.12, 0.6, 0.12, 1)` : 'none' }}>
           {b.roue.map((m, i) => (
             <g key={i}>
-              <path d={cheminSegment(i, n, 34, 96)} fill={i % 2 ? '#1b2340' : '#2b1838'} stroke="#c9952e" strokeWidth="0.6" />
+              <path d={cheminSegment(i, n, 34, 96)} fill={m >= 100 ? '#4a0f18' : i % 2 ? '#121a30' : '#1e1028'} stroke="#c9952e" strokeWidth="0.6" />
               <text transform={`rotate(${i * a}) translate(0 -76)`} textAnchor="middle" dominantBaseline="central" className={`rk-txt ${m >= 100 ? 'gros' : ''}`}>{m}</text>
             </g>
           ))}
           <circle r="34" fill="#0b0f1e" stroke="#c9952e" strokeWidth="1.4" />
         </svg>
-        <img className="rk-tempete-moyeu" src="/img/pli_kraken.webp" alt="" />
+        <img className="rk-tempete-moyeu" src="/img/roue_tempete_moyeu.webp" alt="" />
         {DRAPEAUX.map((d) => {
           const ang = { rouge: 0, bleu: 11, or: 21 }[d] * a;
           const c = caseDrapeau(b, d);
           return (
             <div key={d} className={`rk-drapeau ${mien === d ? 'mien' : ''}`} style={{ transform: `rotate(${ang}deg)`, ['--c' as string]: COULEUR_DRAPEAU[d] } as CSSProperties}>
-              <i />{arrete && c !== null && <b style={{ transform: `rotate(${-ang}deg)` }}>×{b.roue[c]}</b>}
+              <img src={`/img/roue_drapeau_${d}.webp`} alt="" />{arrete && c !== null && <b style={{ transform: `rotate(${-ang}deg)` }}>×{b.roue[c]}</b>}
             </div>
           );
         })}
@@ -515,7 +551,7 @@ function SceneTempete({ b, moi, participe, choisir, debut, echeance }: {
           <div className="rk-drapeaux">
             {DRAPEAUX.map((d) => (
               <button key={d} type="button" className={mien === d ? 'choisi' : ''} style={{ ['--c' as string]: COULEUR_DRAPEAU[d] } as CSSProperties} onClick={() => choisir(d)}>
-                <i />{NOM_DRAPEAU[d]}
+                <img src={`/img/roue_drapeau_${d}.webp`} alt="" />{NOM_DRAPEAU[d]}
               </button>
             ))}
           </div>

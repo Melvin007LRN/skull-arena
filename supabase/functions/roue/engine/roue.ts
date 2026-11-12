@@ -23,11 +23,13 @@ export const CASES: readonly Zone[] = [
 export const DELAI_MISES = 15000;
 export const DELAI_BOUSSOLE = 3500;
 export const DELAI_TOUR = 7500;
-export const DELAI_PIECE = 6000;
-export const DELAI_ABYSSES_CHUTE = 3200;
-export const DELAI_CHOIX = 10000;
-export const DELAI_REVELE = 5500;
-export const DELAI_TEMPETE_TOUR = 7000;
+/** Grande annonce du mini-jeu avant qu'il commence. */
+export const DELAI_INTRO_BONUS = 4500;
+export const DELAI_PIECE = 8000;
+export const DELAI_ABYSSES_CHUTE = 4200;
+export const DELAI_CHOIX = 13000;
+export const DELAI_REVELE = 6500;
+export const DELAI_TEMPETE_TOUR = 9000;
 export const DELAI_RESULTATS = 6000;
 /** Un joueur reste « présent » tant qu'il a donné signe de vie depuis moins de ce délai. */
 export const PRESENCE = 60000;
@@ -214,7 +216,9 @@ export function avancer(e: EtatRoue, s: SecretRoue, h: Hasard, maintenant: numbe
 }
 
 function lancerBonus(e: EtatRoue, s: SecretRoue, z: Bonus, h: Hasard, maintenant: number): void {
-  e.phase = 'bonus'; e.debut = maintenant;
+  // Le mini-jeu commence après sa grande annonce : debut est dans le futur pendant l'intro.
+  e.phase = 'bonus'; e.debut = maintenant + DELAI_INTRO_BONUS;
+  maintenant = e.debut;
   if (z === 'piece') {
     let a = pondere(h, PIECE_MULTS), b = pondere(h, PIECE_MULTS);
     if (a === b) b = pondere(h, PIECE_MULTS);
@@ -237,7 +241,7 @@ function lancerBonus(e: EtatRoue, s: SecretRoue, z: Bonus, h: Hasard, maintenant
       break;
     }
     e.bonus = { type: 'abysses', base, chutes, doubles, mult };
-    e.echeance = maintenant + DELAI_ABYSSES_CHUTE * chutes.length + 2500;
+    e.echeance = maintenant + DELAI_ABYSSES_CHUTE * chutes.length + 3000;
   } else if (z === 'chasse') {
     s.grille = melanger(h, [...CHASSE_MULTS]);
     e.bonus = { type: 'chasse', etape: 'choix', choix: {}, grille: null };
