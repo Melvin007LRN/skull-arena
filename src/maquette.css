@@ -524,7 +524,10 @@ body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bot
 .jeu-arene.nombreux .adv-dos { display: block !important; transform: scale(.72); transform-origin: 0 100%; }
 .adv-dos img.dos-image, .adv-dos .dos-perso { width: 30px !important; aspect-ratio: 5 / 7; object-fit: cover; border: 1px solid rgba(255,215,120,.6); }
 .carte-volante { aspect-ratio: 5 / 7; object-fit: cover; }
-.adversaire .adv-dos { z-index: 3 !important; left: 74% !important; top: 30% !important; }
+.adversaire .adv-dos { z-index: 1 !important; left: auto !important; right: 64% !important; top: 8px !important; }
+.adversaire .adv-avatar { z-index: 4 !important; }
+.adversaire .adv-ruban { z-index: 5 !important; }
+.adv-dos img.dos-image { left: auto !important; right: 0; transform-origin: 50% 100%; }
 .adv-dos img.dos-image { width: 32px !important; box-shadow: 0 3px 6px rgba(0,0,0,.7); }
 
 /* =================== Cadres peints autour de l'avatar =================== */
@@ -549,4 +552,4 @@ body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bot
 /* Petit écran : l'écusson Jouer de la barre ne touche plus les boutons au-dessus */
 .ecran-accueil.cr { padding-bottom: calc(90px + max(0px, calc(env(safe-area-inset-bottom) - 26px))) !important; }
 /* La main reste entre l'avatar (à gauche) et les boutons cadeau / chat (à droite) */
-.main-eventail { left: max(70px, calc(var(--sa-g, 0px) + 60px)) !important; right: max(166px, calc(var(--sa-d, 0px) + 156px)) !important; width: auto !important; }
+.main-eventail { left: 100px !important; right: 166px !important; width: auto !important; }

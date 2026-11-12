@@ -524,7 +524,9 @@ export function TableJeu(p: PropsTable) {
   const enMise = vue.phase === 'mise' && decompte === 0;
   // Écart entre les cartes : jamais plus large que l'écran (toutes les cartes restent visibles, même sur un petit iPhone).
   const largeurCarte = Math.min(enMise ? 128 : 132, Math.max(enMise ? 62 : 64, tailleTable.h * (enMise ? 0.26 : 0.29)));
-  const ecartMax = n > 1 ? (tailleTable.l - largeurCarte - 2 * MARGE_MAIN) / (n - 1) : 99;
+  // Place libre entre mon avatar (à gauche) et les boutons cadeau / chat (à droite) : voir .main-eventail dans maquette.css
+  const placeMain = tailleTable.l - MAIN_GAUCHE - MAIN_DROITE;
+  const ecartMax = n > 1 ? (placeMain - largeurCarte * 2.2) / (n - 1) : 99;
   const ecart = Math.max(18, Math.min(enMise ? 92 : 64, (enMise ? 720 : 620) / Math.max(n, 1), ecartMax));
   const angleMax = Math.min(28, n * 3.2);
 
@@ -1429,7 +1431,8 @@ function centreDans(racine: HTMLElement, el: Element | null | undefined): { x: n
   return { x: px - b.left, y: py - b.top };
 }
 /** Marge de chaque côté de la main (centrée) : la 1re carte ne passe pas sous mon avatar en bas à gauche. */
-const MARGE_MAIN = 142;
+const MAIN_GAUCHE = 100;
+const MAIN_DROITE = 166;
 
 type TypeEvenement = 'regicide' | 'roi' | 'abordage' | 'kraken' | 'baleine';
 interface GrandEvenement { type: TypeEvenement; /** Classe d'animation, si différente du type. */ classe?: string; titre: string; texte: string; carte: string; victimes: string[]; son: 'regicide' | 'roiFrappe' | 'abordageFort' | 'krakenFort' | 'baleineForte' }
