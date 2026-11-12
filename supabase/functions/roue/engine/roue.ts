@@ -55,11 +55,11 @@ function melanger<T>(h: Hasard, t: T[]): T[] {
   return t;
 }
 
-/** Boussole : la case désignée (ou aucune) et son multiplicateur. */
+/** Boussole : elle désigne une case environ 4 tours sur 10 (sinon rien), avec un multiplicateur de ×2 à ×50. */
 export const BOUSSOLE_ZONES: ReadonlyArray<readonly [Zone | null, number]> = [
-  ['1', 86], ['2', 92], ['5', 52], ['10', 35], ['piece', 60], ['abysses', 60], ['chasse', 60], ['tempete', 60], [null, 495],
+  ['1', 86], ['2', 92], ['5', 52], ['10', 35], ['piece', 60], ['abysses', 60], ['chasse', 60], ['tempete', 60], [null, 758],
 ];
-export const BOUSSOLE_MULTS: ReadonlyArray<readonly [number, number]> = [[2, 35], [3, 25], [5, 20], [10, 12], [25, 6], [50, 2]];
+export const BOUSSOLE_MULTS: ReadonlyArray<readonly [number, number]> = [[2, 30], [3, 24], [5, 20], [10, 15], [25, 7], [50, 4]];
 
 /** Pièce maudite : multiplicateurs possibles de chaque face. */
 export const PIECE_MULTS: ReadonlyArray<readonly [number, number]> = [

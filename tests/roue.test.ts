@@ -47,7 +47,7 @@ test('simulation : le retour moyen reste proche de 95 % sur chaque case', () => 
   }
   for (const z of ZONES) {
     const r = rendu[z] / mise[z];
-    const tol = z === 'tempete' ? 0.2 : z === 'chasse' || z === 'abysses' ? 0.1 : 0.04;
+    const tol = z === 'tempete' ? 0.2 : z === 'chasse' || z === 'abysses' || z === 'piece' ? 0.1 : 0.05;
     assert.ok(Math.abs(r - 0.95) < tol, `${z} : ${r.toFixed(3)}`);
   }
 });

@@ -54,7 +54,8 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
   const rapide = etat?.phase === 'bonus' || etat?.phase === 'boussole';
   const maintenant = useHorloge(rapide);
   const [jeton, setJeton] = useState<number>(() => { try { return Number(localStorage.getItem('roue-jeton')) || 10; } catch { return 10; } });
-  const [enAttente, setEnAttente] = useState<Partial<Record<Zone, number>>>({});
+  /** Ce que je crois avoir misé sur chaque case (affiché tout de suite, sans attendre le serveur). */
+  const [local, setLocal] = useState<Partial<Record<Zone, number>>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [chat, setChat] = useState(false);
   const [regles, setRegles] = useState(false);
@@ -67,8 +68,11 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
   const max = miseMaxRoue(niveau);
 
   const mesMises = etat?.mises[profil.id]?.zones ?? {};
-  const mise = (z: Zone) => (mesMises[z] ?? 0) + (enAttente[z] ?? 0);
-  const totalMoi = somme(mesMises) + somme(enAttente);
+  // On affiche le plus grand des deux : rien ne recule ni ne compte deux fois quand la réponse du serveur arrive.
+  const mise = (z: Zone) => Math.max(mesMises[z] ?? 0, local[z] ?? 0);
+  const totalMoi = ZONES.reduce((t, z) => t + mise(z), 0);
+  /** Jetons posés mais pas encore débités. */
+  const nonDebite = ZONES.reduce((t, z) => t + Math.max(0, (local[z] ?? 0) - (mesMises[z] ?? 0)), 0);
 
   // Sons, solde et « Rejouer » au fil des phases.
   useEffect(() => {
@@ -89,6 +93,11 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
     }
   }, [etat, profil.id, recharger]);
 
+  // Dès que les mises ferment, mes jetons « locaux » laissent la place à ceux du serveur.
+  useEffect(() => {
+    if (etat && etat.phase !== 'mises' && etat.phase !== 'attente') setLocal({});
+  }, [etat?.phase, etat?.manche]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Filet de sécurité : si une minuterie a expiré sans que le serveur avance, on le relance.
   useEffect(() => {
     if (!etat?.echeance) return;
@@ -99,17 +108,18 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
   if (!etat) return <EcranAttente texte="La roue se prépare" decor="taverne" />;
 
   const restant = etat.echeance ? Math.max(0, etat.echeance - maintenant) : 0;
-  const misesOuvertes = etat.phase === 'attente' || (etat.phase === 'mises' && restant > 400) || (etat.phase === 'resultats' && restant === 0);
+  const misesOuvertes = etat.phase === 'attente' || (etat.phase === 'mises' && restant > 1200) || (etat.phase === 'resultats' && restant === 0);
 
   /** Pose le jeton choisi sur une case ; les jetons partent au serveur par petits paquets. */
   function poser(z: Zone) {
     debloquerSon();
     if (!misesOuvertes) { setMessage('Les mises sont fermées, attends le prochain tour.'); return; }
-    const dispo = profil.louidors - somme(enAttente);
+    const dispo = profil.louidors - nonDebite;
     const ajout = Math.min(jeton, dispo, max - mise(z));
     if (ajout <= 0) { setMessage(mise(z) >= max ? `Mise max à ton niveau : ${fmt(max)} par case` : 'Pas assez de Louidors'); return; }
     setMessage(null); son.piece();
-    setEnAttente((a) => ({ ...a, [z]: (a[z] ?? 0) + ajout }));
+    const nouveau = mise(z) + ajout;
+    setLocal((l) => ({ ...l, [z]: Math.max(l[z] ?? 0, nouveau) }));
     const e = envoi.current;
     e.lot[z] = (e.lot[z] ?? 0) + ajout;
     if (e.t) clearTimeout(e.t);
@@ -120,10 +130,9 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
     const paquet = lot ?? e.lot;
     if (!lot) { e.lot = {}; e.t = null; }
     if (somme(paquet) <= 0) return;
-    if (lot) setEnAttente((a) => ajouter(a, paquet)); // sinon déjà affiché en attente
+    if (lot) { const base = Object.fromEntries(ZONES.map((z) => [z, mise(z)])) as Record<Zone, number>; setLocal((l) => { const n = { ...l }; for (const [z, v] of Object.entries(paquet) as Array<[Zone, number]>) n[z] = Math.max(n[z] ?? 0, base[z] + v); return n; }); }
     try { await appelRoue('miser', { table_id: id, zones: paquet }); recharger(); }
-    catch (err) { setMessage((err as Error).message); }
-    finally { setEnAttente((a) => retirer(a, paquet)); }
+    catch (err) { setMessage((err as Error).message); setLocal((l) => retirer(l, paquet)); }
   }
   function rejouer() {
     if (!dernier) return;
@@ -133,16 +142,16 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
     envoyerLot(lot);
   }
   function doubler() {
-    const actuel = { ...mesMises } as Partial<Record<Zone, number>>;
-    for (const [z, v] of Object.entries(enAttente) as Array<[Zone, number]>) actuel[z] = (actuel[z] ?? 0) + v;
+    const actuel = Object.fromEntries(ZONES.map((z) => [z, mise(z)]).filter(([, v]) => (v as number) > 0)) as Partial<Record<Zone, number>>;
     const lot: Partial<Record<Zone, number>> = {};
     for (const [z, v] of Object.entries(actuel) as Array<[Zone, number]>) { const a = Math.min(v ?? 0, max - (v ?? 0)); if (a > 0) lot[z] = a; }
-    if (somme(lot) > profil.louidors) { setMessage('Pas assez de Louidors pour doubler'); return; }
+    if (somme(lot) > profil.louidors - nonDebite) { setMessage('Pas assez de Louidors pour doubler'); return; }
     debloquerSon(); son.piece();
     envoyerLot(lot);
   }
   async function toutRetirer() {
     setMessage(null);
+    setLocal({});
     try { await appelRoue('retirer', { table_id: id }); recharger(); }
     catch (err) { setMessage((err as Error).message); }
   }
@@ -186,13 +195,11 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
           : etat.phase === 'tour' ? 'La roue tourne…'
           : etat.phase === 'bonus' ? `Mini-jeu : ${NOMS_ZONES[etat.bonus!.type]}`
           : restant > 0 ? 'Nouveau tour dans un instant' : 'Pose un jeton pour relancer'}</p>
-        {etat.echeance && restant > 0 && etat.phase !== 'resultats' && <div className="rk-minuterie"><i style={{ width: `${Math.min(100, (restant / total) * 100)}%` }} /></div>}
-        {parieurs.length > 0 && (
-          <div className="rk-parieurs">
-            {parieurs.slice(0, 7).map(([j, m]) => <span key={j} title={m.pseudo}><Avatar photo={m.photo} taille={24} /></span>)}
-            {parieurs.length > 7 && <small>+{parieurs.length - 7}</small>}
-          </div>
-        )}
+        <div className="rk-minuterie" style={{ visibility: etat.echeance && restant > 0 && etat.phase !== 'resultats' ? 'visible' : 'hidden' }}><i style={{ width: `${Math.min(100, (restant / total) * 100)}%` }} /></div>
+        <div className="rk-parieurs">
+          {parieurs.slice(0, 7).map(([j, m]) => <span key={j} title={m.pseudo}><Avatar photo={m.photo} taille={24} /></span>)}
+          {parieurs.length > 7 && <small>+{parieurs.length - 7}</small>}
+        </div>
       </div>
 
       <section className={`rk-plateau ${misesOuvertes ? 'ouvert' : ''}`} aria-label="Cases où miser">
@@ -234,11 +241,11 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
           ) : (
             <>
               <button type="button" className="rk-action" disabled={!misesOuvertes || totalMoi === 0} onClick={doubler} aria-label="Doubler mes mises">×2</button>
-              <button type="button" className="rk-action" disabled={etat.phase !== 'mises' || restant < 400 || somme(mesMises) === 0} onClick={toutRetirer} aria-label="Retirer mes mises">↺</button>
+              <button type="button" className="rk-action" disabled={etat.phase !== 'mises' || restant < 1200 || somme(mesMises) === 0} onClick={toutRetirer} aria-label="Retirer mes mises">↺</button>
             </>
           )}
         </div>
-        {totalMoi > 0 && <p className="rk-total">Ta mise : <b>{fmt(totalMoi)}</b></p>}
+        <p className="rk-total" style={{ visibility: totalMoi > 0 ? 'visible' : 'hidden' }}>Ta mise : <b>{fmt(totalMoi)}</b></p>
       </div>
 
       {etat.phase === 'bonus' && etat.bonus && (
@@ -252,11 +259,6 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
   );
 }
 
-const ajouter = (a: Partial<Record<Zone, number>>, b: Partial<Record<Zone, number>>) => {
-  const n = { ...a };
-  for (const [z, v] of Object.entries(b) as Array<[Zone, number]>) n[z] = (n[z] ?? 0) + v;
-  return n;
-};
 const retirer = (a: Partial<Record<Zone, number>>, b: Partial<Record<Zone, number>>) => {
   const n = { ...a };
   for (const [z, v] of Object.entries(b) as Array<[Zone, number]>) { const r = (n[z] ?? 0) - v; if (r > 0) n[z] = r; else delete n[z]; }

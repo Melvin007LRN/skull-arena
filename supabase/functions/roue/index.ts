@@ -47,7 +47,7 @@ async function action(moi: string, c: Record<string, unknown>) {
       await modifier(id, (e) => { signaler(e, moi, Date.now()); });
       return { id };
     }
-    case 'present': return modifier(String(c.table_id), (e) => { signaler(e, moi, Date.now()); });
+    case 'present': return modifier(String(c.table_id), (e) => { if (Date.now() - (e.presents[moi] ?? 0) > 25000) signaler(e, moi, Date.now()); });
     case 'miser': return miser(moi, String(c.table_id), c.zones as Record<string, number>);
     case 'retirer': return retirer(moi, String(c.table_id));
     case 'choisir': return modifier(String(c.table_id), (e) => { choisir(e, moi, c.choix as number | Drapeau, Date.now()); });
@@ -81,23 +81,32 @@ async function modifier(id: string, f: (e: EtatRoue, s: SecretRoue) => void) {
     if (!t) throw new Refus('La roue est introuvable.');
     const s = ok(await db.from('roue_secrets').select('secret').eq('table_id', id).maybeSingle()) as { secret: SecretRoue } | null;
     const etat = t.etat, secret = s?.secret ?? { grille: null };
-    const avant = etat.phase, manche = etat.manche;
+    const avant = etat.phase, manche = etat.manche, echeanceAvant = etat.echeance;
+    const empreinte = JSON.stringify(etat) + JSON.stringify(secret);
     f(etat, secret);
+    // Rien n'a changé (minuterie pas encore expirée, signe de vie récent) : on n'écrit pas, pour ne pas gêner les autres.
+    if (JSON.stringify(etat) + JSON.stringify(secret) === empreinte) return { ok: true };
     const ecrit = ok(await db.rpc('roue_ecrire', { p_table: id, p_version: t.version, p_etat: etat, p_secret: secret })) as boolean;
     if (!ecrit) { await dormir(50 + Math.random() * 120); continue; }
     if (avant !== 'resultats' && etat.phase === 'resultats' && etat.manche === manche) {
       for (const g of gainsRoue(etat)) {
-        try { await db.rpc('louidors_ajuster', { p_joueur: g.joueur, p_delta: g.montant, p_table: id, p_raison: 'roue-gain' }); } catch (e) { console.error('gain', e); }
+        for (let k = 0; k < 3; k++) {
+          const r = await db.rpc('louidors_ajuster', { p_joueur: g.joueur, p_delta: g.montant, p_table: id, p_raison: 'roue-gain' });
+          if (!r.error) break;
+          console.error('gain', g, r.error);
+          await dormir(300);
+        }
       }
     }
-    if (etat.echeance) enArrierePlan(surveiller(id, etat.echeance));
+    // Une seule minuterie par échéance : seulement quand celle-ci vient de changer.
+    if (etat.echeance && etat.echeance !== echeanceAvant) enArrierePlan(surveiller(id, etat.echeance));
     return { ok: true };
   }
   throw new Refus('Trop de monde en même temps, réessaie.');
 }
 
 /** Fait tourner la roue quand une minuterie expire (si personne ne l'a déjà fait). */
-async function surveiller(id: string, echeance: number) {
+async function surveiller(id: string, echeance: number): Promise<void> {
   const attente = echeance - Date.now() + 200;
   if (attente > 40000) return;
   await dormir(Math.max(0, attente));
