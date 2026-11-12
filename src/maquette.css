@@ -405,3 +405,30 @@ img.ico-texte { display: inline-block; width: 1.35em; height: 1.35em; object-fit
 .ecran-accueil .bouton-or.cr-jouer.cr-jouer-bj, .ecran-accueil .bouton-or.cr-jouer { box-shadow: none !important; border: 0 !important; outline: 0 !important; }
 .cr-affiche.blackjack img { filter: brightness(1.35) saturate(1.1); }
 .cr-affiche.blackjack img { object-position: 18% 35% !important; }
+
+/* =================== ACCUEIL v5 : cadres comme le bandeau du jeu (fond sombre teinté, filet d'or) =================== */
+.ecran-accueil.cr > .cr-jeu { gap: 6px !important; }
+.ecran-accueil .bouton-or.cr-jouer, .ecran-accueil .bouton-or.cr-jouer.cr-jouer-bj, .cr-secondaires .plaque, .cr-modes button {
+  aspect-ratio: auto !important; border: 2px solid rgba(201,154,61,.8) !important; border-radius: 12px !important; clip-path: none !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,230,170,.15) !important; filter: none !important; }
+.cr-modes button::before, .cr-modes button.actif::before { display: none !important; }
+/* JOUER : grand cadre, fond ambre sombre */
+.ecran-accueil .bouton-or.cr-jouer { width: 100%; height: 72px; padding: 0 16px !important;
+  background: linear-gradient(180deg, rgba(120,72,10,.92), rgba(52,30,4,.94)) !important; border-color: #e0b04e !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.6), 0 0 18px rgba(255,170,40,.25), inset 0 1px 0 rgba(255,230,170,.3) !important; }
+.ecran-accueil .bouton-or.cr-jouer.cr-jouer-bj { background: linear-gradient(180deg, rgba(130,16,22,.92), rgba(56,6,10,.94)) !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.6), 0 0 18px rgba(255,50,60,.25), inset 0 1px 0 rgba(255,200,200,.25) !important; }
+.ecran-accueil .bouton-or.cr-jouer.cr-jouer-bj { color: #fff0ee !important; text-shadow: 0 2px 0 #3a0404, 0 0 6px #ff7a7a, 0 0 14px #ff2a3a, 0 0 26px rgba(255,42,58,.8) !important; }
+/* Petits boutons : même cadre, fond teinté */
+.cr-secondaires { gap: 6px !important; }
+.cr-secondaires .plaque { height: 48px; padding: 0 8px; }
+.cr-secondaires .plaque.p-bleue { background: linear-gradient(180deg, rgba(22,58,120,.92), rgba(8,22,52,.94)) !important; }
+.cr-secondaires .plaque.p-rouge { background: linear-gradient(180deg, rgba(120,18,22,.92), rgba(52,6,8,.94)) !important; }
+.cr-secondaires .plaque.p-violet { background: linear-gradient(180deg, rgba(76,26,120,.92), rgba(30,8,52,.94)) !important; }
+/* Choix du jeu */
+.cr-modes { gap: 6px !important; }
+.cr-modes button { height: 44px; padding: 0 8px; background: linear-gradient(180deg, rgba(20,18,16,.9), rgba(8,8,8,.94)) !important; border-color: rgba(201,154,61,.45) !important; }
+.cr-modes button.actif { background: linear-gradient(180deg, rgba(120,72,10,.92), rgba(52,30,4,.94)) !important; border-color: #e0b04e !important; }
+.cr-modes button.actif.m-blackjack { background: linear-gradient(180deg, rgba(130,16,22,.92), rgba(56,6,10,.94)) !important; }
+.cr-affiche { height: 64px; }
+@media (max-height: 760px) { .ecran-accueil .bouton-or.cr-jouer { height: 60px; } .cr-secondaires .plaque, .cr-modes button { height: 42px; } }
