@@ -97,6 +97,34 @@ export const BJ = {
   banniere: I('banniere_mode_bj'), roue: I('cadre_gouvernail'),
 };
 
+/** Trou de chaque cadre peint (centre x, centre y, rayon), en fraction de la largeur de l'image : la photo s'y place exactement. */
+export const CADRE_TROU: Record<string, [number, number, number]> = {
+  c_brasier: [0.4819, 0.5003, 0.2342],
+  c_canard: [0.4548, 0.5712, 0.223],
+  c_chope: [0.4973, 0.5143, 0.2674],
+  c_cocotier: [0.5436, 0.5348, 0.246],
+  c_dauphin: [0.5327, 0.5482, 0.2287],
+  c_goeland: [0.4567, 0.6092, 0.2005],
+  c_gouvernail: [0.5016, 0.5255, 0.2526],
+  c_pavillon: [0.5016, 0.5383, 0.2613],
+  c_requin: [0.4823, 0.5783, 0.2346],
+  c_singe: [0.4519, 0.6363, 0.1898],
+  c_tentacules: [0.4962, 0.5317, 0.2275],
+  c_tonneau: [0.53, 0.4912, 0.2346],
+  g_ailes: [0.4922, 0.4908, 0.2115],
+  g_canons: [0.5073, 0.5459, 0.2336],
+  g_crane: [0.5228, 0.599, 0.1879],
+  g_fantome: [0.5365, 0.5856, 0.2008],
+  g_kraken: [0.5098, 0.5962, 0.2102],
+  g_lauriers: [0.4782, 0.5062, 0.2424],
+  g_ombres: [0.4961, 0.4978, 0.225],
+  g_poseidon: [0.4624, 0.5306, 0.227],
+  g_tempete: [0.5022, 0.5592, 0.2157],
+  g_tresor: [0.5339, 0.526, 0.2272],
+  g_vaisseau: [0.5175, 0.5095, 0.2408],
+  g_vaudou: [0.4948, 0.5621, 0.2311],
+};
+
 /** Cadres d'avatar peints (achetés ou gagnés). */
 export const CADRE_PEINT: Record<string, string> = Object.fromEntries(
   ['c_chope', 'c_canard', 'c_dauphin', 'c_cocotier', 'c_pavillon', 'c_tonneau', 'c_goeland', 'c_singe', 'c_requin', 'c_tentacules', 'c_gouvernail', 'c_brasier',

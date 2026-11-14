@@ -566,3 +566,10 @@ body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bot
 .cr-modes { grid-template-columns: repeat(3, 1fr) !important; }
 .cr-modes button { padding: 0 4px !important; white-space: nowrap; }
 .cr-modes .icone-img { width: 20px; height: 20px; }
+
+/* Cadres peints v2 : la photo (66 %) est centrée et le cadre est placé pour que son trou tombe pile dessus. */
+.avatar.cadre-peint .avatar-cadre { width: var(--fw, 150%) !important; height: var(--fw, 150%) !important; left: var(--fx, -25%) !important; top: var(--fy, -25%) !important; transform: none !important; }
+.avatar.cadre-peint .avatar-photo { left: 17% !important; top: 17% !important; inset: auto !important; width: 66% !important; height: 66% !important; }
+.avatar.cadre-peint .avatar-photo { left: 17% !important; top: 17% !important; }
+/* Aperçus en boutique : on laisse la place au cadre pour qu'il ne cache pas le texte. */
+.grille-cadres li .avatar.cadre-peint, .cadre-actuel .avatar.cadre-peint { margin: var(--deb, 22px) auto !important; }
