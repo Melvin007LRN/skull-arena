@@ -93,6 +93,8 @@ export const ARTICLES: ArticlePerso[] = [
   { id: 'titre_sirene', categorie: 'titre', nom: 'Charmeur de sirènes', prix: 1000 },
   { id: 'titre_terreur', categorie: 'titre', nom: 'Terreur des Sept Mers', prix: 1500 },
   { id: 'titre_roi', categorie: 'titre', nom: 'Roi des pirates', prix: 5000 },
+  // Titre unique offert par l'admin (ni vendu ni à gagner : il n'apparaît pas en boutique).
+  { id: 'titre_khel', categorie: 'titre', nom: 'Khel a pirate' },
   { id: 'titre_premier_sang', categorie: 'titre', nom: 'Premier sang', gagne: g('Gagner une partie', (p) => p.victoires >= 1) },
   { id: 'titre_briscard', categorie: 'titre', nom: 'Vieux briscard', gagne: g('Niveau 15', (p) => niveau(p.xp) >= 15) },
   { id: 'titre_veteran', categorie: 'titre', nom: 'Vétéran', gagne: g('50 parties jouées', (p) => p.parties_jouees >= 50) },
