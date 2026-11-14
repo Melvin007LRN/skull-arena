@@ -177,6 +177,12 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
   const croupierSaute = etat.phase === 'resultats' && revele && croupierTotal > 21;
   const monGain = moi?.dernierGain ?? 0;
   const monBJ = !!moi?.mains.some((m) => m.resultat === 'blackjack');
+  // L'annonce suit le résultat de la main (pas le total avec les paris annexes) : croupier à 23 = GAGNÉ.
+  const mains = moi?.mains ?? [];
+  const nbGagne = mains.filter((m) => m.resultat === 'gagne' || m.resultat === 'blackjack').length;
+  const nbPerdu = mains.filter((m) => m.resultat === 'perdu').length;
+  const verdict = monBJ ? 'blackjack' : nbGagne > nbPerdu ? 'gagne' : nbPerdu > nbGagne ? 'perdu' : nbGagne === 0 ? 'egalite' : monGain > 0 ? 'gagne' : monGain < 0 ? 'perdu' : 'egalite';
+  const signe = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${Math.abs(n).toLocaleString('fr-FR')}`;
   const visible = (k: number, debut: number) => maintenant >= debut + k * DELAI_CARTE_DONNE;
 
   return (
@@ -216,17 +222,17 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
 
       {/* Sièges */}
       {etat.sieges.map((s, i) => (
-        <Siege key={i} index={i} place={moiIndex >= 0 ? (i - moiIndex + 7) % 5 : i} siege={s} moi={i === moiIndex} actif={etat.phase === 'jeu' && etat.tour === i && !enDistribution}
+        <Siege key={i} index={i} place={i} siege={s} moi={i === moiIndex} actif={etat.phase === 'jeu' && etat.tour === i && !enDistribution}
           resultat={etat.phase === 'resultats' && revele} etat={etat} maintenant={maintenant} L={L} H={H}
           paris={i === moiIndex && moi && moi.mise === 0 ? paris : null} poser={i === moiIndex && peutPoser ? poser : undefined} />
       ))}
 
       {/* Grandes annonces */}
       {etat.phase === 'resultats' && revele && moi?.mains.length ? (
-        monBJ ? <div className="bj2-annonce blackjack" key={`a${etat.manche}`}><span className="bj2-rayons" /><img className="bj2-banniere-bj" src={BJ.blackjack} alt="BLACKJACK !" /><em>+{monGain.toLocaleString('fr-FR')}</em><Pieces /></div>
-          : monGain > 0 ? <div className="bj2-annonce gagne" key={`a${etat.manche}`}><strong>GAGNÉ</strong><em>+{monGain.toLocaleString('fr-FR')}</em><Pieces /></div>
-            : monGain < 0 ? <div className="bj2-annonce perdu" key={`a${etat.manche}`}><strong>PERDU</strong><em>{monGain.toLocaleString('fr-FR')}</em></div>
-              : <div className="bj2-annonce egalite" key={`a${etat.manche}`}><strong>ÉGALITÉ</strong><em>mise rendue</em></div>
+        verdict === 'blackjack' ? <div className="bj2-annonce blackjack" key={`a${etat.manche}`}><span className="bj2-rayons" /><img className="bj2-banniere-bj" src={BJ.blackjack} alt="BLACKJACK !" /><em>{signe(monGain)}</em><Pieces /></div>
+          : verdict === 'gagne' ? <div className="bj2-annonce gagne" key={`a${etat.manche}`}><strong>GAGNÉ</strong><em>{signe(monGain)}</em>{monGain > 0 && <Pieces />}</div>
+            : verdict === 'perdu' ? <div className="bj2-annonce perdu" key={`a${etat.manche}`}><strong>PERDU</strong><em>{signe(monGain)}</em></div>
+              : <div className="bj2-annonce egalite" key={`a${etat.manche}`}><strong>ÉGALITÉ</strong><em>{monGain === 0 ? 'mise rendue' : signe(monGain)}</em></div>
       ) : null}
       {moi && !enDistribution && etat.phase !== 'mises' && (moi.resultatsAnnexes ?? []).filter((r) => r.pari !== 'assurance' && r.gain > 0).map((r) => (
         <div key={`${etat.manche}-${r.pari}`} className="bj2-annexe-gagnee">{r.pari === 'paires' ? 'Paires' : '21+3'} · {r.nom} · <b>+{(r.gain - r.mise).toLocaleString('fr-FR')}</b></div>
