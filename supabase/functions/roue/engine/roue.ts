@@ -37,7 +37,10 @@ export const MISE_MIN_ROUE = 10;
 export const MULT_MAX = 2500;
 
 /** Mise maximale par case selon le niveau (comme au Blackjack). */
+/** Niveau donné à l'admin : aucune limite de mise (seulement ses Louidors). */
+export const NIVEAU_SANS_LIMITE = 1_000_000;
 export function miseMaxRoue(niveau: number): number {
+  if (niveau >= NIVEAU_SANS_LIMITE) return 1_000_000_000;
   const n = Math.max(1, Math.floor(niveau));
   if (n >= 100) return 10000;
   if (n >= 50) return 5000;

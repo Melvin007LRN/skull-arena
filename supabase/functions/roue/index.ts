@@ -2,7 +2,7 @@
 // L'état public est dans roue_tables (lu en temps réel) ; la grille cachée de la Chasse au trésor est dans roue_secrets.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
-  avancer, choisir, ErreurRoue, gainsRoue, miserRoue, nouvelEtatRoue, retirerMises, signaler, ZONES,
+  avancer, choisir, ErreurRoue, gainsRoue, miserRoue, NIVEAU_SANS_LIMITE, nouvelEtatRoue, retirerMises, signaler, ZONES,
   type Drapeau, type EtatRoue, type SecretRoue, type Zone,
 } from './engine/roue.ts';
 
@@ -67,11 +67,11 @@ async function tablePublique(): Promise<string> {
 }
 
 async function profil(moi: string) {
-  const p = ok(await db.from('profils').select('pseudo, photo_url, xp, banni').eq('id', moi).maybeSingle()) as
-    { pseudo: string; photo_url: string | null; xp: number; banni: boolean } | null;
+  const p = ok(await db.from('profils').select('pseudo, photo_url, xp, banni, est_admin').eq('id', moi).maybeSingle()) as
+    { pseudo: string; photo_url: string | null; xp: number; banni: boolean; est_admin: boolean } | null;
   if (!p) throw new Refus('Profil introuvable.');
   if (p.banni) throw new Refus('Ton compte a été banni.');
-  return { id: moi, pseudo: p.pseudo, photo: p.photo_url, niveau: 1 + Math.floor(Math.max(0, p.xp) / 100) };
+  return { id: moi, pseudo: p.pseudo, photo: p.photo_url, niveau: p.est_admin ? NIVEAU_SANS_LIMITE : 1 + Math.floor(Math.max(0, p.xp) / 100) };
 }
 
 /** Lit, modifie et réécrit la roue (avec reprise si quelqu'un a joué en même temps). Paie les gains une seule fois. */

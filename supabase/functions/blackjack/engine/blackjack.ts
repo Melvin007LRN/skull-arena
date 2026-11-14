@@ -20,8 +20,11 @@ export const DELAI_RESULTATS = 6000;
 export const DELAI_CARTE_DONNE = 520;
 export const DELAI_CARTE_CROUPIER = 950;
 
+/** Niveau donné à l'admin : aucune limite de mise (seulement ses Louidors). */
+export const NIVEAU_SANS_LIMITE = 1_000_000;
 /** Mise maximale selon le niveau : plus on monte, plus on peut miser gros. */
 export function miseMax(niveau: number): number {
+  if (niveau >= NIVEAU_SANS_LIMITE) return 1_000_000_000;
   const n = Math.max(1, Math.floor(niveau));
   if (n >= 100) return 10000;
   if (n >= 50) return 5000;
@@ -138,7 +141,7 @@ const siegeVide = (s: Identite): SiegeBJ => ({ ...s, mise: 0, annexes: { paires:
 /** Un joueur s'assoit (au premier siège libre, ou à celui demandé). */
 export function asseoir(e: EtatBJ, s: Identite, place?: number): number {
   const deja = e.sieges.findIndex((x) => x?.joueur === s.joueur);
-  if (deja >= 0) return deja;
+  if (deja >= 0) { e.sieges[deja]!.niveau = s.niveau; return deja; } // niveau à jour (mise max)
   const i = place !== undefined && e.sieges[place] === null ? place : e.sieges.findIndex((x) => x === null);
   if (i < 0) throw new ErreurBJ('La table est complète (5 places). Réessaie dans un instant.');
   e.sieges[i] = siegeVide(s);

@@ -8,7 +8,7 @@ import type { Profil } from '../lib/profil.ts';
 import { niveau as niveauDe } from '../lib/profil.ts';
 import { appelBJ, JETONS, useTableBJ, type TableBJ } from '../lib/blackjack.ts';
 import {
-  couleurDe, DELAI_CARTE_CROUPIER, DELAI_CARTE_DONNE, dureeDonne, estBlackjack, miseMax, MISE_MIN_BJ, peutDoubler, peutSeparer, rangDe, valeurMain,
+  couleurDe, DELAI_CARTE_CROUPIER, DELAI_CARTE_DONNE, dureeDonne, estBlackjack, miseMax, NIVEAU_SANS_LIMITE, MISE_MIN_BJ, peutDoubler, peutSeparer, rangDe, valeurMain,
   type EtatBJ, type MainBJ, type SiegeBJ,
 } from '../engine/blackjack.ts';
 import { Avatar } from '../composants/Avatar.tsx';
@@ -81,8 +81,9 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
   const maintenant = useHorloge();
   const taille = useTailleEcran();
   const precedent = useRef<EtatBJ | null>(null);
-  const niveau = niveauDe(profil.xp);
+  const niveau = profil.est_admin ? NIVEAU_SANS_LIMITE : niveauDe(profil.xp);
   const max = miseMax(niveau);
+  const illimite = niveau >= NIVEAU_SANS_LIMITE;
   const moiIndex = etat ? etat.sieges.findIndex((s) => s?.joueur === profil.id) : -1;
   const moi = moiIndex >= 0 ? etat!.sieges[moiIndex] : null;
   const pivote = taille.l < taille.h && taille.l <= 900;
@@ -244,7 +245,7 @@ export function TableBlackjack({ profil, table, quitter, recharger }: { profil: 
             ? <p className="bj2-info">Mise posée : <strong>{moi.mise + moi.annexes.paires + moi.annexes.vingtEtUn}</strong> · on attend les autres pirates…</p>
             : (
               <div className="bj2-ligne">
-                <div className="bj2-max" title={`Niveau ${niveau}`}><small>Mise max</small><b>{max.toLocaleString('fr-FR')}</b></div>
+                <div className="bj2-max" title={`Niveau ${niveau}`}><small>Mise max</small><b>{illimite ? '∞' : max.toLocaleString('fr-FR')}</b></div>
                 <div className="bj2-jetons" role="radiogroup" aria-label="Jeton à poser">
                   {JETONS.map((j) => {
                     const bloque = j > max;

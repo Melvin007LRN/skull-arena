@@ -8,7 +8,7 @@ import { niveau as niveauDe } from '../lib/profil.ts';
 import { appelRoue, useRoue } from '../lib/roue.ts';
 import { JETONS } from '../lib/blackjack.ts';
 import {
-  CASES, caseDrapeau, DELAI_ABYSSES_CHUTE, DELAI_BOUSSOLE, DELAI_MISES, DELAI_CHOIX, DRAPEAUX, estBonus, miseMaxRoue,
+  CASES, caseDrapeau, DELAI_ABYSSES_CHUTE, DELAI_BOUSSOLE, DELAI_MISES, DELAI_CHOIX, DRAPEAUX, estBonus, miseMaxRoue, NIVEAU_SANS_LIMITE,
   multBonus, NOMS_ZONES, ZONES, type Drapeau, type EtatBonus, type EtatRoue, type Zone,
 } from '../engine/roue.ts';
 import { EcranAttente } from '../composants/Attente.tsx';
@@ -77,7 +77,7 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
   });
   const envoi = useRef<{ t: ReturnType<typeof setTimeout> | null; lot: Partial<Record<Zone, number>> }>({ t: null, lot: {} });
   const precedent = useRef<EtatRoue | null>(null);
-  const niveau = niveauDe(profil.xp);
+  const niveau = profil.est_admin ? NIVEAU_SANS_LIMITE : niveauDe(profil.xp);
   const max = miseMaxRoue(niveau);
 
   const mesMises = etat?.mises[profil.id]?.zones ?? {};
@@ -236,7 +236,7 @@ function TableRoue({ profil, id, quitter, recharger }: { profil: Profil; id: str
 
       {message && <p className="rk-erreur" onClick={() => setMessage(null)}>{message}</p>}
       <div className="rk-barre">
-        <div className="rk-max" title={`Niveau ${niveau}`}><small>Max/case</small><b>{fmt(max)}</b></div>
+        <div className="rk-max" title={`Niveau ${niveau}`}><small>Max/case</small><b>{niveau >= NIVEAU_SANS_LIMITE ? '∞' : fmt(max)}</b></div>
         <div className="rk-jetons" role="radiogroup" aria-label="Jeton à poser">
           {JETONS.map((j) => {
             const bloque = j > max;

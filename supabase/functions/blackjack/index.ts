@@ -3,7 +3,7 @@
 // le sabot et la carte cachée du croupier restent dans bj_secrets, que seul ce serveur lit.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
-  agir, asseoir, assurer, coutDuCoup, delaiEcoule, ErreurBJ, gains, lever, miser, nouvelEtat, nouveauSabot, type CoupBJ, type EtatBJ, type SecretBJ,
+  agir, asseoir, assurer, coutDuCoup, delaiEcoule, ErreurBJ, gains, lever, miser, NIVEAU_SANS_LIMITE, nouvelEtat, nouveauSabot, type CoupBJ, type EtatBJ, type SecretBJ,
 } from './engine/blackjack.ts';
 
 const CORS = {
@@ -57,11 +57,11 @@ async function action(moi: string, c: Record<string, unknown>) {
 }
 
 async function profil(moi: string) {
-  const p = ok(await db.from('profils').select('pseudo, photo_url, cadre, xp, banni').eq('id', moi).maybeSingle()) as
-    { pseudo: string; photo_url: string | null; cadre: string | null; xp: number; banni: boolean } | null;
+  const p = ok(await db.from('profils').select('pseudo, photo_url, cadre, xp, banni, est_admin').eq('id', moi).maybeSingle()) as
+    { pseudo: string; photo_url: string | null; cadre: string | null; xp: number; banni: boolean; est_admin: boolean } | null;
   if (!p) throw new Refus('Profil introuvable.');
   if (p.banni) throw new Refus('Ton compte a été banni.');
-  return { joueur: moi, pseudo: p.pseudo, photo: p.photo_url, cadre: p.cadre, niveau: 1 + Math.floor(Math.max(0, p.xp) / 100) };
+  return { joueur: moi, pseudo: p.pseudo, photo: p.photo_url, cadre: p.cadre, niveau: p.est_admin ? NIVEAU_SANS_LIMITE : 1 + Math.floor(Math.max(0, p.xp) / 100) };
 }
 
 async function creerTable(type: 'public' | 'solo' | 'privee', hote: string | null) {
