@@ -26,6 +26,7 @@ const placesMax = (s: { extension?: boolean }) => (s.extension ? 9 : 8);
 const ALPHABET_CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const INACTIVITE_MS = 120_000; // 2 minutes sans jouer : un robot prend le relais
 const PAUSE_FIN_PLI_MS = 4_800; // le temps que les joueurs voient le pli terminé
+const DELAI_TOUR_MS = 10_000; // 10 secondes pour jouer sa carte, sinon elle est jouée automatiquement
 const PAUSE_ROBOT_MS = 1_100;
 const PAUSE_ROBOT_RAPIDE_MS = 450;
 const NOMS_ROBOTS = [
@@ -352,7 +353,11 @@ interface Extra {
   aideRobot: string[]; // humains qu'un robot a aidés au moins une fois (pas de badge « Devin » ni « Légende »)
   regicides: Record<string, number>; // Skull King capturés avec une Sirène, joués soi-même
   stats: Record<string, StatsJoueur>; // exploits de la partie (résumé de fin, défis du jour)
+  tour: TourJoueur | null; // minuterie du joueur qui doit jouer une carte
 }
+
+/** Le joueur qui doit jouer, et l'heure à laquelle sa carte sera jouée pour lui. */
+interface TourJoueur { cle: string; joueur: string; echeance: number }
 
 interface StatsJoueur { sk: number; pir: number; q14n: number; q14: number; kraken: number }
 const statsVides = (): StatsJoueur => ({ sk: 0, pir: 0, q14n: 0, q14: 0, kraken: 0 });
@@ -365,7 +370,7 @@ function normaliser(extra: Partial<Extra>): Extra {
   return {
     continuer: [], debutManche: new Date().toISOString(), robots: [], remplaces: [], definitifs: [], retours: [],
     abandons: [], exclus: [], humainsAuDepart: 0, entrainement: false, annulee: false, finPliA: 0, rapide: false,
-    aideRobot: [], regicides: {}, stats: {}, ...extra,
+    aideRobot: [], regicides: {}, stats: {}, tour: null, ...extra,
   };
 }
 
@@ -377,6 +382,7 @@ function vueComplete(etat: EtatPartie, extra: Extra, partieId: string) {
     continuer: extra.continuer, debutManche: extra.debutManche,
     robots: extra.robots, remplaces: extra.remplaces, definitifs: extra.definitifs,
     entrainement: extra.entrainement, annulee: extra.annulee, rapide: extra.rapide, stats: extra.stats,
+    tour: extra.tour ? { joueur: extra.tour.joueur, echeance: extra.tour.echeance } : null,
   };
 }
 
@@ -478,13 +484,53 @@ function resultats(etat: EtatPartie, extra: Extra) {
   });
 }
 
+/** Démarre la minuterie de 10 s quand c'est à un humain de jouer une carte (ou de choisir un pouvoir). */
+function marquerTour(etat: EtatPartie, extra: Extra): boolean {
+  const attente = etat.phase === 'jeu' || etat.phase === 'pouvoir' ? enAttente(etat, extra) : [];
+  if (attente.length !== 1) { extra.tour = null; return false; }
+  const cle = `${etat.manche}:${etat.numeroPli}:${etat.pliEnCours.length}:${etat.phase}:${attente[0]}`;
+  if (extra.tour?.cle === cle) return false;
+  // On laisse le temps de voir le pli terminé avant de lancer le décompte.
+  const depart = Math.max(Date.now(), extra.finPliA + (extra.rapide ? 3_100 : PAUSE_FIN_PLI_MS));
+  extra.tour = { cle, joueur: attente[0], echeance: depart + DELAI_TOUR_MS };
+  return true;
+}
+
+/** Le temps est écoulé : la carte (ou le pouvoir) est jouée automatiquement pour le joueur. */
+async function jouerAutomatiquement(partieId: string, cle: string): Promise<boolean> {
+  const p = await charger(partieId);
+  if (p.termine || p.extra.tour?.cle !== cle || Date.now() < p.extra.tour.echeance) return false;
+  let joue = false;
+  try {
+    await modifierPartie(partieId, (etat, extra) => {
+      const t = extra.tour;
+      if (!t || t.cle !== cle || Date.now() < t.echeance) return etat;
+      const action = actionRobot(etat, t.joueur);
+      if (!action) return etat;
+      ajouter(extra.aideRobot, t.joueur);
+      joue = true;
+      return appliquer(etat, action);
+    });
+  } catch (e) { console.error('auto', e); }
+  return joue;
+}
+
+async function minuterieTour(partieId: string, cle: string, echeance: number) {
+  const attente = echeance - Date.now() + 200;
+  if (attente > 60_000) return;
+  await dormir(Math.max(0, attente));
+  if (await jouerAutomatiquement(partieId, cle)) await avancerRobots(partieId);
+}
+
 async function ecrire(partieId: string, version: number, etat: EtatPartie, extra: Extra, salonId: string) {
   const termine = etat.phase === 'fin_partie' || extra.annulee;
+  const nouveauTour = !termine && marquerTour(etat, extra);
   for (const j of extra.remplaces) ajouter(extra.aideRobot, j);
   const ok = verifier(await db.rpc('ecrire_partie', {
     p_partie: partieId, p_version: version, p_etat: etat, p_extra: extra,
     p_vue: vueComplete(etat, extra, partieId), p_mains: vuesPrivees(etat, extra), p_termine: termine,
   }));
+  if (ok && nouveauTour && extra.tour) enArrierePlan(minuterieTour(partieId, extra.tour.cle, extra.tour.echeance));
   if (ok && termine) {
     // Une partie compte s'il y avait au moins 2 humains au départ (jamais l'entraînement, jamais une partie annulée).
     if (!extra.annulee && !extra.entrainement && extra.humainsAuDepart >= 2) {
@@ -612,6 +658,8 @@ function enAttente(etat: EtatPartie, extra: Extra): string[] {
 async function reveiller(moi: string, partieId: string) {
   const p = await charger(partieId);
   if (p.termine || !p.etat.joueurs.includes(moi)) return { ok: true };
+  // Filet de sécurité : si la minuterie de 10 s a expiré sans que la carte soit jouée, on la joue maintenant.
+  if (p.extra.tour && Date.now() > p.extra.tour.echeance + 1_500) await jouerAutomatiquement(partieId, p.extra.tour.cle);
   const inactifs = enAttente(p.etat, p.extra).filter((j) => j !== moi);
   if (inactifs.length > 0 && Date.now() - p.majLe > INACTIVITE_MS) {
     await modifierPartie(partieId, (etat, extra) => {

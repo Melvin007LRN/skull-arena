@@ -41,6 +41,8 @@ export type VueJeu = VuePublique & {
   annulee: boolean;
   rapide?: boolean;
   stats?: Record<string, { sk: number; pir: number; q14n: number; q14: number; kraken: number }>;
+  /** Minuterie de 10 s : qui doit jouer, et quand sa carte sera jouée pour lui. */
+  tour?: { joueur: string; echeance: number } | null;
 };
 
 /** Appelle l'arbitre. En cas de refus, lève une erreur avec le message en français. */

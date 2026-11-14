@@ -322,6 +322,7 @@ export function TableJeu(p: PropsTable) {
   const etape = p.etapeForcee ?? etapePli;
   const pliAffiche = etape !== 'aucune';
   const aMoi = vue.joueurActif === moi && !pliAffiche && decompte === 0 && !piloteParRobot(moi) && !carteEnVol;
+  const chrono = useChrono(vue.tour);
 
   // Son + vibration quand c'est mon tour
   useEffect(() => {
@@ -654,7 +655,9 @@ export function TableJeu(p: PropsTable) {
                 ))}
               </div>
               <div className="adv-avatar" data-joueur={j} onClick={() => { if (!vue.robots?.includes(j)) ouvrirProfil(j); }}>
-                {actif && vue.phase === 'jeu' && <span className="adv-sablier" title="À son tour">⏳</span>}
+                {actif && vue.phase === 'jeu' && (chrono && vue.tour?.joueur === j
+                  ? <span className={`chrono-tour ${chrono <= 3 ? 'urgent' : ''}`} title="Secondes pour jouer">{chrono}</span>
+                  : <span className="adv-sablier" title="À son tour">⏳</span>)}
                 {vue.joueurs.indexOf(j) === vue.couronne && <span className="adv-couronne">👑</span>}
                 {vue.phase === 'mise' && vue.meneur === j && <span className="adv-ouvre" title="Ouvre le premier pli">▶ 1er</span>}
                 <Avatar photo={photo(j)} taille={tailleAvatar} alt={pseudo(j)} cadre={cadre(j)} compagnon={compagnon(j)} />
@@ -697,7 +700,7 @@ export function TableJeu(p: PropsTable) {
         {vue.joueurs.indexOf(moi) === vue.couronne && <span className="adv-couronne">👑</span>}
         <span className="moi-pastilles">
           {aMoi && !tigresse && !choixValeur && !choixJoker && vue.phase === 'jeu' && (
-            <span className="moi-tour">{vue.salve === moi ? '💥 2e carte !' : 'À toi de jouer !'}{vue.manche <= 2 && <small>{selection ? 'Glisse-la vers le centre ou touche-la encore' : 'Glisse une carte vers le centre'}</small>}</span>
+            <span className="moi-tour">{vue.salve === moi ? '💥 2e carte !' : 'À toi de jouer !'}{chrono && vue.tour?.joueur === moi ? <b className={`chrono-moi ${chrono <= 3 ? 'urgent' : ''}`}>{chrono} s</b> : null}{vue.manche <= 2 && <small>{selection ? 'Glisse-la vers le centre ou touche-la encore' : 'Glisse une carte vers le centre'}</small>}</span>
           )}
           {(() => { const o = objectif(moi); return o ? <span key={o.texte} className={`moi-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
         </span>
@@ -1831,4 +1834,17 @@ function EffetSurJoueur({ racine, joueur, effet, retard = 0, nomVisible = false 
       {nomVisible && <span className="entree-nom" style={{ left: pos.x, top: pos.y }}>{a.nom}</span>}
     </span>
   );
+}
+
+/** Secondes restantes pour jouer (de 10 à 1), ou null s'il n'y a pas de minuterie en cours. */
+function useChrono(tour: { joueur: string; echeance: number } | null | undefined): number | null {
+  const [maintenant, setMaintenant] = useState(() => Date.now());
+  useEffect(() => {
+    if (!tour) return;
+    const t = setInterval(() => setMaintenant(Date.now()), 250);
+    return () => clearInterval(t);
+  }, [tour?.echeance]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!tour) return null;
+  const reste = Math.ceil((tour.echeance - maintenant) / 1000);
+  return reste >= 1 && reste <= 10 ? reste : null;
 }

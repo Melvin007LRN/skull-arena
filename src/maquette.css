@@ -573,3 +573,10 @@ body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bot
 .avatar.cadre-peint .avatar-photo { left: 17% !important; top: 17% !important; }
 /* Aperçus en boutique : on laisse la place au cadre pour qu'il ne cache pas le texte. */
 .grille-cadres li .avatar.cadre-peint, .cadre-actuel .avatar.cadre-peint { margin: var(--deb, 22px) auto !important; }
+
+/* Minuterie de 10 s pour jouer sa carte */
+.chrono-tour { position: absolute; top: -10px; right: -10px; z-index: 6; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 900; font-size: 14px; color: #2a1604; background: #ffd36b; border: 2px solid #fff3c8; box-shadow: 0 0 10px #ffb400; }
+.chrono-tour.urgent, .chrono-moi.urgent { background: #e0343f; color: #fff; box-shadow: 0 0 12px #ff3040; animation: chrono-pouls .5s ease-in-out infinite alternate; }
+.chrono-moi { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 99px; background: #ffd36b; color: #2a1604; font-weight: 900; font-size: .9em; }
+@keyframes chrono-pouls { to { transform: scale(1.15); } }
