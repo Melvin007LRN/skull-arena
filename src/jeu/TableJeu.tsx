@@ -689,6 +689,12 @@ export function TableJeu(p: PropsTable) {
         )}
       </section>
 
+      {/* Mon décompte de 10 s : à gauche, au milieu de l'écran, pour ne jamais cacher les cartes */}
+      {chrono && vue.tour?.joueur === moi && vue.phase === 'jeu' && (
+        <div className={`chrono-gauche ${chrono <= 3 ? 'urgent' : ''}`} role="timer" aria-label={`${chrono} secondes pour jouer`}>
+          <b>{chrono}</b><small>s</small>
+        </div>
+      )}
       {/* Mon coin : avatar, ruban, statut */}
       <div className={`moi-coin ${aMoi ? 'actif' : ''}`} data-joueur={moi}>
         {vue.phase === 'mise' && vue.meneur === moi && <span className="adv-ouvre" title="Tu ouvres le premier pli">▶ 1er</span>}
@@ -700,7 +706,7 @@ export function TableJeu(p: PropsTable) {
         {vue.joueurs.indexOf(moi) === vue.couronne && <span className="adv-couronne">👑</span>}
         <span className="moi-pastilles">
           {aMoi && !tigresse && !choixValeur && !choixJoker && vue.phase === 'jeu' && (
-            <span className="moi-tour">{vue.salve === moi ? '💥 2e carte !' : 'À toi de jouer !'}{chrono && vue.tour?.joueur === moi ? <b className={`chrono-moi ${chrono <= 3 ? 'urgent' : ''}`}>{chrono} s</b> : null}{vue.manche <= 2 && <small>{selection ? 'Glisse-la vers le centre ou touche-la encore' : 'Glisse une carte vers le centre'}</small>}</span>
+            <span className="moi-tour">{vue.salve === moi ? '💥 2e carte !' : 'À toi de jouer !'}{vue.manche <= 2 && <small>{selection ? 'Glisse-la vers le centre ou touche-la encore' : 'Glisse une carte vers le centre'}</small>}</span>
           )}
           {(() => { const o = objectif(moi); return o ? <span key={o.texte} className={`moi-objectif ${o.ton}`}>{o.texte}</span> : null; })()}
         </span>

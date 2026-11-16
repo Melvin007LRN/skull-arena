@@ -580,3 +580,11 @@ body:has(.ecran-accueil.cr) { height: var(--hauteur-ecran, 100%) !important; bot
 .chrono-tour.urgent, .chrono-moi.urgent { background: #e0343f; color: #fff; box-shadow: 0 0 12px #ff3040; animation: chrono-pouls .5s ease-in-out infinite alternate; }
 .chrono-moi { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 99px; background: #ffd36b; color: #2a1604; font-weight: 900; font-size: .9em; }
 @keyframes chrono-pouls { to { transform: scale(1.15); } }
+/* Mon décompte : rond à gauche, au milieu, sans gêner la partie */
+.chrono-gauche { position: fixed; left: calc(env(safe-area-inset-left) + 8px); top: 50%; transform: translateY(-50%); z-index: 40; pointer-events: none;
+  width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: baseline; justify-content: center; padding-top: 9px; box-sizing: border-box;
+  background: rgba(10, 12, 22, .85); border: 2px solid #ffd36b; box-shadow: 0 0 12px rgba(255, 180, 0, .6); color: #ffd36b; font-weight: 900; }
+.chrono-gauche b { font-size: 20px; line-height: 1; }
+.chrono-gauche small { font-size: 10px; margin-left: 1px; }
+.chrono-gauche.urgent { border-color: #ff4a5e; color: #fff; background: rgba(150, 20, 35, .9); box-shadow: 0 0 14px #ff3040; animation: chrono-pouls2 .5s ease-in-out infinite alternate; }
+@keyframes chrono-pouls2 { to { transform: translateY(-50%) scale(1.12); } }
